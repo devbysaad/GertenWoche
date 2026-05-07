@@ -1,0 +1,20 @@
+version: '3.9'
+
+services:
+  gartenwoche:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+      - PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-https://gartenwoche.ch}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/robots.txt"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
