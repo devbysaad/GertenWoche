@@ -213,7 +213,7 @@
 										<div class="feat-overlay">
 											<CategoryBadge category={featuredLarge.category} />
 											<h2 class="feat-title">{featuredLarge.title}</h2>
-											<AuthorMeta author={featuredLarge.author} publishedAt={featuredLarge.publishedAt} />
+											<AuthorMeta author={featuredLarge.author} publishedAt={featuredLarge.publishedAt} noLink />
 										</div>
 									</div>
 								</a>

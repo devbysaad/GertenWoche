@@ -46,7 +46,7 @@
 							<div class="feat-overlay">
 								<CategoryBadge category={featuredLarge.category} />
 								<h2 class="feat-title">{featuredLarge.title}</h2>
-								<AuthorMeta author={featuredLarge.author} publishedAt={featuredLarge.publishedAt} />
+								<AuthorMeta author={featuredLarge.author} publishedAt={featuredLarge.publishedAt} noLink />
 							</div>
 						</div>
 					</a>
@@ -64,7 +64,7 @@
 									<div class="feat-small-overlay">
 										<CategoryBadge category={art.category} />
 										<p class="feat-small-title">{art.title}</p>
-										<AuthorMeta author={art.author} publishedAt={art.publishedAt} />
+										<AuthorMeta author={art.author} publishedAt={art.publishedAt} noLink />
 									</div>
 								</div>
 							</a>

@@ -37,7 +37,6 @@
 		class="rotating-carousel"
 		onmouseenter={() => (paused = true)}
 		onmouseleave={() => (paused = false)}
-		role="region"
 		aria-label="Artikel-Karussell"
 	>
 		<div class="carousel-slide">
