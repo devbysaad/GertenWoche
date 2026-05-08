@@ -158,7 +158,7 @@
 	.homepage-grid {
 		display: grid;
 		grid-template-columns: 2fr 1fr;
-		gap: 0;      /* spec: cards touch edge-to-edge */
+		gap: 4px;
 		height: 480px;
 	}
 
@@ -192,7 +192,7 @@
 	.right-stack {
 		display: grid;
 		grid-template-rows: 1fr 1fr;
-		gap: 0;
+		gap: 4px;
 	}
 	.stack-card {
 		position: relative;
@@ -225,14 +225,14 @@
 	.mosaic-grid {
 		display: grid;
 		grid-template-columns: 1fr 2fr 1fr;
-		gap: 0;      /* spec: cards touch edge-to-edge */
+		gap: 4px;
 		height: 480px;
 	}
 
 	.mosaic-side {
 		display: grid;
 		grid-template-rows: 1fr 1fr;
-		gap: 0;
+		gap: 4px;
 	}
 
 	.side-card {
