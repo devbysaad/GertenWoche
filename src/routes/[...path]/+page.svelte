@@ -332,13 +332,7 @@
 		.related-grid { grid-template-columns: 1fr; }
 		.cat-grid { grid-template-columns: 1fr; }
 	}
-</style>
 
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		padding: 28px 32px;
-		min-width: 0;
-	}
 
 	.article-header { margin-bottom: 20px; }
 	.article-meta-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
