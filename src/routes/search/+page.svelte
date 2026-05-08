@@ -4,8 +4,9 @@
 
 	let { data } = $props();
 
-	let q = $state(data.q);
+	let q = $state('');
 	let inputEl = $state<HTMLInputElement | null>(null);
+	$effect(() => { q = data.q ?? ''; });
 
 	function onSubmit(e: Event) {
 		e.preventDefault();
@@ -36,7 +37,6 @@
 					class="search-input"
 					aria-label="Suchbegriff"
 					autocomplete="off"
-					autofocus
 				/>
 			</div>
 			<button type="submit" class="search-btn">Suchen</button>

@@ -6,10 +6,11 @@
 
 	let { data } = $props();
 
-	let activeView = $state(data.view === 'calendar' ? 'calendar' : 'list');
+	let activeView = $state('list');
 	let calYear = $state(new Date().getFullYear());
 	let calMonth = $state(new Date().getMonth());
 	let showPast = $state(false);
+	$effect(() => { activeView = data.view === 'calendar' ? 'calendar' : 'list'; });
 
 	function switchView(v: string) {
 		activeView = v;

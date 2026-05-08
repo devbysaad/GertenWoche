@@ -26,7 +26,7 @@
 	}
 </script>
 
-<header class="site-header" role="banner">
+<header class="site-header">
 	<div class="header-inner">
 
 		<!-- ── LEFT: Weather widget ──────────────────────────── -->
@@ -116,6 +116,7 @@
 						onmouseenter={openMenu}
 						onmouseleave={scheduleClose}
 						role="menu"
+						tabindex="-1"
 					>
 						<button
 							type="button"

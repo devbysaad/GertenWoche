@@ -4,8 +4,12 @@
 
 	let { data } = $props();
 
-	let q = $state(data.search);
-	let cat = $state(data.catFilter);
+	let q = $state('');
+	let cat = $state('');
+	$effect(() => {
+		q = data.search ?? '';
+		cat = data.catFilter ?? '';
+	});
 	let debounce: ReturnType<typeof setTimeout>;
 
 	function onSearch() {

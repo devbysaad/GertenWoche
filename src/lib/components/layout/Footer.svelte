@@ -93,19 +93,6 @@
 		gap: 24px;
 	}
 
-	/* Italic serif logo matching live site */
-	.footer-logo {
-		font-family: 'Lora', Georgia, serif;
-		font-style: italic;
-		font-weight: 700;
-		font-size: 28px;
-		color: #222;
-		text-decoration: none;
-		flex-shrink: 0;
-		transition: color 0.15s;
-	}
-	.footer-logo:hover { color: #2D1B69; }
-
 	/* Horizontal pro links — right side */
 	.footer-pro-links {
 		display: flex;
