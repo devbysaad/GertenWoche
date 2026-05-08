@@ -1,1 +1,0 @@
-import{S as e,b as t,et as n,h as r}from"./jHS1uxE5.js";import"./CuyqONxg.js";var i=e(`<span class="pro-badge">PRO</span>`);function a(e){t(e,i())}var o=e(`<div class="prose article-body svelte-bddbxu"></div>`);function s(e,i){var a=o();r(a,()=>i.content,!0),n(a),t(e,a)}export{a as n,s as t};
