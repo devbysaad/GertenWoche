@@ -1,4 +1,13 @@
-# Project instruction files — do not commit
-Instructions/
-*.md
-!gartenwoche-clone/README.md
+node_modules/
+build/
+.svelte-kit/
+.env
+.env.local
+.env.*.local
+dist/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+instructions/*
