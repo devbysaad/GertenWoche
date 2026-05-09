@@ -1,4 +1,5 @@
 import type { Handle, HandleFetch } from '@sveltejs/kit';
+import { auth } from '$lib/auth.js';
 
 // ============================================================
 // Simple in-memory rate limiter for search / API endpoints
@@ -91,6 +92,19 @@ function getCacheControl(pathname: string): string {
 export const handle: Handle = async ({ event, resolve }) => {
 	const { request, url } = event;
 	const start = Date.now();
+
+	// ── Let better-auth handle its own routes ─────────────────
+	if (url.pathname.startsWith('/api/auth')) {
+		return auth.handler(request);
+	}
+
+	// ── Resolve session from cookie ───────────────────────────
+	try {
+		const session = await auth.api.getSession({ headers: request.headers });
+		event.locals.user = session?.user ?? null;
+	} catch {
+		event.locals.user = null;
+	}
 
 	// Rate-limit search and API endpoints
 	if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/search')) {

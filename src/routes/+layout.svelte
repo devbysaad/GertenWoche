@@ -5,7 +5,6 @@
 	import FooterCTA from '$lib/components/layout/FooterCTA.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import LoginModal from '$lib/components/ui/LoginModal.svelte';
-	import SearchBar from '$lib/components/ui/SearchBar.svelte';
 	import { modalStore } from '$lib/stores/modal.store.js';
 	import { authStore } from '$lib/stores/auth.store.js';
 
@@ -25,7 +24,6 @@
 
 <!-- Modals -->
 <LoginModal open={$modalStore.loginOpen} activeTab={$modalStore.activeTab} />
-<SearchBar open={$modalStore.searchOpen} />
 
 <!-- Page structure: Header → Nav → Main → FooterCTA → Footer (NO TopBar) -->
 <HeaderMain weather={data.weather} />

@@ -197,7 +197,9 @@
 				<!-- MAIN: magazine grid + pagination -->
 				<div class="category-main">
 					{#if articles.length === 0}
-						<p class="no-articles">Keine Beiträge vorhanden.</p>
+						<div class="empty-state">
+							<p>Keine Beiträge vorhanden</p>
+						</div>
 					{:else}
 						<MagazineGrid {articles} />
 
@@ -488,7 +490,19 @@
 	}
 
 	.cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
-	.no-articles { color: var(--color-text-muted); font-style: italic; }
+	.empty-state {
+		background: #F7F7F7;
+		border: 1px solid #E0E0E0;
+		border-radius: 4px;
+		padding: 24px;
+		text-align: center;
+	}
+	.empty-state p {
+		font-family: 'Roboto', sans-serif;
+		font-size: 14px;
+		color: #999;
+		margin: 0;
+	}
 
 	.subcats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 	.subcat-pill { font-size: 13px; font-weight: 600; color: var(--color-primary); background: var(--color-tag-bg); border: 1px solid var(--color-border); padding: 6px 14px; border-radius: 20px; transition: all 0.2s; }

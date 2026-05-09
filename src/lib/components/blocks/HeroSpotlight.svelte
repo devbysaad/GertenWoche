@@ -25,40 +25,31 @@
 <section class="hero-section" aria-label="Hauptartikel">
 	<div class="homepage-grid">
 
-		<!-- Large hero left -->
-		<a href={url} class="hero-main">
-			<div class="hero-img">
-				{#if article.thumbnail}
-					<img src={article.thumbnail} alt={article.title} loading="eager" />
-				{:else}
-					<div class="img-ph"></div>
-				{/if}
-			</div>
-			<div class="hero-overlay">
-				<span class="cat-badge">{article.category.name}</span>
-				<h1 class="hero-title">{article.title}</h1>
-				<span class="hero-author">{article.author.name}</span>
-			</div>
+		<!-- LEFT: 70% — pure image, no overlay, no gradient -->
+		<a href={url} class="hero-img-link" tabindex="0">
+			{#if article.thumbnail}
+				<img
+					src={article.thumbnail}
+					alt={article.title}
+					loading="eager"
+					class="hero-img"
+				/>
+			{:else}
+				<div class="hero-img hero-img-ph"></div>
+			{/if}
 		</a>
 
-		<!-- 2 small articles stacked right -->
-		<div class="right-stack">
-			{#each rightStack as art}
-				{@const artUrl = `/${art.urlPath}`}
-				<a href={artUrl} class="stack-card">
-					<div class="stack-img">
-						{#if art.thumbnail}
-							<img src={art.thumbnail} alt={art.title} loading="lazy" />
-						{:else}
-							<div class="img-ph"></div>
-						{/if}
-					</div>
-					<div class="stack-overlay">
-						<span class="cat-badge sm-badge">{art.category.name}</span>
-						<p class="stack-title">{art.title}</p>
-					</div>
-				</a>
-			{/each}
+		<!-- RIGHT: 30% — mint text panel -->
+		<div class="hero-text-panel">
+			<span class="hero-cat-badge">{article.category.name}</span>
+			<a href={url} class="hero-title-link">
+				<h1 class="hero-title">{article.title}</h1>
+			</a>
+			<p class="hero-author">{article.author.name}</p>
+			{#if article.excerpt}
+				<p class="hero-excerpt">{article.excerpt}</p>
+			{/if}
+			<a href={url} class="hero-read-more">Mehr lesen →</a>
 		</div>
 
 	</div>
@@ -153,71 +144,113 @@
 	.img-ph { width: 100%; height: 100%; background: #333; }
 
 	/* ══════════════════════════════════════
-	   HOMEPAGE: large left | 2 small right
+	   HOMEPAGE: 70% image | 30% text panel
 	   ══════════════════════════════════════ */
 	.homepage-grid {
 		display: grid;
-		grid-template-columns: 2fr 1fr;
-		gap: 4px;
-		height: 480px;
+		grid-template-columns: 70% 30%;
+		gap: 0;
+		height: 460px;
+		margin-bottom: 28px;
 	}
 
-	/* Large hero (left) */
-	.hero-main {
-		position: relative;
+	/* LEFT: pure image link — no overlay, no gradient */
+	.hero-img-link {
 		display: block;
 		overflow: hidden;
+		height: 100%;
 		text-decoration: none;
-		background: #111;
 	}
-	.hero-img { width: 100%; height: 100%; }
-	.hero-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
-	.hero-main:hover .hero-img img { transform: scale(1.02); }
+	.hero-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		border-radius: 0;
+		transition: transform 0.4s ease;
+	}
+	.hero-img-link:hover .hero-img { transform: scale(1.02); }
+	.hero-img-ph {
+		width: 100%;
+		height: 100%;
+		background: #e0e0e0;
+	}
 
-	.hero-overlay {
-		position: absolute;
-		bottom: 0; left: 0; right: 0;
-		padding: 48px 20px 18px;
-		background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
-		display: flex; flex-direction: column; gap: 8px;
+	/* RIGHT: mint-tinted text panel */
+	.hero-text-panel {
+		background: rgba(200, 230, 210, 0.18);
+		border-left: 1px solid rgba(0, 0, 0, 0.06);
+		padding: 28px 20px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		overflow: hidden;
 	}
+
+	/* Badge */
+	.hero-cat-badge {
+		display: inline-block;
+		background: #F7C900;
+		color: #2D1B69;
+		font-family: 'Roboto', sans-serif;
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 2px 8px;
+		border-radius: 2px;
+		align-self: flex-start;
+	}
+
+	/* Title */
+	.hero-title-link { text-decoration: none; }
 	.hero-title {
 		font-family: 'Roboto', sans-serif;
-		font-size: 24px; font-weight: 700;
-		color: #fff; margin: 0; line-height: 1.3;
-	}
-	.hero-author { font-size: 11px; color: rgba(255,255,255,0.75); font-family: 'Roboto', sans-serif; }
-
-	/* 2 small stacked right */
-	.right-stack {
-		display: grid;
-		grid-template-rows: 1fr 1fr;
-		gap: 4px;
-	}
-	.stack-card {
-		position: relative;
-		display: block;
+		font-size: 22px;
+		font-weight: 700;
+		color: #222;
+		margin: 0;
+		line-height: 1.3;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
 		overflow: hidden;
-		text-decoration: none;
-		background: #111;
+		transition: color 0.15s;
 	}
-	.stack-img { width: 100%; height: 100%; }
-	.stack-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; opacity: 0.88; }
-	.stack-card:hover .stack-img img { transform: scale(1.05); opacity: 1; }
+	.hero-title-link:hover .hero-title { color: #2D1B69; }
 
-	.stack-overlay {
-		position: absolute;
-		bottom: 0; left: 0; right: 0;
-		padding: 28px 10px 8px;
-		background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
-		display: flex; flex-direction: column; gap: 4px;
+	/* Author */
+	.hero-author {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 12px;
+		font-weight: 700;
+		color: #555;
+		margin: 0;
 	}
-	.stack-title {
+
+	/* Excerpt */
+	.hero-excerpt {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		color: #444;
+		margin: 0;
+		line-height: 1.5;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	/* Read more */
+	.hero-read-more {
 		font-family: 'Roboto', sans-serif;
-		font-size: 12px; font-weight: 700;
-		color: #fff; margin: 0; line-height: 1.3;
-		display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+		font-size: 13px;
+		color: #2D1B69;
+		text-decoration: none;
+		margin-top: auto;
+		transition: opacity 0.15s;
 	}
+	.hero-read-more:hover { opacity: 0.7; }
 
 	/* ══════════════════════════════════════
 	   MOSAIC: o o / O / o o
@@ -287,14 +320,22 @@
 
 	/* ── MOBILE ── */
 	@media (max-width: 900px) {
-		.homepage-grid, .mosaic-grid { grid-template-columns: 1fr; height: auto; }
-		.mosaic-side, .right-stack { grid-template-rows: auto; grid-template-columns: 1fr 1fr; }
-		.side-card, .stack-card { height: 160px; }
-		.hero-main, .mosaic-center { height: 280px; order: -1; }
+		.homepage-grid {
+			grid-template-columns: 1fr;
+			grid-template-rows: 300px auto;
+			height: auto;
+		}
+		.hero-img-link { height: 300px; }
+		.hero-text-panel { padding: 20px 16px; }
+		.mosaic-grid { grid-template-columns: 1fr; height: auto; }
+		.mosaic-side { grid-template-rows: auto; grid-template-columns: 1fr 1fr; }
+		.side-card { height: 160px; }
+		.mosaic-center { height: 280px; order: -1; }
 	}
 	@media (max-width: 480px) {
-		.mosaic-side, .right-stack { grid-template-columns: 1fr; }
-		.side-card, .stack-card { height: 140px; }
-		.hero-main, .mosaic-center { height: 220px; }
+		.mosaic-side { grid-template-columns: 1fr; }
+		.side-card { height: 140px; }
+		.mosaic-center { height: 220px; }
+		.hero-img-link { height: 220px; }
 	}
 </style>

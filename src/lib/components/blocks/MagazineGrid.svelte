@@ -11,63 +11,68 @@
 	const remaining = $derived(articles.slice(5));
 </script>
 
-<!-- ══════════════════════════════════════════════════════
-     MAGAZINE GRID — 5 cards
-     [1] [  2  ] [3]
-     [4] [  2  ] [5]   ← center spans both rows
-     ══════════════════════════════════════════════════════ -->
+<!--
+	MAGAZINE GRID — 5 cards
+	[1] [  2  ] [3]
+	[4] [  2  ] [5]   ← center card spans both rows (tall)
+-->
 {#if featured.length > 0}
 <div class="magazine-grid">
 	{#each featured as article, i}
 		{@const url = `/${article.urlPath}`}
+		{@const col  = [1, 2, 3, 1, 3][i]}
+		{@const row  = i === 1 ? '1 / span 2' : i < 3 ? '1' : '2'}
 		<a
 			href={url}
 			class="mag-card"
-			class:tall={i === 1}
-			style="grid-column:{[1,2,3,1,3][i]};grid-row:{i===1?'1/span 2':i<3?'1':'2'}"
-			tabindex="0"
+			style="grid-column:{col};grid-row:{row}"
 		>
-			<!-- Full-bleed image -->
-			<div class="mag-img">
-				{#if article.thumbnail}
-					<img src={article.thumbnail} alt={article.title} loading={i === 0 ? 'eager' : 'lazy'} />
-				{:else}
-					<div class="img-ph"></div>
-				{/if}
-			</div>
+			<!-- Full-bleed image — NO border-radius -->
+			{#if article.thumbnail}
+				<img src={article.thumbnail} alt={article.title} loading={i === 0 ? 'eager' : 'lazy'} class="mag-img" />
+			{:else}
+				<div class="mag-img mag-img-ph"></div>
+			{/if}
 
-			<!-- Dark gradient + text overlay at bottom -->
-			<div class="mag-overlay">
-				<span class="cat-badge mag-badge">{article.category.name}</span>
-				<p class="mag-title" class:mag-title-lg={i === 1}>{article.title}</p>
-				<p class="mag-author">{article.author.name}</p>
-			</div>
+			<!-- Gradient covers bottom 50% -->
+			<div class="mag-gradient"></div>
+
+			<!-- Badge: absolute, bottom 8px left 8px -->
+			<span class="mag-badge">{article.category.name}</span>
+
+			<!-- Title: sits above badge -->
+			<p class="mag-title" class:mag-title-lg={i === 1}>{article.title}</p>
+
+			<!-- Author: below badge -->
+			<p class="mag-author">{article.author.name}</p>
 		</a>
 	{/each}
 </div>
 {/if}
 
-<!-- ══════════════════════════════════════════════════════
-     REMAINING — 2-column grid (matches screenshot)
-     ══════════════════════════════════════════════════════ -->
+<!--
+	REMAINING ARTICLES — 2-column grid, gap 20px
+	White bg cards: image top (16:9), badge bottom-left on image,
+	title Roboto 15px 700, "Von Author · Date" Open Sans 12px #555
+-->
 {#if remaining.length > 0}
 <div class="remaining-grid">
 	{#each remaining as article}
-		{@const url = `/${article.urlPath}`}
+		{@const url     = `/${article.urlPath}`}
 		{@const dateStr = formatGermanDate(article.publishedAt)}
 		<a href={url} class="rem-card">
 			<div class="rem-img">
 				{#if article.thumbnail}
 					<img src={article.thumbnail} alt={article.title} loading="lazy" />
 				{:else}
-					<div class="img-ph"></div>
+					<div class="rem-img-ph"></div>
 				{/if}
-				<!-- Badge: top-left corner of image, matches screenshot -->
-				<span class="cat-badge rem-badge">{article.category.name}</span>
+				<!-- Badge: bottom-left of image -->
+				<span class="rem-badge">{article.category.name}</span>
 			</div>
 			<div class="rem-body">
 				<p class="rem-title">{article.title}</p>
-				<p class="rem-author">{article.author.name}</p>
+				<p class="rem-meta">Von {article.author.name} · {dateStr}</p>
 			</div>
 		</a>
 	{/each}
@@ -75,18 +80,19 @@
 {/if}
 
 <style>
-	/* ── Magazine 5-card grid ──────────────────────────────────
-	   3 cols, center spans 2 rows, gap ~3px (thin divider lines
-	   matching the screenshot)
-	   ─────────────────────────────────────────────────────── */
+	/* ═══════════════════════════════════════════════════════
+	   MAGAZINE GRID — spec-exact
+	   3 cols × 2 rows, center spans both rows, gap 3px
+	   ═══════════════════════════════════════════════════════ */
 	.magazine-grid {
 		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
-		grid-template-rows: 280px 280px;
-		gap: 3px;         /* thin dividing lines like screenshot */
-		margin-bottom: 3px;
+		grid-template-columns: 1fr 1.3fr 1fr;
+		grid-template-rows: 200px 200px;
+		gap: 3px;
+		margin-bottom: 24px;
 	}
 
+	/* Card: image is the card — position relative so absolute children work */
 	.mag-card {
 		position: relative;
 		display: block;
@@ -95,56 +101,61 @@
 		background: #1a1a1a;
 	}
 
-	/* Image fills the entire card absolutely */
+	/* Full-bleed image — NO border-radius */
 	.mag-img {
 		position: absolute;
 		inset: 0;
-	}
-	.mag-img img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 		display: block;
+		border-radius: 0;
 		transition: transform 0.4s ease;
 	}
-	.mag-card:hover .mag-img img { transform: scale(1.04); }
+	.mag-card:hover .mag-img { transform: scale(1.04); }
 
-	.img-ph { width: 100%; height: 100%; background: #444; }
-
-	/* Gradient + text overlay — bottom of each card */
-	.mag-overlay {
+	.mag-img-ph {
 		position: absolute;
-		bottom: 0; left: 0; right: 0;
-		padding: 48px 10px 10px;
-		background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		z-index: 1;
+		inset: 0;
+		background: linear-gradient(90deg, #2a2a2a 25%, #3d3d3d 50%, #2a2a2a 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.6s infinite;
 	}
 
-	/* Category badge: #F7C900 bg, #2D1B69 text, 11px 700 uppercase */
-	.cat-badge {
+	/* Dark gradient: covers bottom 50% */
+	.mag-gradient {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.72) 100%);
+		pointer-events: none;
+	}
+
+	/* Badge: absolute, bottom 8px left 8px */
+	.mag-badge {
+		position: absolute;
+		bottom: 8px;
+		left: 8px;
+		z-index: 2;
 		display: inline-block;
 		background: #F7C900;
 		color: #2D1B69;
 		font-family: 'Roboto', sans-serif;
-		font-size: 10px;
+		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		padding: 2px 6px;
 		border-radius: 2px;
 		white-space: nowrap;
-		align-self: flex-start;
 	}
 
-	.mag-badge {
-		/* sits inside the overlay just above the title */
-	}
-
-	/* Title: white, Roboto 700 */
+	/* Title: sits above badge (bottom 30px to clear badge) */
 	.mag-title {
+		position: absolute;
+		bottom: 30px;
+		left: 8px;
+		right: 8px;
+		z-index: 2;
 		font-family: 'Roboto', sans-serif;
 		font-size: 13px;
 		font-weight: 700;
@@ -155,41 +166,57 @@
 		-webkit-line-clamp: 3;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-		text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+		text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 	}
 	.mag-title-lg {
 		font-size: 17px;
-		-webkit-line-clamp: 4;
 	}
 
-	/* Author: small white bold */
+	/* Author: visible below badge on center card */
 	.mag-author {
-		font-family: 'Roboto', sans-serif;
+		position: absolute;
+		bottom: 26px;   /* sits just above the badge (badge is at 8px, badge ~18px tall) */
+		left: 8px;
+		z-index: 3;
+		font-family: 'Open Sans', sans-serif;
 		font-size: 10px;
 		font-weight: 700;
-		color: rgba(255,255,255,0.75);
+		color: rgba(255, 255, 255, 0.85);
 		margin: 0;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
+		white-space: nowrap;
+		text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+		display: none;
+	}
+	/* Show author only on the center (tall) card */
+	.mag-card:nth-child(2) .mag-author {
+		display: block;
 	}
 
-	/* ── Remaining: 2-column grid (matches screenshot) ───────── */
+	/* ═══════════════════════════════════════════════════════
+	   REMAINING: 2-column, gap 20px, white bg cards
+	   ═══════════════════════════════════════════════════════ */
 	.remaining-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: 3px;     /* same thin gap as magazine grid */
+		gap: 20px;
 	}
 
+	/* Card: white bg, no shadow by default */
 	.rem-card {
 		display: block;
 		text-decoration: none;
 		background: #fff;
 		overflow: hidden;
+		transition: box-shadow 0.2s ease;
+	}
+	.rem-card:hover {
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
 	}
 
+	/* Image: 16:9 ratio */
 	.rem-img {
 		position: relative;
-		padding-bottom: 66%;    /* 3:2 ratio — matches screenshot proportions */
+		padding-bottom: 56.25%;   /* 16:9 */
 		overflow: hidden;
 		background: #e0e0e0;
 	}
@@ -204,24 +231,44 @@
 	}
 	.rem-card:hover .rem-img img { transform: scale(1.04); }
 
-	/* Badge: TOP-LEFT corner of image (matches screenshot) */
+	.rem-img-ph {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(90deg, #e0e0e0 25%, #ececec 50%, #e0e0e0 75%);
+		background-size: 200% 100%;
+		animation: shimmer 1.6s infinite;
+	}
+
+	/* Badge: bottom-left of image */
 	.rem-badge {
 		position: absolute;
-		top: 6px;
+		bottom: 6px;
 		left: 6px;
 		z-index: 1;
+		display: inline-block;
+		background: #F7C900;
+		color: #2D1B69;
+		font-family: 'Roboto', sans-serif;
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 2px 6px;
+		border-radius: 2px;
+		white-space: nowrap;
 	}
 
 	.rem-body {
-		padding: 8px 6px 10px;
+		padding: 10px 8px 12px;
 	}
 
+	/* Title: Roboto 15px 700 */
 	.rem-title {
 		font-family: 'Roboto', sans-serif;
-		font-size: 14px;
+		font-size: 15px;
 		font-weight: 700;
 		color: #222;
-		margin: 0 0 4px;
+		margin: 0 0 5px;
 		line-height: 1.3;
 		display: -webkit-box;
 		-webkit-line-clamp: 3;
@@ -231,12 +278,18 @@
 	}
 	.rem-card:hover .rem-title { color: #2D1B69; }
 
-	.rem-author {
+	/* "Von Author · Date": Open Sans 12px #555 */
+	.rem-meta {
 		font-family: 'Open Sans', sans-serif;
-		font-size: 11px;
-		color: #777;
+		font-size: 12px;
+		color: #555;
 		margin: 0;
-		font-style: italic;
+	}
+
+	/* ── Skeleton shimmer ───────────────────────────────────── */
+	@keyframes shimmer {
+		0%   { background-position: 200% 0; }
+		100% { background-position: -200% 0; }
 	}
 
 	/* ── Responsive ─────────────────────────────────────────── */
@@ -250,6 +303,7 @@
 			grid-row: auto !important;
 			height: 200px;
 		}
+		.remaining-grid { gap: 12px; }
 	}
 
 	@media (max-width: 600px) {

@@ -10,16 +10,12 @@
 	let tab = $state<'login' | 'register' | 'recover'>('login');
 
 	// Keep tab in sync with store
-	$effect(() => {
-		tab = activeTab;
-	});
+	$effect(() => { tab = activeTab; });
 
 	// Focus first input when opened
 	let firstInput = $state<HTMLInputElement | null>(null);
 	$effect(() => {
-		if (open && firstInput) {
-			setTimeout(() => firstInput?.focus(), 50);
-		}
+		if (open && firstInput) setTimeout(() => firstInput?.focus(), 50);
 	});
 
 	// ESC closes
@@ -30,6 +26,92 @@
 		window.addEventListener('keydown', onKeydown);
 		return () => window.removeEventListener('keydown', onKeydown);
 	});
+
+	// ── Form state ────────────────────────────────────────────
+	let loading  = $state(false);
+	let errorMsg = $state('');
+	let successMsg = $state('');
+
+	// Login form
+	let loginEmail    = $state('');
+	let loginPassword = $state('');
+
+	// Register form
+	let regEmail    = $state('');
+	let regName     = $state('');
+	let regPassword = $state('');
+
+	// Recover form
+	let recoverEmail = $state('');
+
+	function reset() { errorMsg = ''; successMsg = ''; }
+
+	async function handleLogin(e: SubmitEvent) {
+		e.preventDefault();
+		reset(); loading = true;
+		try {
+			const res = await fetch('/api/auth/sign-in/email', {
+				method:  'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body:    JSON.stringify({ email: loginEmail, password: loginPassword }),
+				credentials: 'include'
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				errorMsg = data?.message ?? 'Anmeldung fehlgeschlagen.';
+			} else {
+				modalStore.closeModal();
+				window.location.reload();
+			}
+		} catch {
+			errorMsg = 'Netzwerkfehler. Bitte versuchen Sie es erneut.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleRegister(e: SubmitEvent) {
+		e.preventDefault();
+		reset(); loading = true;
+		try {
+			const res = await fetch('/api/auth/sign-up/email', {
+				method:  'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body:    JSON.stringify({ email: regEmail, name: regName, password: regPassword }),
+				credentials: 'include'
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				errorMsg = data?.message ?? 'Registrierung fehlgeschlagen.';
+			} else {
+				successMsg = 'Konto erstellt! Sie sind jetzt angemeldet.';
+				setTimeout(() => { modalStore.closeModal(); window.location.reload(); }, 1200);
+			}
+		} catch {
+			errorMsg = 'Netzwerkfehler. Bitte versuchen Sie es erneut.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleRecover(e: SubmitEvent) {
+		e.preventDefault();
+		reset(); loading = true;
+		try {
+			// better-auth reset password endpoint
+			await fetch('/api/auth/forget-password', {
+				method:  'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body:    JSON.stringify({ email: recoverEmail, redirectTo: '/anmelden-registrieren' }),
+				credentials: 'include'
+			});
+			successMsg = 'Falls ein Konto mit dieser E-Mail existiert, wurde eine E-Mail gesendet.';
+		} catch {
+			errorMsg = 'Netzwerkfehler. Bitte versuchen Sie es erneut.';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 {#if open}
@@ -71,15 +153,18 @@
 				<h2 id="modal-heading" class="modal-heading">Herzlich willkommen!</h2>
 				<p class="modal-sub">Melde dich in deinem Konto an</p>
 
-				<form method="POST" action="/api/auth/login" class="modal-form">
+				{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
+				{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
+
+				<form onsubmit={handleLogin} class="modal-form">
 					<div class="form-group">
-						<label for="login-username">Benutzername</label>
+						<label for="login-email">E-Mail-Adresse</label>
 						<input
-							id="login-username"
-							name="username"
-							type="text"
-							autocomplete="username"
+							id="login-email"
+							type="email"
+							autocomplete="email"
 							bind:this={firstInput}
+							bind:value={loginEmail}
 							required
 						/>
 					</div>
@@ -87,9 +172,9 @@
 						<label for="login-password">Passwort</label>
 						<input
 							id="login-password"
-							name="password"
 							type="password"
 							autocomplete="current-password"
+							bind:value={loginPassword}
 							required
 						/>
 					</div>
@@ -98,7 +183,9 @@
 						Passwort vergessen?
 					</button>
 
-					<button type="submit" class="submit-btn">Anmelden</button>
+					<button type="submit" class="submit-btn" disabled={loading}>
+						{loading ? 'Wird geladen…' : 'Anmelden'}
+					</button>
 
 					<div class="divider"><span>oder</span></div>
 
@@ -119,32 +206,46 @@
 				<h2 id="modal-heading" class="modal-heading">Herzlich willkommen!</h2>
 				<p class="modal-sub">Registrieren Sie sich für ein Konto</p>
 
-				<form method="POST" action="/api/auth/register" class="modal-form">
+				{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
+				{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
+
+				<form onsubmit={handleRegister} class="modal-form">
 					<div class="form-group">
 						<label for="reg-email">E-Mail-Adresse</label>
 						<input
 							id="reg-email"
-							name="email"
 							type="email"
 							autocomplete="email"
 							bind:this={firstInput}
+							bind:value={regEmail}
 							required
 						/>
 					</div>
 					<div class="form-group">
-						<label for="reg-username">Benutzername</label>
+						<label for="reg-name">Name</label>
 						<input
-							id="reg-username"
-							name="username"
+							id="reg-name"
 							type="text"
-							autocomplete="username"
+							autocomplete="name"
+							bind:value={regName}
+							required
+						/>
+					</div>
+					<div class="form-group">
+						<label for="reg-password">Passwort (min. 8 Zeichen)</label>
+						<input
+							id="reg-password"
+							type="password"
+							autocomplete="new-password"
+							bind:value={regPassword}
+							minlength="8"
 							required
 						/>
 					</div>
 
-					<p class="modal-info">Ein Passwort wird Ihnen per Email zugeschickt.</p>
-
-					<button type="submit" class="submit-btn">Registrieren</button>
+					<button type="submit" class="submit-btn" disabled={loading}>
+						{loading ? 'Wird geladen…' : 'Registrieren'}
+					</button>
 
 					<p class="modal-note">
 						Mit der Registrierung akzeptieren Sie unsere
@@ -159,20 +260,25 @@
 				<h2 id="modal-heading" class="modal-heading">Passwort zurücksetzen</h2>
 				<p class="modal-sub">Geben Sie Ihre E-Mail-Adresse ein</p>
 
-				<form class="modal-form">
+				{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
+				{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
+
+				<form onsubmit={handleRecover} class="modal-form">
 					<div class="form-group">
 						<label for="recover-email">E-Mail-Adresse</label>
 						<input
 							id="recover-email"
-							name="email"
 							type="email"
 							autocomplete="email"
 							bind:this={firstInput}
+							bind:value={recoverEmail}
 							required
 						/>
 					</div>
 
-					<button type="submit" class="submit-btn">Link senden</button>
+					<button type="submit" class="submit-btn" disabled={loading}>
+						{loading ? 'Wird geladen…' : 'Link senden'}
+					</button>
 
 					<button type="button" class="link-btn" onclick={() => (tab = 'login')}>
 						← Zurück zum Anmelden
@@ -279,6 +385,25 @@
 		font-size: 13px;
 		color: var(--color-text-muted);
 		margin-bottom: 20px;
+	}
+
+	/* Inline feedback messages */
+	.msg {
+		font-family: var(--font-body);
+		font-size: 13px;
+		padding: 8px 12px;
+		border-radius: var(--radius-sm);
+		margin: 0 0 4px;
+	}
+	.msg-error {
+		background: #fff0f0;
+		color: #cc2200;
+		border: 1px solid #fcc;
+	}
+	.msg-success {
+		background: #f0fff4;
+		color: #1a7a3a;
+		border: 1px solid #b2f0c8;
 	}
 
 	.modal-form {

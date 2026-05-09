@@ -26,7 +26,9 @@
 			<!-- MAIN: magazine grid + pagination -->
 			<div class="category-main">
 				{#if articles.length === 0}
-					<p class="no-articles">Keine Artikel in dieser Kategorie.</p>
+					<div class="empty-state">
+						<p>Keine Beiträge vorhanden</p>
+					</div>
 				{:else}
 					<MagazineGrid {articles} />
 
@@ -102,9 +104,18 @@
 		top: 70px;   /* below the sticky nav */
 	}
 
-	.no-articles {
-		color: #777;
-		font-style: italic;
+	.empty-state {
+		background: #F7F7F7;
+		border: 1px solid #E0E0E0;
+		border-radius: 4px;
+		padding: 24px;
+		text-align: center;
+	}
+	.empty-state p {
+		font-family: 'Roboto', sans-serif;
+		font-size: 14px;
+		color: #999;
+		margin: 0;
 	}
 
 	.subcats {

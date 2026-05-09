@@ -2,6 +2,8 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types.js';
 import { getArticlesByCategory, getCategoryBySlug, getCategories, getArticles } from '$lib/api/index.js';
 
+// First 5 go to magazine grid, then 12 per page in the remaining 2-col grid
+const MAG_COUNT = 5;
 const PAGE_SIZE = 12;
 
 export const load: PageServerLoad = async ({ params, url }) => {
@@ -20,12 +22,16 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	// Fetch ALL articles for this category (no limit — full pagination)
 	const allArticles = await getArticlesByCategory(categorySlug, 9999);
 
-	// Paginate server-side
+	// Paginate server-side: always include first 5 for mag grid + 12 per page remaining
 	const totalArticles = allArticles.length;
-	const totalPages = Math.max(1, Math.ceil(totalArticles / PAGE_SIZE));
+	const remainingTotal = Math.max(0, totalArticles - MAG_COUNT);
+	const totalPages = Math.max(1, Math.ceil(remainingTotal / PAGE_SIZE));
 	const safePage = Math.min(currentPage, totalPages);
-	const start = (safePage - 1) * PAGE_SIZE;
-	const articles = allArticles.slice(start, start + PAGE_SIZE);
+	const remStart = (safePage - 1) * PAGE_SIZE + MAG_COUNT;
+	const articles = [
+		...allArticles.slice(0, MAG_COUNT),
+		...allArticles.slice(remStart, remStart + PAGE_SIZE)
+	];
 
 	// Subcategories
 	const subCategories = categories.filter((c) => c.parent === categorySlug);

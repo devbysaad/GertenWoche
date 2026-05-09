@@ -30,8 +30,12 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@better-auth/client": "^0.0.2-alpha.3",
 		"@types/bcryptjs": "^2.4.6",
+		"@types/better-sqlite3": "^7.6.13",
 		"bcryptjs": "^3.0.3",
+		"better-auth": "^1.6.10",
+		"better-sqlite3": "^12.9.0",
 		"date-fns": "^4.1.0",
 		"lucide-svelte": "^1.0.1",
 		"marked": "^18.0.3",

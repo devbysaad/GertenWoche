@@ -3,6 +3,23 @@
 
 /// <reference types="@sveltejs/kit" />
 
+// better-auth: User type available in event.locals across all server routes
+declare global {
+	namespace App {
+		interface Locals {
+			user: {
+				id: string;
+				email: string;
+				name: string;
+				emailVerified: boolean;
+				createdAt: Date;
+				updatedAt: Date;
+			} | null;
+		}
+	}
+}
+
+
 // Private env vars (server-only, accessed via $env/static/private or process.env)
 declare module '$env/static/private' {
 	// OpenWeatherMap API key — used by /api/weather proxy
