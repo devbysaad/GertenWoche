@@ -7,6 +7,7 @@
 	import LoginModal from '$lib/components/ui/LoginModal.svelte';
 	import { modalStore } from '$lib/stores/modal.store.js';
 	import { authStore } from '$lib/stores/auth.store.js';
+	import { organizationSchema, websiteSchema } from '$lib/utils/seo.js';
 
 	let { data, children } = $props();
 
@@ -18,6 +19,24 @@
 		}
 	});
 </script>
+
+<svelte:head>
+	<!-- Default title (overridden per-page) -->
+	<title>Gartenwoche – Das unabhängige Gartenmagazin</title>
+	<meta name="description" content="Gartenwoche – Ihr Schweizer Gartenmagazin für Pflanzen, Gartenpraxis, Aktuelles und Veranstaltungen." />
+	<link rel="canonical" href="https://gartenwoche.ch" />
+
+	<!-- Default OpenGraph -->
+	<meta property="og:title" content="Gartenwoche – Das unabhängige Gartenmagazin" />
+	<meta property="og:description" content="Gartenwoche – Ihr Schweizer Gartenmagazin für Pflanzen, Gartenpraxis, Aktuelles und Veranstaltungen." />
+	<meta property="og:image" content="https://gartenwoche.ch/Logo_Gartenwoche-1.png" />
+	<meta property="og:url" content="https://gartenwoche.ch" />
+	<meta property="og:type" content="website" />
+
+	<!-- JSON-LD: Organization + WebSite (present on every page) -->
+	{@html `<script type="application/ld+json">${JSON.stringify(organizationSchema)}</script>`}
+	{@html `<script type="application/ld+json">${JSON.stringify(websiteSchema)}</script>`}
+</svelte:head>
 
 <!-- Skip to main content (accessibility) -->
 <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>

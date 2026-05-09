@@ -16,9 +16,7 @@ const config = {
 			// Output directory for the built server
 			out: 'build',
 			// Precompress static assets with brotli + gzip
-			precompress: true,
-			// Environment variable prefix for production secrets
-			envPrefix: 'GARTENWOCHE_'
+			precompress: true
 		}),
 
 		alias: {

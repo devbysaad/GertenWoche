@@ -1,73 +1,70 @@
 /**
- * File-based user store.
- * Reads/writes users to a JSON file at USERS_FILE path.
- * In production, swap this for a real database (SQLite/Postgres).
+ * Serverless-safe in-memory user store.
+ *
+ * For a clone/demo deployment this is sufficient — Vercel functions
+ * share process memory within a single instance.
+ *
+ * For production with persistent users: swap the Map for
+ * a Supabase/Neon/PlanetScale call using the same interface.
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { USERS_FILE } from './config.js';
+import bcrypt from 'bcryptjs';
 
 export interface StoredUser {
 	id: string;
 	username: string;
 	email: string;
 	passwordHash: string;
+	name: string;
 	tier: 'free' | 'pro';
 	createdAt: string; // ISO string
 }
 
-function getFilePath(): string {
-	// Resolve relative to project root (process.cwd())
-	return path.isAbsolute(USERS_FILE)
-		? USERS_FILE
-		: path.join(process.cwd(), USERS_FILE);
-}
+// In-memory store — survives the request lifetime; resets on cold start
+const users = new Map<string, StoredUser>();
 
-function readUsers(): StoredUser[] {
-	const filePath = getFilePath();
-	try {
-		if (!fs.existsSync(filePath)) return [];
-		const raw = fs.readFileSync(filePath, 'utf-8');
-		return JSON.parse(raw) as StoredUser[];
-	} catch {
-		return [];
-	}
-}
-
-function writeUsers(users: StoredUser[]): void {
-	const filePath = getFilePath();
-	const dir = path.dirname(filePath);
-	if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-	fs.writeFileSync(filePath, JSON.stringify(users, null, 2), 'utf-8');
-}
+// ── Read helpers ─────────────────────────────────────────────────────────────
 
 export function findByEmail(email: string): StoredUser | undefined {
-	return readUsers().find((u) => u.email.toLowerCase() === email.toLowerCase());
+	for (const u of users.values()) {
+		if (u.email.toLowerCase() === email.toLowerCase()) return u;
+	}
+	return undefined;
 }
 
 export function findById(id: string): StoredUser | undefined {
-	return readUsers().find((u) => u.id === id);
+	return users.get(id);
 }
 
-export function createUser(data: Omit<StoredUser, 'id' | 'createdAt'>): StoredUser {
-	const users = readUsers();
-
-	// Check for duplicates
-	if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-		throw new Error('EMAIL_EXISTS');
+export function findByUsername(username: string): StoredUser | undefined {
+	for (const u of users.values()) {
+		if (u.username.toLowerCase() === username.toLowerCase()) return u;
 	}
-	if (users.some((u) => u.username.toLowerCase() === data.username.toLowerCase())) {
-		throw new Error('USERNAME_EXISTS');
-	}
+	return undefined;
+}
 
+// ── Write helpers ─────────────────────────────────────────────────────────────
+
+export async function createUser(
+	data: Pick<StoredUser, 'email' | 'username' | 'name'> & { password: string }
+): Promise<StoredUser> {
+	if (findByEmail(data.email)) throw new Error('EMAIL_EXISTS');
+	if (findByUsername(data.username)) throw new Error('USERNAME_EXISTS');
+
+	const passwordHash = await bcrypt.hash(data.password, 12);
 	const user: StoredUser = {
-		...data,
 		id: crypto.randomUUID(),
+		email: data.email,
+		username: data.username,
+		name: data.name || data.username,
+		passwordHash,
+		tier: 'free',
 		createdAt: new Date().toISOString()
 	};
-
-	users.push(user);
-	writeUsers(users);
+	users.set(user.id, user);
 	return user;
+}
+
+export async function verifyPassword(user: StoredUser, password: string): Promise<boolean> {
+	return bcrypt.compare(password, user.passwordHash);
 }

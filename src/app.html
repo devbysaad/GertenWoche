@@ -3,12 +3,37 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<!-- ── Primary SEO ──────────────────────────────────────────── -->
+		<meta name="theme-color" content="#2D1B69" />
+		<meta name="color-scheme" content="light" />
+
+		<!-- ── Favicons ─────────────────────────────────────────────── -->
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+		<!-- ── Font preconnect (performance) ────────────────────────── -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800;900&family=Open+Sans:wght@400;600;700&family=Lora:wght@700&display=swap"
 			rel="stylesheet"
+			media="print"
+			onload="this.media='all'"
 		/>
+		<noscript>
+			<link
+				href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800;900&family=Open+Sans:wght@400;600;700&family=Lora:wght@700&display=swap"
+				rel="stylesheet"
+			/>
+		</noscript>
+
+		<!-- ── Default OpenGraph (overridden per-page via svelte:head) ─ -->
+		<meta property="og:site_name" content="Gartenwoche" />
+		<meta property="og:locale" content="de_CH" />
+		<meta name="twitter:card" content="summary_large_image" />
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

@@ -1,8 +1,6 @@
 import type { LayoutServerLoad } from './$types.js';
-import { getSession } from '$lib/auth/session.js';
-import { findById } from '$lib/auth/users.js';
 
-export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
+export const load: LayoutServerLoad = async ({ fetch, locals }) => {
 	// ── Weather ──────────────────────────────────────────────────────────────
 	let weather = { temp: null as number | null, city: 'Zürich' };
 	try {
@@ -12,25 +10,17 @@ export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
 		// fallback already set
 	}
 
-	// ── Auth session ─────────────────────────────────────────────────────────
-	let user = null;
-	try {
-		const session = await getSession(cookies);
-		if (session) {
-			const stored = findById(session.userId);
-			if (stored) {
-				user = {
-					id: stored.id,
-					username: stored.username,
-					email: stored.email,
-					tier: stored.tier,
-					createdAt: new Date(stored.createdAt)
-				};
+	// ── Auth session (via better-auth, set in hooks.server.ts) ───────────────
+	// locals.user is populated by the hooks.server.ts handle() function
+	const user = locals.user
+		? {
+				id:        locals.user.id,
+				name:      locals.user.name,
+				email:     locals.user.email,
+				tier:      'free' as const, // extend with DB role lookup when needed
+				createdAt: new Date(locals.user.createdAt)
 			}
-		}
-	} catch {
-		// invalid or expired session — treat as logged out
-	}
+		: null;
 
 	return { weather, user };
 };

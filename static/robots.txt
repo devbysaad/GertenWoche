@@ -1,3 +1,7 @@
-# allow crawling everything by default
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /mein-konto
+Disallow: /api/
+Disallow: /anmelden-registrieren
+
+Sitemap: https://gartenwoche.ch/sitemap.xml

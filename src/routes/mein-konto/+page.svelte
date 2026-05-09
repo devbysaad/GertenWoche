@@ -1,6 +1,6 @@
 <script lang="ts">
 	let { data } = $props();
-	const { user } = data;
+	const user = $derived(data.user);
 
 	let logoutLoading = $state(false);
 
