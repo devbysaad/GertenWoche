@@ -1,5 +1,6 @@
 import type { Handle, HandleFetch } from '@sveltejs/kit';
-import { auth } from '$lib/auth.js';
+import { getSession } from '$lib/auth/session.js';
+import { findById } from '$lib/auth/users.js';
 
 // ============================================================
 // Simple in-memory rate limiter for search / API endpoints
@@ -22,13 +23,13 @@ function checkRateLimit(ip: string): boolean {
 
 	if (!record || now > record.resetAt) {
 		rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-		return true; // allowed
+		return true;
 	}
 
-	if (record.count >= RATE_LIMIT_MAX) return false; // blocked
+	if (record.count >= RATE_LIMIT_MAX) return false;
 
 	record.count++;
-	return true; // allowed
+	return true;
 }
 
 // Clean up stale rate limit records every 5 minutes
@@ -51,98 +52,77 @@ const SECURITY_HEADERS: Record<string, string> = {
 	'Referrer-Policy': 'strict-origin-when-cross-origin',
 	'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 	'X-XSS-Protection': '1; mode=block',
-	// HSTS — 1 year, include subdomains (enable in prod, not in dev)
 	...(process.env.NODE_ENV === 'production'
-		? {
-				'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
-			}
+		? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload' }
 		: {})
 };
 
 // Cache-Control presets
 function getCacheControl(pathname: string): string {
-	// API endpoints — no cache by default
 	if (pathname.startsWith('/api/')) return 'no-store, must-revalidate';
-
-	// Static assets (handled by SvelteKit's file serving with content hash)
 	if (pathname.startsWith('/_app/')) return 'public, max-age=31536000, immutable';
-
-	// SEO endpoints
 	if (pathname === '/sitemap.xml') return 'public, max-age=3600, s-maxage=3600';
 	if (pathname === '/robots.txt') return 'public, max-age=86400';
-
-	// Article/category pages — 5 minutes stale-while-revalidate
-	if (
-		pathname.startsWith('/category/') ||
-		pathname.match(/^\/[a-z-]+\/[a-z0-9-]+$/)
-	) {
+	if (pathname.startsWith('/category/') || pathname.match(/^\/[a-z-]+\/[a-z0-9-]+$/)) {
 		return 'public, max-age=300, stale-while-revalidate=60';
 	}
-
-	// Homepage — 3 minutes
 	if (pathname === '/') return 'public, max-age=180, stale-while-revalidate=60';
-
-	// Other pages — 10 minutes
 	return 'public, max-age=600, stale-while-revalidate=120';
 }
 
 // ============================================================
-// Main handle hook
+// Main handle hook — fully serverless, zero filesystem access
 // ============================================================
 export const handle: Handle = async ({ event, resolve }) => {
 	const { request, url } = event;
 	const start = Date.now();
 
-	// ── Let better-auth handle its own routes ─────────────────
-	if (url.pathname.startsWith('/api/auth')) {
-		return auth.handler(request);
-	}
-
-	// ── Resolve session from cookie ───────────────────────────
+	// ── Resolve session from JWT cookie (Web Crypto, no DB needed) ──
 	try {
-		const session = await auth.api.getSession({ headers: request.headers });
-		event.locals.user = session?.user ?? null;
+		const session = await getSession(event.cookies);
+		if (session) {
+			const stored = findById(session.userId);
+			if (stored) {
+				event.locals.user = {
+					id:           stored.id,
+					email:        stored.email,
+					name:         stored.name ?? stored.username,
+					emailVerified: false,
+					createdAt:    new Date(stored.createdAt),
+					updatedAt:    new Date(stored.createdAt)
+				};
+			} else {
+				event.locals.user = null;
+			}
+		} else {
+			event.locals.user = null;
+		}
 	} catch {
 		event.locals.user = null;
 	}
 
-	// Rate-limit search and API endpoints
+	// ── Rate-limit search and API endpoints ──────────────────────
 	if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/search')) {
 		const ip = getClientIp(request);
 		if (!checkRateLimit(ip)) {
 			return new Response('Too Many Requests', {
 				status: 429,
-				headers: {
-					'Retry-After': '60',
-					'Content-Type': 'text/plain',
-					...SECURITY_HEADERS
-				}
+				headers: { 'Retry-After': '60', 'Content-Type': 'text/plain', ...SECURITY_HEADERS }
 			});
 		}
 	}
 
-	// Resolve the response
 	const response = await resolve(event, {
-		// Enable HTML streaming for faster TTFB
 		filterSerializedResponseHeaders: (name) =>
 			name === 'content-type' || name === 'x-sveltekit-page'
 	});
 
-	// Clone headers (Response headers are immutable)
 	const headers = new Headers(response.headers);
-
-	// Apply security headers
 	for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
 		headers.set(key, value);
 	}
-
-	// Apply Cache-Control
-	const cacheControl = getCacheControl(url.pathname);
-	headers.set('Cache-Control', cacheControl);
-
-	// Server-Timing header for debugging
-	const elapsed = Date.now() - start;
-	headers.set('Server-Timing', `total;dur=${elapsed};desc="Server total"`);
+	headers.set('Cache-Control', getCacheControl(url.pathname));
+	headers.set('Server-Timing', `total;dur=${Date.now() - start};desc="Server total"`);
 
 	return new Response(response.body, {
 		status: response.status,
@@ -152,16 +132,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 // ============================================================
-// HandleFetch — controls outgoing fetch from server load fns
+// HandleFetch — sets User-Agent for WordPress API requests
 // ============================================================
 export const handleFetch: HandleFetch = async ({ request, fetch }) => {
-	// Set a User-Agent for the WordPress API so it doesn't block us
 	const modifiedRequest = new Request(request, {
 		headers: {
 			...Object.fromEntries(request.headers.entries()),
 			'User-Agent': 'GartenWoche-Clone/1.0 (https://gartenwoche.ch)'
 		}
 	});
-
 	return fetch(modifiedRequest);
 };

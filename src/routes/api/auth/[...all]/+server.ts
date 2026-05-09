@@ -1,11 +1,13 @@
 /**
- * better-auth API handler.
- * All auth requests (sign-in, sign-up, sign-out, session, etc.) go through here.
- * Route: /api/auth/[...all]
+ * better-auth catch-all — disabled until a cloud database is configured.
+ * Login/register are handled by /api/auth/login and /api/auth/register.
+ * Returns 503 gracefully instead of crashing the function.
  */
-
-import { auth } from '$lib/auth.js';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 
-export const GET: RequestHandler = ({ request }) => auth.handler(request);
-export const POST: RequestHandler = ({ request }) => auth.handler(request);
+export const GET: RequestHandler = () =>
+	json({ error: 'Auth provider not configured' }, { status: 503 });
+
+export const POST: RequestHandler = () =>
+	json({ error: 'Auth provider not configured' }, { status: 503 });

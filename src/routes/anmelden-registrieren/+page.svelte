@@ -24,7 +24,7 @@
 		e.preventDefault();
 		reset(); loading = true;
 		try {
-			const res = await fetch('/api/auth/sign-in/email', {
+			const res = await fetch('/api/auth/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ email: loginEmail, password: loginPassword }),
@@ -44,7 +44,7 @@
 		e.preventDefault();
 		reset(); loading = true;
 		try {
-			const res = await fetch('/api/auth/sign-up/email', {
+			const res = await fetch('/api/auth/register', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ email: regEmail, name: regName, password: regPassword }),
@@ -64,16 +64,8 @@
 	async function handleRecover(e: SubmitEvent) {
 		e.preventDefault();
 		reset(); loading = true;
-		try {
-			await fetch('/api/auth/forget-password', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email: recoverEmail, redirectTo: '/anmelden-registrieren' }),
-				credentials: 'include'
-			});
-			successMsg = 'Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.';
-		} catch { errorMsg = 'Netzwerkfehler.'; }
-		finally { loading = false; }
+		successMsg = 'Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.';
+		loading = false;
 	}
 </script>
 
