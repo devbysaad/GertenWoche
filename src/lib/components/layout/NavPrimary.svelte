@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 
 	interface NavChild { label: string; href: string; }
 	interface NavItem  { label: string; href: string; children?: NavChild[]; }
 
-	// Spec: exact order
 	const navItems: NavItem[] = [
 		{ label: 'Gartenpraxis', href: '/category/gartenpraxis/' },
 		{
@@ -32,111 +30,54 @@
 		{ label: 'Podcast Garten', href: '/podcast-garten/' },
 	];
 
-	// ── Nav dropdown state ──────────────────────────────────────
-	let openMenu   = $state<string | null>(null);
+	// ── Split State for independent dropdowns ───────────────────
+	let openMenuMain   = $state<string | null>(null);
+	let openMenuSticky = $state<string | null>(null);
+	
 	let mobileOpen = $state(false);
+	let scrollY    = $state(0);
+	
+	// Threshold for the sticky nav to pop out
+	let isVisible = $derived(scrollY > 150);
 
-	// ── Search popup state ──────────────────────────────────────
-	let searchOpen    = $state(false);
-	let searchQuery   = $state('');
-	let searchResults = $state<Array<{ title: string; href: string; category: string }>>([]);
-	let searchWrap: HTMLDivElement | undefined;
-	let searchInput: HTMLInputElement | undefined;
-
-	// Close on route change or Escape
+	// Close menus on Escape
 	$effect(() => {
 		function onKey(e: KeyboardEvent) {
 			if (e.key === 'Escape') {
-				openMenu   = null;
-				mobileOpen = false;
-				searchOpen = false;
+				openMenuMain   = null;
+				openMenuSticky = null;
+				mobileOpen     = false;
 			}
 		}
 		window.addEventListener('keydown', onKey);
 		return () => window.removeEventListener('keydown', onKey);
 	});
 
-	// Click outside search → close
-	$effect(() => {
-		if (!searchOpen) return;
-		function onOutside(e: MouseEvent) {
-			if (searchWrap && !searchWrap.contains(e.target as Node)) {
-				searchOpen  = false;
-				searchQuery = '';
-			}
-		}
-		document.addEventListener('mousedown', onOutside);
-		return () => document.removeEventListener('mousedown', onOutside);
-	});
-
-	// Focus input when popup opens
-	$effect(() => {
-		if (searchOpen && searchInput) {
-			setTimeout(() => searchInput?.focus(), 50);
-		}
-	});
-
+	// Close menus on route change
 	$effect(() => {
 		$page.url.pathname;
-		openMenu   = null;
-		mobileOpen = false;
-		searchOpen = false;
+		openMenuMain   = null;
+		openMenuSticky = null;
+		mobileOpen     = false;
 	});
 
 	function isActive(href: string) {
 		return $page.url.pathname === href || $page.url.pathname.startsWith(href.replace(/\/$/, '') + '/');
 	}
-
-	// Live search — debounced fetch from WP API
-	let debounce: ReturnType<typeof setTimeout>;
-	function onSearchInput() {
-		clearTimeout(debounce);
-		if (!searchQuery.trim()) { searchResults = []; return; }
-		debounce = setTimeout(async () => {
-			try {
-				const res = await fetch(
-					`https://gartenwoche.ch/wp-json/wp/v2/posts?search=${encodeURIComponent(searchQuery)}&per_page=5&_embed`,
-					{ signal: AbortSignal.timeout(4000) }
-				);
-				if (!res.ok) { searchResults = []; return; }
-				const posts = await res.json();
-				searchResults = posts.map((p: Record<string, unknown>) => ({
-					title:    (p.title as Record<string, string>)?.rendered?.replace(/<[^>]+>/g, '') ?? '',
-					href:     (p.link as string)?.replace('https://gartenwoche.ch', '') ?? '/',
-					category: ((p._embedded as Record<string, unknown>)?.['wp:term'] as unknown[])?.[0] as string ?? ''
-				}));
-			} catch { searchResults = []; }
-		}, 280);
-	}
-
-	function submitSearch() {
-		const q = searchQuery.trim();
-		if (q) goto(`/search?q=${encodeURIComponent(q)}`);
-		searchOpen  = false;
-		searchQuery = '';
-	}
-
-	function toggleSearch() {
-		searchOpen  = !searchOpen;
-		if (!searchOpen) { searchQuery = ''; searchResults = []; }
-	}
 </script>
 
-<!-- ──────────────────────────────────────────────────────────
-     NAV — white, 50px, sticky top:0, border-bottom #E0E0E0
-     ────────────────────────────────────────────────────────── -->
+<svelte:window bind:scrollY />
+
 <nav class="site-nav" aria-label="Hauptnavigation">
 	<div class="nav-inner">
-
-		<!-- Desktop nav links (left) -->
 		<ul class="nav-list" role="menubar">
 			{#each navItems as item}
 				<li
 					class="nav-item"
 					class:has-dropdown={!!item.children}
 					role="none"
-					onmouseenter={() => item.children && (openMenu = item.label)}
-					onmouseleave={() => (openMenu = null)}
+					onmouseenter={() => item.children && (openMenuMain = item.label)}
+					onmouseleave={() => (openMenuMain = null)}
 				>
 					<a
 						href={item.href}
@@ -144,7 +85,7 @@
 						class:active={isActive(item.href)}
 						role="menuitem"
 						aria-haspopup={item.children ? 'true' : undefined}
-						aria-expanded={item.children ? String(openMenu === item.label) : undefined}
+						aria-expanded={item.children ? String(openMenuMain === item.label) : undefined}
 					>
 						{item.label}
 						{#if item.children}
@@ -155,7 +96,7 @@
 					{#if item.children}
 						<div
 							class="dropdown"
-							class:open={openMenu === item.label}
+							class:open={openMenuMain === item.label}
 							role="menu"
 						>
 							{#each item.children as child}
@@ -172,62 +113,6 @@
 			{/each}
 		</ul>
 
-		<!-- ── Search icon + inline popup ───────────────────────── -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="search-wrap" bind:this={searchWrap}>
-			<button
-				class="search-btn"
-				type="button"
-				onclick={toggleSearch}
-				aria-label={searchOpen ? 'Suche schließen' : 'Suche öffnen'}
-				aria-expanded={searchOpen}
-			>
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-					<circle cx="11" cy="11" r="8"/>
-					<line x1="21" y1="21" x2="16.65" y2="16.65"/>
-				</svg>
-			</button>
-
-			{#if searchOpen}
-				<!-- Dropdown popup — 320px, anchored to search button -->
-				<div class="search-popup" role="dialog" aria-label="Suche">
-					<!-- Input row -->
-					<form class="search-row" onsubmit={(e) => { e.preventDefault(); submitSearch(); }}>
-						<input
-							bind:this={searchInput}
-							bind:value={searchQuery}
-							oninput={onSearchInput}
-							type="search"
-							class="search-input"
-							placeholder="type here..."
-							autocomplete="off"
-						/>
-						<button type="submit" class="search-go">Suche →</button>
-					</form>
-
-					<!-- Live results (up to 5) -->
-					{#if searchResults.length > 0}
-						<ul class="search-results">
-							{#each searchResults as result}
-								<li>
-									<a
-										href={result.href}
-										class="search-result-link"
-										onclick={() => { searchOpen = false; searchQuery = ''; }}
-									>
-										<span class="result-title">{result.title}</span>
-									</a>
-								</li>
-							{/each}
-						</ul>
-					{:else if searchQuery.trim().length > 1}
-						<p class="search-empty">Keine Ergebnisse gefunden.</p>
-					{/if}
-				</div>
-			{/if}
-		</div>
-
-		<!-- Hamburger (mobile, <1024px) -->
 		<button
 			class="hamburger"
 			class:open={mobileOpen}
@@ -238,14 +123,68 @@
 		>
 			<span></span><span></span><span></span>
 		</button>
-
 	</div>
 </nav>
 
-<!-- Mobile slide-in panel (from LEFT per spec) -->
+<div class="sticky-nav-bar" class:visible={isVisible} aria-hidden={!isVisible}>
+	<div class="nav-inner">
+		
+		<a href="/" class="logo-link" tabindex={isVisible ? 0 : -1} aria-label="Gartenwoche – Startseite">
+			<img
+				src="/Logo_Gartenwoche-1.png"
+				alt="Gartenwoche"
+				class="logo-img"
+			/>
+		</a>
+
+		<ul class="nav-list" role="menubar">
+			{#each navItems as item}
+				<li
+					class="nav-item"
+					class:has-dropdown={!!item.children}
+					role="none"
+					onmouseenter={() => item.children && (openMenuSticky = item.label)}
+					onmouseleave={() => (openMenuSticky = null)}
+				>
+					<a
+						href={item.href}
+						class="nav-link"
+						class:active={isActive(item.href)}
+						role="menuitem"
+						tabindex={isVisible ? 0 : -1}
+						aria-haspopup={item.children ? 'true' : undefined}
+						aria-expanded={item.children ? String(openMenuSticky === item.label) : undefined}
+					>
+						{item.label}
+						{#if item.children}
+							<span class="dropdown-arrow" aria-hidden="true">▾</span>
+						{/if}
+					</a>
+
+					{#if item.children}
+						<div
+							class="dropdown"
+							class:open={openMenuSticky === item.label}
+							role="menu"
+						>
+							{#each item.children as child}
+								<a
+									href={child.href}
+									class="dropdown-item"
+									class:active={isActive(child.href)}
+									role="menuitem"
+									tabindex={isVisible && openMenuSticky === item.label ? 0 : -1}
+								>{child.label}</a>
+							{/each}
+						</div>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	</div>
+</div>
+
 {#if mobileOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="mobile-overlay" onclick={() => (mobileOpen = false)}></div>
 	<div class="mobile-panel" role="dialog" aria-label="Mobilnavigation" aria-modal="true">
 		<div class="mobile-top">
@@ -270,36 +209,16 @@
 {/if}
 
 <style>
-	/* ── Nav shell ──────────────────────────────────────────────── */
-	.site-nav {
-		background: #ffffff;
-		border-bottom: 1px solid #E0E0E0;
-		position: sticky;
-		top: 0;
-		z-index: 100;
-		width: 100%;
-	}
-
-	.nav-inner {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 0 20px;
-		height: 50px;
-	}
-
-	/* ── Nav links ──────────────────────────────────────────────── */
+	/* =========================================================================
+	   GLOBAL & SHARED NAV STYLES
+	   ========================================================================= */
 	.nav-list {
 		display: flex;
 		align-items: center;
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		gap: 28px;
 		height: 100%;
-		flex: 1;
 	}
 
 	.nav-item {
@@ -312,17 +231,16 @@
 	.nav-link {
 		display: flex;
 		align-items: center;
-		gap: 2px;
+		gap: 4px;
 		height: 100%;
-		font-family: 'Roboto', sans-serif;
-		font-size: 14px;
-		font-weight: 500;
+		font-family: 'Roboto', 'Open Sans', sans-serif;
 		color: #222222;
 		text-decoration: none;
 		white-space: nowrap;
 		border-bottom: 3px solid transparent;
 		transition: color 0.15s ease, border-color 0.15s ease;
 	}
+	
 	.nav-link:hover,
 	.nav-link.active {
 		color: #2D1B69;
@@ -336,11 +254,9 @@
 		color: inherit;
 	}
 
-	/* ── Dropdown panel ─────────────────────────────────────────── */
 	.dropdown {
 		position: absolute;
 		top: 100%;
-		left: 0;
 		background: #ffffff;
 		border: 1px solid #E0E0E0;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
@@ -349,13 +265,12 @@
 		min-width: 210px;
 		z-index: 200;
 		opacity: 0;
-		transform: translateY(-4px);
 		pointer-events: none;
 		transition: opacity 0.16s ease, transform 0.16s ease;
 	}
+
 	.dropdown.open {
 		opacity: 1;
-		transform: translateY(0);
 		pointer-events: auto;
 	}
 
@@ -364,123 +279,161 @@
 		padding: 8px 20px;
 		font-family: 'Roboto', sans-serif;
 		font-size: 13px;
-		font-weight: 400;
 		color: #222222;
 		text-decoration: none;
 		transition: background 0.12s ease, color 0.12s ease;
 	}
+	
 	.dropdown-item:hover,
 	.dropdown-item.active {
 		background: #F7F7F7;
 		color: #2D1B69;
 	}
 
-	/* ── Search: icon button + popup ───────────────────────────── */
-	.search-wrap {
+	/* =========================================================================
+	   1. MAIN STATIC NAV SPECIFICS
+	   ========================================================================= */
+	.site-nav {
+		border-bottom: 6px;
+		background: #ffffff;
+		z-index: 100;
+		width: 100%;
 		position: relative;
-		flex-shrink: 0;
 	}
 
-	.search-btn {
+	.site-nav::after {
+		content: '';
+		display: block;
+		height: 1px;
+		background: #E0E0E0;
+		margin: 0 auto;
+		width: 100%;
+		max-width: 1200px;
+	}
+
+	.site-nav .nav-inner {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: none;
-		border: none;
-		color: #333333;
-		cursor: pointer;
-		padding: 6px;
-		border-radius: 4px;
-		transition: color 0.15s ease;
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 0 20px;
+		height: 50px;
 	}
-	.search-btn:hover { color: #2D1B69; }
 
-	/* Popup: 320px max, white, anchored top-right of nav */
-	.search-popup {
-		position: absolute;
-		top: calc(100% + 8px);
-		right: 0;
-		width: 320px;
-		max-width: calc(100vw - 40px);
+	.site-nav .nav-list {
+		justify-content: center;
+		gap: 32px;
+	}
+
+	.site-nav .nav-link {
+		font-size: 14px;
+		font-weight: 500;
+	}
+
+	.site-nav .dropdown {
+		left: 50%;
+		transform: translateX(-50%) translateY(-4px);
+	}
+
+	.site-nav .dropdown.open {
+		transform: translateX(-50%) translateY(0);
+	}
+
+	.site-nav .dropdown-item {
+		text-align: center;
+		font-weight: 400;
+	}
+
+	/* =========================================================================
+	   2. STICKY POP-OUT NAV SPECIFICS
+	   ========================================================================= */
+	.sticky-nav-bar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
 		background: #ffffff;
-		border: 1px solid #E0E0E0;
-		border-radius: 4px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		z-index: 300;
-		overflow: hidden;
+		border-bottom: 1px solid #E0E0E0;
+		z-index: 1000;
+		transform: translateY(-100%);
+		transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+		pointer-events: none;
 	}
 
-	/* Input row */
-	.search-row {
+	.sticky-nav-bar.visible {
+		transform: translateY(0);
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+		pointer-events: auto;
+	}
+
+	.sticky-nav-bar .nav-inner {
 		display: flex;
 		align-items: center;
-		border-bottom: 1px solid #f0f0f0;
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 0 20px;
+		height: 64px;
+		gap: 32px;
 	}
 
-	.search-input {
-		flex: 1;
-		padding: 10px 12px;
-		border: none;
-		outline: none;
-		font-family: 'Open Sans', sans-serif;
-		font-size: 14px;
-		color: #222;
-		background: transparent;
-		min-width: 0;
-	}
-	.search-input::placeholder { color: #aaa; }
-
-	.search-go {
+	.sticky-nav-bar .logo-link {
+		display: flex;
+		align-items: center;
 		flex-shrink: 0;
-		padding: 10px 12px;
-		background: none;
-		border: none;
-		border-left: 1px solid #f0f0f0;
-		font-family: 'Roboto', sans-serif;
-		font-size: 13px;
+		line-height: 0;
+		transition: opacity 0.2s ease;
+	}
+	.sticky-nav-bar .logo-link:hover { opacity: 0.85; }
+	.sticky-nav-bar .logo-img {
+		height: 34px;
+		width: auto;
+		object-fit: contain;
+	}
+
+	.sticky-nav-bar .nav-list {
+		justify-content: flex-start;
+		gap: 28px;
+	}
+
+	.sticky-nav-bar .nav-link {
+		font-size: 14px;
 		font-weight: 700;
-		color: #2D1B69;
-		cursor: pointer;
-		white-space: nowrap;
-		transition: background 0.15s;
-	}
-	.search-go:hover { background: #f7f7f7; }
-
-	/* Live results list */
-	.search-results {
-		list-style: none;
-		margin: 0;
-		padding: 4px 0;
+		text-transform: uppercase;
+		letter-spacing: 0.3px;
+		color: #111111;
 	}
 
-	.search-result-link {
-		display: block;
-		padding: 8px 14px;
-		text-decoration: none;
-		transition: background 0.12s;
-	}
-	.search-result-link:hover { background: #f7f7f7; }
-
-	.result-title {
-		font-family: 'Roboto', sans-serif;
-		font-size: 13px;
-		font-weight: 600;
-		color: #222;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
+	.sticky-nav-bar .dropdown-arrow {
+		transform: translateY(1px);
 	}
 
-	.search-empty {
-		padding: 10px 14px;
-		font-family: 'Open Sans', sans-serif;
-		font-size: 12px;
-		color: #999;
-		margin: 0;
+	.sticky-nav-bar .dropdown {
+		left: 0;
+		border-top: none;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+		transform: translateY(-4px);
 	}
 
-	/* ── Hamburger ──────────────────────────────────────────────── */
+	.sticky-nav-bar .dropdown.open {
+		transform: translateY(0);
+	}
+
+	.sticky-nav-bar .dropdown-item {
+		text-align: left;
+		padding: 10px 20px;
+		font-size: 14px;
+		font-weight: 500;
+		color: #333333;
+	}
+	.sticky-nav-bar .dropdown-item:hover,
+	.sticky-nav-bar .dropdown-item.active {
+		background: #F8F8F8;
+	}
+
+	/* =========================================================================
+	   3. MOBILE PANEL & HAMBURGER STYLES
+	   ========================================================================= */
 	.hamburger {
 		display: none;
 		flex-direction: column;
@@ -507,7 +460,6 @@
 	.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
 	.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-	/* ── Mobile panel ───────────────────────────────────────────── */
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;
@@ -529,7 +481,7 @@
 		animation: slideIn 0.26s ease;
 		box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 	}
-	@keyframes fadeIn  { from { opacity: 0; }               to { opacity: 1; }           }
+	@keyframes fadeIn  { from { opacity: 0; }               to { opacity: 1; }            }
 	@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 
 	.mobile-top {
@@ -580,10 +532,22 @@
 		padding-left: 32px;
 	}
 
-	/* ── Responsive ─────────────────────────────────────────────── */
+	/* =========================================================================
+	   4. RESPONSIVE BREAKPOINTS
+	   ========================================================================= */
 	@media (max-width: 1023px) {
-		.nav-list   { display: none; }
-		.search-btn { display: none; }
-		.hamburger  { display: flex; }
+		/* Hide Desktop links on both Navs */
+		.site-nav .nav-list,
+		.sticky-nav-bar {
+			display: none;
+		}
+		
+		/* Show Hamburger on Main Nav */
+		.site-nav .nav-inner { 
+			justify-content: flex-end; 
+		}
+		.hamburger { 
+			display: flex; 
+		}
 	}
 </style>
