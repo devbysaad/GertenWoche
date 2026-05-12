@@ -1,7 +1,12 @@
-export interface User {
-	id: string;
+export interface WPUser {
+	id: number;
 	username: string;
+	name: string;
 	email: string;
-	tier: 'free' | 'pro';
-	createdAt: Date;
+	avatar: string;
+	roles: string[];
+	isPro: boolean;
+	token: string;
 }
+
+export type User = WPUser;

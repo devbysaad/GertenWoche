@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ArticlePreview } from '$lib/types/index.js';
-	import ArticleCard from '$lib/components/articles/ArticleCard.svelte';
+	import ArticleCard from '../articles/ArticleCard.svelte';
 
 	interface Props {
 		articles: ArticlePreview[];
@@ -45,4 +45,4 @@
 			grid-template-columns: 1fr;
 		}
 	}
-</style>
+  </style>

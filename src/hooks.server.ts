@@ -1,6 +1,5 @@
 import type { Handle, HandleFetch } from '@sveltejs/kit';
-import { getSession } from '$lib/auth/session.js';
-import { findById } from '$lib/auth/users.js';
+import { validateToken } from '$lib/server/auth';
 
 // ============================================================
 // Simple in-memory rate limiter for search / API endpoints
@@ -77,26 +76,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const { request, url } = event;
 	const start = Date.now();
 
-	// ── Resolve session from JWT cookie (Web Crypto, no DB needed) ──
+	// ── Resolve session from WordPress JWT cookie ──
 	try {
-		const session = await getSession(event.cookies);
-		if (session) {
-			const stored = findById(session.userId);
-			if (stored) {
-				event.locals.user = {
-					id:           stored.id,
-					email:        stored.email,
-					name:         stored.name ?? stored.username,
-					emailVerified: false,
-					createdAt:    new Date(stored.createdAt),
-					updatedAt:    new Date(stored.createdAt)
-				};
-			} else {
-				event.locals.user = null;
-			}
-		} else {
-			event.locals.user = null;
-		}
+		const token = event.cookies.get('wp_token');
+		event.locals.user = token ? await validateToken(token) : null;
 	} catch {
 		event.locals.user = null;
 	}

@@ -70,8 +70,6 @@
 {/if}
 
 <style>
-	/* All classes are prefixed gw- to avoid Tailwind conflicts */
-
 	.gw-pagination {
 		margin-top: 24px;
 		display: flex;
@@ -86,9 +84,7 @@
 		gap: 12px;
 	}
 
-	/* ── Arrow links: plain text, #2D1B69, no box ── */
 	.gw-arrow {
-		/* Hard reset all box-model that Tailwind/browser might add */
 		display: inline !important;
 		background: none !important;
 		border: none !important;
@@ -97,7 +93,6 @@
 		padding: 0 !important;
 		margin: 0 !important;
 		outline: none;
-		/* Typography */
 		font-family: 'Roboto', sans-serif !important;
 		font-size: 13px !important;
 		font-weight: 400 !important;
@@ -118,9 +113,7 @@
 		gap: 12px;
 	}
 
-	/* ── Page number links: plain text, no box ── */
 	.gw-num {
-		/* Hard reset */
 		display: inline !important;
 		background: none !important;
 		border: none !important;
@@ -128,7 +121,6 @@
 		box-shadow: none !important;
 		padding: 0 !important;
 		margin: 0 !important;
-		/* Typography */
 		font-family: 'Roboto', sans-serif !important;
 		font-size: 13px !important;
 		font-weight: 400 !important;
@@ -142,7 +134,6 @@
 		color: #2D1B69 !important;
 	}
 
-	/* Current page: purple + bold, not clickable */
 	.gw-num.gw-current {
 		color: #2D1B69 !important;
 		font-weight: 700 !important;
@@ -157,7 +148,6 @@
 		line-height: 1;
 	}
 
-	/* "Seite X von Y": Open Sans 12px, #999, centered */
 	.gw-page-info {
 		font-family: 'Open Sans', sans-serif !important;
 		font-size: 12px !important;

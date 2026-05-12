@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ArticlePreview } from '$lib/types/index.js';
-	import ArticleCardSmall from '$lib/components/articles/ArticleCardSmall.svelte';
+	import type { ArticlePreview } from "$lib/types/index.js";
+	import ArticleCardSmall from "../articles/ArticleCardSmall.svelte";
 
 	interface Props {
 		gartenpraxis: ArticlePreview[];
@@ -10,9 +10,17 @@
 	let { gartenpraxis, wissen, europa }: Props = $props();
 
 	const columns = $derived([
-		{ title: 'Gartenpraxis', href: '/category/gartenpraxis', articles: gartenpraxis },
-		{ title: 'Wissen', href: '/category/wissen', articles: wissen },
-		{ title: 'Europa', href: '/category/aktuelles/europa', articles: europa }
+		{
+			title: "Gartenpraxis",
+			href: "/category/gartenpraxis",
+			articles: gartenpraxis,
+		},
+		{ title: "Wissen", href: "/category/wissen", articles: wissen },
+		{
+			title: "Europa",
+			href: "/category/aktuelles/europa",
+			articles: europa,
+		},
 	]);
 </script>
 

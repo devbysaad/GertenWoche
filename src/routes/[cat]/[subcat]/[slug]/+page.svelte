@@ -7,12 +7,15 @@
 	import ArticleCard from '$lib/components/articles/ArticleCard.svelte';
 	import ProductSidebar from '$lib/components/blocks/ProductSidebar.svelte';
 	import EventsWidget from '$lib/components/blocks/EventsWidget.svelte';
-	import { authStore } from '$lib/stores/auth.store.js';
+	import AdBanner from '$lib/components/ui/AdBanner.svelte';
+	import { modalStore } from '$lib/stores/modal.store.js';
+	import { getFirstParagraphs } from '$lib/utils/article.js';
 
 	let { data } = $props();
 	const { article, related } = $derived(data);
+	const user = $derived(data.user);
 
-	const isProGated = $derived(article.isPro && $authStore.user?.tier !== 'pro');
+	const isLocked = $derived(article.isPro && !user?.isPro);
 
 	const crumbs = $derived([
 		{ label: article.category.name, href: `/category/${article.category.slug}` },
@@ -23,6 +26,10 @@
 	]);
 
 	const canonicalUrl = $derived(`https://gartenwoche.ch/${article.urlPath}`);
+
+	function openLogin() {
+		modalStore.openLogin();
+	}
 </script>
 
 <svelte:head>
@@ -61,22 +68,26 @@
 					</div>
 				{/if}
 
-				{#if isProGated}
-					<div class="pro-gate">
-						<div class="pro-gate-preview">
-							<ArticleBody content={article.content.slice(0, 800) + '...'} />
-						</div>
-						<div class="pro-gate-overlay">
-							<div class="pro-gate-card">
-								<ProBadge />
-								<h2>Dieser Artikel ist für PRO-Mitglieder</h2>
-								<p>Lesen Sie diesen und alle anderen Artikel mit einem PRO-Abonnement.</p>
-								<a href="/abonnement" class="pro-gate-btn">Jetzt PRO werden</a>
+				{#if isLocked}
+					<div class="content-preview">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+						<div class="prose article-body-preview">{@html getFirstParagraphs(article.content, 3)}</div>
+					</div>
+					<div class="paywall">
+						<div class="paywall-inner">
+							<span class="lock-icon">🔒</span>
+							<h3>Dieser Artikel ist nur für PRO-Mitglieder</h3>
+							<p>Melden Sie sich an oder werden Sie PRO-Mitglied für vollen Zugang.</p>
+							<div class="paywall-btns">
+								{#if !user}
+									<button class="btn-login" onclick={openLogin}>Anmelden</button>
+								{/if}
+								<a href="/abonnement" class="btn-pro">Jetzt PRO werden</a>
 							</div>
 						</div>
 					</div>
 				{:else}
-					<ArticleBody content={article.content} />
+					<ArticleBody content={article.content} showMidAd={true} />
 				{/if}
 
 				{#if article.tags?.length}
@@ -103,6 +114,7 @@
 			<aside class="article-sidebar">
 				<ProductSidebar articles={related} />
 				<EventsWidget events={[]} />
+				<AdBanner size="300x250" mode="awin" label={true} />
 			</aside>
 		</div>
 	</div>
@@ -118,12 +130,15 @@
 	.article-byline { padding-bottom: 16px; border-bottom: 1px solid var(--color-border); }
 	.article-thumb { margin-bottom: 24px; border-radius: var(--radius-sm); overflow: hidden; }
 	.article-thumb img { width: 100%; height: auto; display: block; }
-	.pro-gate { position: relative; }
-	.pro-gate-preview { max-height: 200px; overflow: hidden; mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
-	.pro-gate-overlay { display: flex; justify-content: center; padding: 32px 0; }
-	.pro-gate-card { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-lg); padding: 28px 32px; text-align: center; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-	.pro-gate-btn { display: inline-block; background: var(--color-primary); color: #fff; font-weight: 700; padding: 10px 24px; border-radius: var(--radius-sm); }
-	.pro-gate-btn:hover { background: var(--color-primary-hover); color: #fff; }
+	.content-preview { position: relative; }
+	.paywall { position: relative; margin-top: -80px; padding-top: 80px; background: linear-gradient(transparent, white 60%); text-align: center; }
+	.paywall-inner { background: white; border: 1px solid #E0E0E0; border-radius: 8px; padding: 32px 24px; max-width: 480px; margin: 0 auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+	.lock-icon { font-size: 32px; display: block; margin-bottom: 12px; }
+	.paywall-inner h3 { font-family: 'Roboto', sans-serif; font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+	.paywall-inner p { font-family: 'Open Sans', sans-serif; font-size: 14px; color: #555; margin-bottom: 20px; }
+	.paywall-btns { display: flex; gap: 12px; justify-content: center; }
+	.btn-login { padding: 10px 20px; border: 2px solid #2D1B69; background: white; color: #2D1B69; border-radius: 4px; font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; }
+	.btn-pro { padding: 10px 20px; background: #2D1B69; color: white; border-radius: 4px; font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 14px; text-decoration: none; }
 	.article-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--color-border); }
 	.tags-label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted); }
 	.article-tag { font-size: 12px; color: var(--color-primary); background: var(--color-tag-bg); border: 1px solid var(--color-border); padding: 4px 10px; border-radius: 20px; }

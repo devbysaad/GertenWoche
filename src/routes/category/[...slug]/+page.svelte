@@ -3,6 +3,7 @@
 	import MagazineGrid from '$lib/components/blocks/MagazineGrid.svelte';
 	import WeitereArtikelSidebar from '$lib/components/blocks/WeitereArtikelSidebar.svelte';
 	import Pagination from '$lib/components/ui/Pagination.svelte';
+	import AdBanner from '$lib/components/ui/AdBanner.svelte';
 
 	let { data } = $props();
 	const { category, articles, weitereArtikel, subCategories, pagination } = $derived(data);
@@ -56,6 +57,7 @@
 			<!-- SIDEBAR: Weitere Artikel -->
 			<div class="category-sidebar">
 				<WeitereArtikelSidebar articles={weitereArtikel ?? []} />
+				<AdBanner size="300x250" mode="awin" label={true} />
 			</div>
 
 		</div>

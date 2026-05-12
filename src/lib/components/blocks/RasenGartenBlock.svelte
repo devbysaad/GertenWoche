@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ArticlePreview } from '$lib/types/index.js';
-	import ArticleCardLarge from '$lib/components/articles/ArticleCardLarge.svelte';
-	import ArticleCardSmall from '$lib/components/articles/ArticleCardSmall.svelte';
+	import ArticleCardLarge from '../articles/ArticleCardLarge.svelte';
+	import ArticleCardSmall from '../articles/ArticleCardSmall.svelte';
 
 	interface Props {
 		main: ArticlePreview;

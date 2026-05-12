@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { formatGermanFull } from '$lib/utils/date.js';
 	import { modalStore } from '$lib/stores/modal.store.js';
+	import Logo from './Logo.svelte';
+	import SocialIcons from './SocialIcons.svelte';
 
 	interface Props {
 		weather: { temp: number | null; city: string };
@@ -104,7 +106,6 @@
 
 		<!-- ── LEFT: Weather widget ──────────────────────────── -->
 		<div class="thermometer">
-			<!-- Thermometer SVG per spec -->
 			<svg class="thermo-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
 				<path d="M15 13V5a3 3 0 0 0-6 0v8a5 5 0 1 0 6 0zm-3 7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
 			</svg>
@@ -119,46 +120,10 @@
 
 		<!-- Social icons: Facebook, Instagram, X -->
 		<div class="social-icons">
-			<a
-				href="https://www.facebook.com/gartenwoche"
-				target="_blank"
-				rel="noopener noreferrer"
-				class="social-link"
-				aria-label="Facebook"
-			>
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-					<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-				</svg>
-			</a>
-			<a
-				href="https://www.instagram.com/gartenwoche/"
-				target="_blank"
-				rel="noopener noreferrer"
-				class="social-link"
-				aria-label="Instagram"
-			>
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-					<rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-					<circle cx="12" cy="12" r="4"/>
-					<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
-				</svg>
-			</a>
-			<a
-				href="https://x.com/PeterRedaktion"
-				target="_blank"
-				rel="noopener noreferrer"
-				class="social-link"
-				aria-label="X (Twitter)"
-			>
-				<!-- X logo mark -->
-				<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-					<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-				</svg>
-			</a>
+			<SocialIcons size={18} />
 		</div>
 
 		<!-- Mein Konto with hover dropdown -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="mein-konto-wrap"
 			onmouseenter={openMenu}
@@ -173,7 +138,6 @@
 			</button>
 
 			{#if menuOpen}
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="konto-dropdown"
 					onmouseenter={openMenu}
@@ -289,7 +253,6 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		/* Removed flex: 1; so it doesn't push other items to the right */
 		font-family: 'Roboto', sans-serif;
 		font-size: 13px;
 		color: #555555;
@@ -303,17 +266,13 @@
 	}
 
 	.weather-temp {
-		/* spec: space between icon and temp = 4px (provided by parent gap) */
 		color: #555555;
 	}
 
 	.weather-city {
-		/* spec: space between temp and city = 8px */
-		margin-left: 4px; /* gap is already 4px so this adds up to 8px total */
+		margin-left: 4px;
 		color: #555555;
 	}
-
-	/* ── date ────────────────────────────────────── */
 
 	.logo-link {
 		display: block;
@@ -340,24 +299,10 @@
 	}
 
 	/* ──: Social  ─────────────────────────────── */
-
 	.social-icons {
 		display: flex;
 		align-items: center;
 		gap: 24px;
-	}
-
-	.social-link {
-		display: flex;
-		align-items: center;
-		color: #333333;
-		text-decoration: none;
-		transition: color 0.15s ease;
-		line-height: 0;
-	}
-
-	.social-link:hover {
-		color: #2D1B69;
 	}
 
 	/* Mein Konto button + dropdown */
@@ -421,7 +366,6 @@
 	/* ── Header Lower Layout ────────────────────────────────────── */
 	.header-lower {
 		display: grid;
-		/* 1fr auto 1fr guarantees the center element is perfectly centered */
 		grid-template-columns: 1fr auto 1fr; 
 		align-items: center;
 		max-width: 1200px;
@@ -447,7 +391,7 @@
 
 	.logo-img {
 		display: block;
-		height: 60px; /* Adjust height based on your visual preference */
+		height: 60px;
 		width: auto;
 		object-fit: contain;
 	}
@@ -457,7 +401,7 @@
 		justify-content: flex-end;
 	}
 
-	/* ── Search UI (Extracted from Nav) ─────────────────────────── */
+	/* ── Search UI ─────────────────────────── */
 	.search-wrap {
 		position: relative;
 		flex-shrink: 0;
@@ -469,7 +413,7 @@
 		justify-content: center;
 		background: none;
 		border: none;
-		color: #111111; /* Darker black for the icon */
+		color: #111111;
 		cursor: pointer;
 		padding: 6px;
 		border-radius: 4px;
@@ -562,7 +506,7 @@
 	/* ── Mobile adjustments ─────────────────────────────────────── */
 	@media (max-width: 767px) {
 		.header-lower {
-			grid-template-columns: auto 1fr; /* Stack differently if space is tight */
+			grid-template-columns: auto 1fr;
 			gap: 16px;
 			padding: 16px;
 		}
@@ -574,7 +518,6 @@
 		}
 	}
 
-	/* ── Mobile ─────────────────────────────────────────────────── */
 	@media (max-width: 767px) {
 		.header-upper {
 			flex-wrap: wrap;
@@ -582,7 +525,6 @@
 			padding: 12px 16px;
 			gap: 8px;
 		}
-		/* Hide social icons on mobile, keep Mein Konto */
 		.social-icons { display: none; }
 	}
 </style>

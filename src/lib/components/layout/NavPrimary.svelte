@@ -30,14 +30,10 @@
 		{ label: 'Podcast Garten', href: '/podcast-garten/' },
 	];
 
-	// ── Split State for independent dropdowns ───────────────────
 	let openMenuMain   = $state<string | null>(null);
 	let openMenuSticky = $state<string | null>(null);
-	
 	let mobileOpen = $state(false);
 	let scrollY    = $state(0);
-	
-	// Threshold for the sticky nav to pop out
 	let isVisible = $derived(scrollY > 150);
 
 	// Close menus on Escape
@@ -128,7 +124,7 @@
 
 <div class="sticky-nav-bar" class:visible={isVisible} aria-hidden={!isVisible}>
 	<div class="nav-inner">
-		
+
 		<a href="/" class="logo-link" tabindex={isVisible ? 0 : -1} aria-label="Gartenwoche – Startseite">
 			<img
 				src="/Logo_Gartenwoche-1.png"
@@ -185,7 +181,7 @@
 </div>
 
 {#if mobileOpen}
-	<div class="mobile-overlay" onclick={() => (mobileOpen = false)}></div>
+	<div class="mobile-overlay" onclick={() => (mobileOpen = false)} onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { mobileOpen = false; e.preventDefault(); } }} role="button" tabindex="0" aria-label="Mobilnavigation schließen"></div>
 	<div class="mobile-panel" role="dialog" aria-label="Mobilnavigation" aria-modal="true">
 		<div class="mobile-top">
 			<span class="mobile-brand">Gartenwoche</span>
@@ -240,7 +236,7 @@
 		border-bottom: 3px solid transparent;
 		transition: color 0.15s ease, border-color 0.15s ease;
 	}
-	
+
 	.nav-link:hover,
 	.nav-link.active {
 		color: #2D1B69;
@@ -283,7 +279,7 @@
 		text-decoration: none;
 		transition: background 0.12s ease, color 0.12s ease;
 	}
-	
+
 	.dropdown-item:hover,
 	.dropdown-item.active {
 		background: #F7F7F7;
@@ -541,7 +537,7 @@
 		.sticky-nav-bar {
 			display: none;
 		}
-		
+
 		/* Show Hamburger on Main Nav */
 		.site-nav .nav-inner { 
 			justify-content: flex-end; 

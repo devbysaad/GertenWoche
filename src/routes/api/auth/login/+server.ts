@@ -1,48 +1,28 @@
-import { json, error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types.js';
-import bcrypt from 'bcryptjs';
-import { findByEmail } from '$lib/auth/users.js';
-import { createSession } from '$lib/auth/session.js';
+import { json } from '@sveltejs/kit';
+import { loginWithWordPress } from '$lib/server/auth';
+import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
-	let body: { email?: string; password?: string };
+	const { username, password } = await request.json();
+
+	if (!username || !password) {
+		return json({ error: 'Benutzername und Passwort sind erforderlich' }, { status: 400 });
+	}
 
 	try {
-		body = await request.json();
-	} catch {
-		throw error(400, 'Invalid JSON body');
+		const user = await loginWithWordPress(username, password);
+
+		cookies.set('wp_token', user.token, {
+			httpOnly: true,
+			secure: true,
+			sameSite: 'strict',
+			maxAge: 60 * 60 * 24 * 7,
+			path: '/'
+		});
+
+		const { token, ...safeUser } = user;
+		return json({ success: true, user: safeUser });
+	} catch (err: any) {
+		return json({ error: err.message || 'Ungültige Zugangsdaten' }, { status: 401 });
 	}
-
-	const { email, password } = body;
-
-	if (!email || !password) {
-		throw error(400, 'E-Mail und Passwort sind erforderlich');
-	}
-
-	// Look up user
-	const user = findByEmail(email);
-	if (!user) {
-		// Constant-time: still hash to prevent timing attacks
-		await bcrypt.compare(password, '$2b$12$invalidhashtopreventtiming00000');
-		throw error(401, 'Ungültige E-Mail oder Passwort');
-	}
-
-	// Verify password
-	const valid = await bcrypt.compare(password, user.passwordHash);
-	if (!valid) {
-		throw error(401, 'Ungültige E-Mail oder Passwort');
-	}
-
-	// Set session cookie
-	await createSession(cookies, user.id, user.tier);
-
-	return json({
-		user: {
-			id: user.id,
-			username: user.username,
-			email: user.email,
-			tier: user.tier,
-			createdAt: new Date(user.createdAt)
-		}
-	});
 };

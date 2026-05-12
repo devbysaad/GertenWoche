@@ -1,207 +1,101 @@
 <script lang="ts">
+	import { modalStore } from '$lib/stores/modal.store.js';
+
 	let { data } = $props();
-	const user = $derived(data.user);
+	const user = data.user;
 
-	let logoutLoading = $state(false);
-
-	async function handleLogout() {
-		logoutLoading = true;
-		try {
-			await fetch('/api/auth/sign-out', {
-				method: 'POST',
-				credentials: 'include'
-			});
-			window.location.href = '/';
-		} catch {
-			logoutLoading = false;
-		}
+	async function logout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		window.location.href = '/';
 	}
 
-	function formatDate(d: Date | string) {
-		return new Date(d).toLocaleDateString('de-CH', {
-			day: '2-digit', month: '2-digit', year: 'numeric'
-		});
+	function openLogin(event: MouseEvent) {
+		event.preventDefault();
+		modalStore.openLogin();
 	}
 </script>
 
 <svelte:head>
 	<title>Mein Konto | Gartenwoche</title>
-	<meta name="description" content="Verwalten Sie Ihr Gartenwoche-Konto." />
-	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="account-page">
-	<div class="container container-narrow">
-
-		<nav class="breadcrumb" aria-label="Breadcrumb">
-			<a href="/">Start</a>
-			<span class="sep">›</span>
-			<span>Mein Konto</span>
-		</nav>
-
-		<h1 class="page-title">Mein Konto</h1>
-
-		<!-- Profile card -->
-		<div class="account-card">
-			<div class="account-avatar" aria-hidden="true">
-				{user.name?.charAt(0)?.toUpperCase() ?? '?'}
-			</div>
-			<div class="account-info">
-				<p class="account-name">{user.name}</p>
-				<p class="account-email">{user.email}</p>
-				<p class="account-since">Mitglied seit {formatDate(user.createdAt)}</p>
+<div class="account-page container">
+	{#if !user}
+		<p>Sie sind nicht angemeldet. <a href="/" onclick={openLogin}>Jetzt anmelden</a></p>
+	{:else}
+		<div class="account-header">
+			{#if user.avatar}
+				<img src={user.avatar} alt={user.name} class="avatar" />
+			{:else}
+				<div class="avatar-placeholder">{user.name[0]}</div>
+			{/if}
+			<div>
+				<h1>Willkommen zurück, {user.name}!</h1>
+				<span class="tier-badge" class:pro={user.isPro}>
+					{user.isPro ? 'PRO' : 'Gratis'}
+				</span>
 			</div>
 		</div>
 
-		<!-- Actions -->
-		<div class="account-section">
-			<h2 class="section-label">Konto-Optionen</h2>
-			<div class="action-list">
-				<a href="/abonnement" class="action-item">
-					<span class="action-icon">📰</span>
-					<span>Abonnement verwalten</span>
-					<span class="action-arrow">›</span>
-				</a>
-				<a href="/datenschutzerklaerung" class="action-item">
-					<span class="action-icon">🔒</span>
-					<span>Datenschutzerklärung</span>
-					<span class="action-arrow">›</span>
-				</a>
+		<div class="account-details">
+			<h2>Kontoinformationen</h2>
+			<p><strong>Benutzername:</strong> {user.username}</p>
+			<p><strong>E-Mail:</strong> {user.email}</p>
+			<p><strong>Konto-Typ:</strong> {user.isPro ? 'PRO Mitglied' : 'Gratis Mitglied'}</p>
+		</div>
+
+		{#if !user.isPro}
+			<div class="upgrade-cta">
+				<h2>Upgrade auf PRO</h2>
+				<p>Erhalten Sie vollen Zugang zu allen Artikeln ohne Einschränkungen.</p>
+				<a href="/abonnement" class="btn-primary">Jetzt upgraden</a>
 			</div>
-		</div>
+		{/if}
 
-		<!-- Logout -->
-		<div class="logout-wrap">
-			<button class="logout-btn" onclick={handleLogout} disabled={logoutLoading}>
-				{logoutLoading ? 'Abmelden…' : 'Abmelden'}
-			</button>
-		</div>
-
-	</div>
+		<button class="btn-logout" onclick={logout}>Abmelden</button>
+	{/if}
 </div>
 
 <style>
-	.account-page {
-		padding: 28px 0 56px;
-		background: var(--color-bg);
-		min-height: calc(100vh - 220px);
-	}
-
-	.breadcrumb {
-		font-family: var(--font-body);
-		font-size: 13px;
-		color: var(--color-text-muted);
-		margin-bottom: 16px;
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-	.breadcrumb a { color: var(--color-text-muted); }
-	.breadcrumb a:hover { color: var(--color-primary); }
-	.sep { color: var(--color-text-faint); }
-
-	.page-title {
-		font-family: 'Roboto', sans-serif;
-		font-size: 26px;
-		font-weight: 800;
-		color: var(--color-text);
-		margin: 0 0 24px;
-	}
-
-	/* Profile card */
-	.account-card {
-		display: flex;
-		align-items: center;
-		gap: 20px;
-		background: #fff;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: 24px;
-		margin-bottom: 24px;
-	}
-	.account-avatar {
-		width: 56px;
-		height: 56px;
-		border-radius: 50%;
-		background: var(--color-primary);
-		color: #fff;
-		font-family: 'Roboto', sans-serif;
-		font-size: 22px;
-		font-weight: 700;
+	.account-page { max-width: 700px; margin: 40px auto; padding: 0 20px; }
+	.account-header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; }
+	.avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+	.avatar-placeholder {
+		width: 80px; height: 80px; border-radius: 50%;
+		background: #2D1B69; color: white;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		flex-shrink: 0;
-	}
-	.account-name {
-		font-family: 'Roboto', sans-serif;
-		font-size: 18px;
+		font-size: 22px;
 		font-weight: 700;
-		color: var(--color-text);
-		margin: 0 0 2px;
-	}
-	.account-email {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 13px;
-		color: var(--color-text-muted);
-		margin: 0 0 2px;
-	}
-	.account-since {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 11px;
-		color: var(--color-text-faint);
-		margin: 0;
-	}
-
-	/* Section */
-	.account-section { margin-bottom: 24px; }
-	.section-label {
 		font-family: 'Roboto', sans-serif;
-		font-size: 12px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--color-text-muted);
-		margin: 0 0 10px;
 	}
-
-	.action-list {
-		background: #fff;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		overflow: hidden;
+	h1 { font-family: 'Roboto', sans-serif; font-size: 24px; margin: 0 0 8px; }
+	.tier-badge {
+		display: inline-block; padding: 3px 10px;
+		background: #E0E0E0; color: #555; border-radius: 12px;
+		font-family: 'Roboto', sans-serif; font-size: 12px; font-weight: 700;
 	}
-	.action-item {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 14px 18px;
-		font-family: 'Roboto', sans-serif;
-		font-size: 14px;
-		color: var(--color-text);
+	.tier-badge.pro { background: #F7C900; color: #2D1B69; }
+	.account-details { background: #F7F7F7; padding: 20px; border-radius: 6px; margin-bottom: 24px; }
+	.account-details h2 { font-family: 'Roboto', sans-serif; font-size: 16px; margin: 0 0 12px; }
+	.account-details p { font-family: 'Open Sans', sans-serif; font-size: 14px; margin: 8px 0; color: #555; }
+	.upgrade-cta {
+		background: #fff; border: 2px solid #F7C900;
+		border-radius: 8px; padding: 24px; margin-bottom: 24px; text-align: center;
+	}
+	.upgrade-cta h2 { font-family: 'Roboto', sans-serif; font-size: 20px; margin: 0 0 8px; }
+	.upgrade-cta p { font-family: 'Open Sans', sans-serif; color: #555; margin-bottom: 16px; }
+	.btn-primary {
+		display: inline-block; background: #2D1B69; color: white;
+		padding: 10px 24px; border-radius: 4px;
+		font-family: 'Roboto', sans-serif; font-weight: 700; font-size: 14px;
 		text-decoration: none;
-		border-bottom: 1px solid var(--color-border);
-		transition: background 0.15s;
 	}
-	.action-item:last-child { border-bottom: none; }
-	.action-item:hover { background: var(--color-bg); }
-	.action-icon { font-size: 16px; }
-	.action-arrow { margin-left: auto; color: var(--color-text-faint); font-size: 18px; }
-
-	/* Logout */
-	.logout-wrap { text-align: center; }
-	.logout-btn {
-		background: none;
-		border: 1px solid #cc2200;
-		color: #cc2200;
-		font-family: 'Roboto', sans-serif;
-		font-size: 13px;
-		font-weight: 700;
-		padding: 9px 24px;
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-		transition: all 0.15s;
+	.btn-logout {
+		background: none; border: 1px solid #E0E0E0;
+		padding: 8px 20px; border-radius: 4px; cursor: pointer;
+		font-family: 'Open Sans', sans-serif; font-size: 13px; color: #555;
 	}
-	.logout-btn:hover:not(:disabled) { background: #cc2200; color: #fff; }
-	.logout-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+	.btn-logout:hover { border-color: #2D1B69; color: #2D1B69; }
 </style>

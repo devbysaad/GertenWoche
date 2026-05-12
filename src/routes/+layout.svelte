@@ -2,7 +2,6 @@
 	import '../app.css';
 	import HeaderMain from '$lib/components/layout/HeaderMain.svelte';
 	import NavPrimary from '$lib/components/layout/NavPrimary.svelte';
-	import FooterCTA from '$lib/components/layout/FooterCTA.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import LoginModal from '$lib/components/ui/LoginModal.svelte';
 	import { modalStore } from '$lib/stores/modal.store.js';
@@ -44,7 +43,7 @@
 <!-- Modals -->
 <LoginModal open={$modalStore.loginOpen} activeTab={$modalStore.activeTab} />
 
-<!-- Page structure: Header → Nav → Main → FooterCTA → Footer (NO TopBar) -->
+<!-- Page structure: Header → Nav → Main → Footer (NO TopBar) -->
 <HeaderMain weather={data.weather} />
 <NavPrimary />
 
@@ -52,7 +51,6 @@
 	{@render children()}
 </main>
 
-<FooterCTA />
 <Footer />
 
 <style>

@@ -9,7 +9,6 @@
 	let { article, showBadge = false }: Props = $props();
 
 	const url = $derived(`/${article.urlPath}`);
-
 </script>
 
 <article class="card-small">

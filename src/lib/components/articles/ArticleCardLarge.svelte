@@ -10,7 +10,6 @@
 
 	const url = $derived(`/${article.urlPath}`);
 
-
 	const excerpt = $derived(
 		article.excerpt.length > 130 ? article.excerpt.slice(0, 127) + '…' : article.excerpt
 	);

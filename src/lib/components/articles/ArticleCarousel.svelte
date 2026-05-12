@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ArticlePreview } from '$lib/types/index.js';
-	import ArticleCard from './ArticleCard.svelte';
+	import type { ArticlePreview } from "$lib/types/index.js";
+	import ArticleCard from "./ArticleCard.svelte";
 
 	interface Props {
 		articles: ArticlePreview[];
@@ -14,7 +14,7 @@
 	function scrollBy(dir: number) {
 		if (!trackEl) return;
 		const cardWidth = 296 + 16; // min-width + gap
-		trackEl.scrollBy({ left: dir * cardWidth, behavior: 'smooth' });
+		trackEl.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
 	}
 </script>
 
@@ -34,7 +34,14 @@
 			onclick={() => scrollBy(-1)}
 			aria-label="Vorherige Artikel"
 		>
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+			<svg
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.5"
+			>
 				<polyline points="15 18 9 12 15 6" />
 			</svg>
 		</button>
@@ -52,7 +59,14 @@
 			onclick={() => scrollBy(1)}
 			aria-label="Nächste Artikel"
 		>
-			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+			<svg
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.5"
+			>
 				<polyline points="9 18 15 12 9 6" />
 			</svg>
 		</button>

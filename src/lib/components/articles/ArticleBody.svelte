@@ -1,14 +1,48 @@
 <script lang="ts">
+	import AdBanner from '$lib/components/ui/AdBanner.svelte';
+
 	interface Props {
 		content: string;
+		showMidAd?: boolean;
 	}
-	let { content }: Props = $props();
+	let { content, showMidAd = false }: Props = $props();
+
+	const paragraphMatches = $derived(content.match(/<p[\s\S]*?<\/p>/gi) ?? []);
+	const hasMidAd = $derived(showMidAd && paragraphMatches.length >= 4);
+	const introHtml = $derived(hasMidAd ? paragraphMatches.slice(0, 3).join('') : content);
+	const restHtml = $derived(hasMidAd ? paragraphMatches.slice(3).join('') : '');
 </script>
 
-<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-<div class="prose article-body">{@html content}</div>
+{#if hasMidAd}
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	<div class="prose article-body">{@html introHtml}</div>
+
+	<!-- Desktop: 728x90, Mobile: 320x50 -->
+	<div class="mid-ad">
+		<AdBanner size="728x90" mode="awin" label={true} />
+	</div>
+
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	<div class="prose article-body">{@html restHtml}</div>
+{:else}
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	<div class="prose article-body">{@html content}</div>
+{/if}
 
 <style>
+	.mid-ad {
+		margin: 24px 0;
+		text-align: center;
+	}
+
+	@media (max-width: 768px) {
+		.mid-ad :global(.adsbygoogle),
+		.mid-ad :global(img) {
+			width: 320px !important;
+			height: 50px !important;
+		}
+	}
+
 	.article-body :global(p) {
 		font-family: Verdana, Geneva, sans-serif;
 		font-size: 16px;

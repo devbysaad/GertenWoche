@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { DirectoryEntry } from '$lib/types/index.js';
+	import type { DirectoryEntry } from "$lib/types/index.js";
 
 	interface Props {
 		entry: DirectoryEntry;
@@ -7,14 +7,25 @@
 	let { entry }: Props = $props();
 
 	function getInitials(name: string): string {
-		return name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+		return name
+			.split(" ")
+			.slice(0, 2)
+			.map((w) => w[0])
+			.join("")
+			.toUpperCase();
 	}
 </script>
 
 <a href="/branchenverzeichnis/eintrag/{entry.slug}" class="dir-card card-hover">
 	<div class="dir-logo">
 		{#if entry.logo}
-			<img src={entry.logo} alt="{entry.name} Logo" loading="lazy" width="100" height="60" />
+			<img
+				src={entry.logo}
+				alt="{entry.name} Logo"
+				loading="lazy"
+				width="100"
+				height="60"
+			/>
 		{:else}
 			<div class="dir-initials">{getInitials(entry.name)}</div>
 		{/if}
@@ -27,7 +38,14 @@
 		{/if}
 		{#if entry.city}
 			<p class="dir-location">
-				<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<svg
+					width="11"
+					height="11"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.5"
+				>
 					<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
 					<circle cx="12" cy="10" r="3" />
 				</svg>

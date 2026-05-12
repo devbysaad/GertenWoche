@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ArticlePreview } from '$lib/types/index.js';
-	import { onMount } from 'svelte';
+	import type { ArticlePreview } from "$lib/types/index.js";
+	import { onMount } from "svelte";
 
 	interface Props {
 		articles: ArticlePreview[];
@@ -10,7 +10,6 @@
 	let current = $state(0);
 	let paused = $state(false);
 	let timer: ReturnType<typeof setInterval>;
-
 
 	function next() {
 		current = (current + 1) % articles.length;
@@ -40,42 +39,64 @@
 		aria-label="Artikel-Karussell"
 	>
 		<div class="carousel-slide">
-		{#if articles[current]}
-			{@const article = articles[current]}
-			<a href={`/${article.urlPath}`} class="slide-link">
-				<div class="slide-image">
-					{#if article.thumbnail}
-						<img
-							src={article.thumbnail}
-							alt={article.title}
-							loading="lazy"
-							width="800"
-							height="420"
-						/>
-					{:else}
-						<div class="slide-placeholder"></div>
-					{/if}
-					<div class="slide-overlay"></div>
-				</div>
-				<div class="slide-content">
-					<span class="cat-badge">{article.category.name}</span>
-					<h2 class="slide-title">{article.title}</h2>
-					<p class="slide-excerpt">{article.excerpt}</p>
-				</div>
-			</a>
+			{#if articles[current]}
+				{@const article = articles[current]}
+				<a href={`/${article.urlPath}`} class="slide-link">
+					<div class="slide-image">
+						{#if article.thumbnail}
+							<img
+								src={article.thumbnail}
+								alt={article.title}
+								loading="lazy"
+								width="800"
+								height="420"
+							/>
+						{:else}
+							<div class="slide-placeholder"></div>
+						{/if}
+						<div class="slide-overlay"></div>
+					</div>
+					<div class="slide-content">
+						<span class="cat-badge">{article.category.name}</span>
+						<h2 class="slide-title">{article.title}</h2>
+						<p class="slide-excerpt">{article.excerpt}</p>
+					</div>
+				</a>
 
-			<!-- Arrows -->
-			<button class="slide-arrow prev" onclick={prev} aria-label="Vorheriges">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-					<polyline points="15 18 9 12 15 6" />
-				</svg>
-			</button>
-			<button class="slide-arrow next" onclick={next} aria-label="Nächstes">
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-					<polyline points="9 18 15 12 9 6" />
-				</svg>
-			</button>
-		{/if}
+				<!-- Arrows -->
+				<button
+					class="slide-arrow prev"
+					onclick={prev}
+					aria-label="Vorheriges"
+				>
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+					>
+						<polyline points="15 18 9 12 15 6" />
+					</svg>
+				</button>
+				<button
+					class="slide-arrow next"
+					onclick={next}
+					aria-label="Nächstes"
+				>
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+					>
+						<polyline points="9 18 15 12 9 6" />
+					</svg>
+				</button>
+			{/if}
 		</div>
 
 		<!-- Dot indicators -->
@@ -133,13 +154,21 @@
 	.slide-placeholder {
 		width: 100%;
 		height: 100%;
-		background: linear-gradient(135deg, var(--color-primary) 0%, #4a0e4e 100%);
+		background: linear-gradient(
+			135deg,
+			var(--color-primary) 0%,
+			#4a0e4e 100%
+		);
 	}
 
 	.slide-overlay {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.1) 60%);
+		background: linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.75) 0%,
+			rgba(0, 0, 0, 0.1) 60%
+		);
 	}
 
 	.slide-content {

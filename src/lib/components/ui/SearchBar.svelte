@@ -63,10 +63,9 @@
 		}
 	}
 
-
 	function highlight(text: string, q: string): string {
 		if (!q) return text;
-		const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const escaped = q.replace(/[.*+?^${}()|[\]\]/g, '\\$&');
 		return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
 	}
 </script>
@@ -79,8 +78,19 @@
 		aria-label="Suche"
 	>
 		<!-- Close -->
-		<button class="search-close" onclick={() => modalStore.closeSearch()} aria-label="Suche schließen">
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+		<button
+			class="search-close"
+			onclick={() => modalStore.closeSearch()}
+			aria-label="Suche schließen"
+		>
+			<svg
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.5"
+			>
 				<line x1="18" y1="6" x2="6" y2="18" />
 				<line x1="6" y1="6" x2="18" y2="18" />
 			</svg>
@@ -100,7 +110,14 @@
 					aria-label="Suchbegriff eingeben"
 					autocomplete="off"
 				/>
-				<button class="search-submit" type="button" onclick={() => { modalStore.closeSearch(); }} aria-label="Suche ausführen">
+				<button
+					class="search-submit"
+					type="button"
+					onclick={() => {
+						modalStore.closeSearch();
+					}}
+					aria-label="Suche ausführen"
+				>
 					Suche →
 				</button>
 			</div>
@@ -109,7 +126,9 @@
 			{#if query.trim()}
 				<div class="search-results" role="listbox">
 					{#if results.length === 0 && !loading}
-						<p class="search-empty">Keine Ergebnisse gefunden für „{query}"</p>
+						<p class="search-empty">
+							Keine Ergebnisse gefunden für „{query}"
+						</p>
 					{:else}
 						{#each results as article}
 							<a
@@ -132,9 +151,16 @@
 									<div class="result-thumb-placeholder"></div>
 								{/if}
 								<div class="result-text">
-									<span class="cat-badge result-badge">{article.category.name}</span>
+									<span class="cat-badge result-badge"
+										>{article.category.name}</span
+									>
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-									<span class="result-title">{@html highlight(article.title, query)}</span>
+									<span class="result-title"
+										>{@html highlight(
+											article.title,
+											query,
+										)}</span
+									>
 								</div>
 							</a>
 						{/each}
@@ -152,7 +178,10 @@
 				</div>
 			{/if}
 
-			<p class="search-hint">Drücken Sie <kbd>Enter</kbd> für alle Ergebnisse · <kbd>Esc</kbd> zum Schließen</p>
+			<p class="search-hint">
+				Drücken Sie <kbd>Enter</kbd> für alle Ergebnisse ·
+				<kbd>Esc</kbd> zum Schließen
+			</p>
 		</div>
 	</div>
 {/if}
@@ -173,8 +202,12 @@
 	}
 
 	@keyframes fadeIn {
-		from { opacity: 0; }
-		to   { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	.search-close {
@@ -190,14 +223,15 @@
 		z-index: 1;
 	}
 
-	.search-close:hover { color: #fff; }
+	.search-close:hover {
+		color: #fff;
+	}
 
 	.search-content {
 		width: 100%;
 		max-width: 700px;
 	}
 
-	/* Input row: cursor | input text             Suche → */
 	.search-input-wrap {
 		display: flex;
 		align-items: center;
@@ -212,11 +246,11 @@
 		background: none;
 		border: none;
 		outline: none;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 24px;
 		font-weight: 400;
 		color: #ffffff;
-		caret-color: #F7C900;
+		caret-color: #f7c900;
 		-webkit-appearance: none;
 	}
 
@@ -224,7 +258,6 @@
 		color: rgba(255, 255, 255, 0.35);
 	}
 
-	/* "Suche →" button (right side) */
 	.search-submit {
 		display: flex;
 		align-items: center;
@@ -232,7 +265,7 @@
 		background: #222;
 		border: none;
 		color: #fff;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 14px;
 		font-weight: 600;
 		padding: 8px 16px;
@@ -242,7 +275,9 @@
 		flex-shrink: 0;
 	}
 
-	.search-submit:hover { background: #333; }
+	.search-submit:hover {
+		background: #333;
+	}
 
 	.search-results {
 		display: flex;

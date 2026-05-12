@@ -1,25 +1,35 @@
 <script lang="ts">
-	import { modalStore } from '$lib/stores/modal.store.js';
+	import { modalStore } from "$lib/stores/modal.store.js";
+
+	interface Props {
+		open: boolean;
+	}
+	let { open }: Props = $props();
 
 	const quickLinks = [
-		{ label: 'Aktuelles',                          href: '/category/aktuelles/' },
-		{ label: 'Schweiz',                            href: '/category/aktuelles/schweiz/' },
-		{ label: 'Europa',                             href: '/category/aktuelles/europa/' },
-		{ label: 'Welt',                               href: '/category/aktuelles/welt/' },
-		{ label: 'Produktschau',                       href: '/category/produktschau/' },
-		{ label: 'Wissen',                             href: '/category/wissen/' },
-		{ label: 'Gartenpraxis',                       href: '/category/gartenpraxis/' },
-		{ label: 'Pflanzenschutz',                     href: '/category/pflanzenschutz/' },
-		{ label: 'Pflanzenempfehlungen',               href: '/category/pflanzen/pflanzenempfehlungen/' },
-		{ label: 'Stauden',                            href: '/category/pflanzen/stauden/' },
-		{ label: 'Veranstaltungen',                    href: '/veranstaltungen/' },
-		{ label: 'Stellenangebote für die grüne Branche', href: '/stellenangebote-fuer-die-gruene-branche/' },
+		{ label: "Aktuelles", href: "/category/aktuelles/" },
+		{ label: "Schweiz", href: "/category/aktuelles/schweiz/" },
+		{ label: "Europa", href: "/category/aktuelles/europa/" },
+		{ label: "Welt", href: "/category/aktuelles/welt/" },
+		{ label: "Produktschau", href: "/category/produktschau/" },
+		{ label: "Wissen", href: "/category/wissen/" },
+		{ label: "Gartenpraxis", href: "/category/gartenpraxis/" },
+		{ label: "Pflanzenschutz", href: "/category/pflanzenschutz/" },
+		{
+			label: "Pflanzenempfehlungen",
+			href: "/category/pflanzen/pflanzenempfehlungen/",
+		},
+		{ label: "Stauden", href: "/category/pflanzen/stauden/" },
+		{ label: "Veranstaltungen", href: "/veranstaltungen/" },
+		{
+			label: "Stellenangebote für die grüne Branche",
+			href: "/stellenangebote-fuer-die-gruene-branche/",
+		},
 	];
 </script>
 
 <div class="topbar" role="navigation" aria-label="Schnellnavigation">
 	<div class="topbar-inner">
-
 		<!-- Left: 12 quick-links -->
 		<nav class="quick-links" aria-label="Kategorien">
 			{#each quickLinks as link}
@@ -32,27 +42,26 @@
 			<button
 				type="button"
 				class="auth-btn"
-				onclick={() => modalStore.openLogin()}
-			>Anmelden</button>
+				onclick={() => modalStore.openLogin()}>Anmelden</button
+			>
 			<button
 				type="button"
 				class="auth-btn"
-				onclick={() => modalStore.openRegister()}
-			>Beitreten</button>
+				onclick={() => modalStore.openRegister()}>Beitreten</button
+			>
 		</div>
-
 	</div>
 </div>
 
 <style>
 	/* ── Topbar shell ───────────────────────────────────────────── */
 	.topbar {
-		background: #2D1B69;
+		background: #2d1b69;
 		height: 36px;
 		width: 100%;
 		display: flex;
 		align-items: center;
-		overflow: hidden;          /* never grow past 36px */
+		overflow: hidden;
 	}
 
 	/* max-width 1200px container, centered */
@@ -72,13 +81,13 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		overflow: hidden;          /* don't overflow on mid-widths */
+		overflow: hidden;
 		flex: 1;
 		min-width: 0;
 	}
 
 	.quick-link {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 12px;
 		font-weight: 400;
 		color: rgba(255, 255, 255, 0.85);
@@ -90,7 +99,7 @@
 	}
 
 	.quick-link:hover {
-		color: #F7C900;
+		color: #f7c900;
 	}
 
 	/* ── Auth buttons (right) ───────────────────────────────────── */
@@ -102,7 +111,7 @@
 	}
 
 	.auth-btn {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 12px;
 		font-weight: 400;
 		color: rgba(255, 255, 255, 0.85);
@@ -116,7 +125,7 @@
 	}
 
 	.auth-btn:hover {
-		color: #F7C900;
+		color: #f7c900;
 	}
 
 	/* ── Mobile <768px: hide ALL quick-links, keep auth only ────── */

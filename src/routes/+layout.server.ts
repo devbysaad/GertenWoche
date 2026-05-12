@@ -10,15 +10,15 @@ export const load: LayoutServerLoad = async ({ fetch, locals }) => {
 		// fallback already set
 	}
 
-	// ── Auth session (via better-auth, set in hooks.server.ts) ───────────────
-	// locals.user is populated by the hooks.server.ts handle() function
 	const user = locals.user
 		? {
-				id:        locals.user.id,
-				name:      locals.user.name,
-				email:     locals.user.email,
-				tier:      'free' as const, // extend with DB role lookup when needed
-				createdAt: new Date(locals.user.createdAt)
+				id: locals.user.id,
+				name: locals.user.name,
+				username: locals.user.username,
+				email: locals.user.email,
+				avatar: locals.user.avatar,
+				roles: locals.user.roles,
+				isPro: locals.user.isPro
 			}
 		: null;
 

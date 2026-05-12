@@ -3,22 +3,16 @@
 
 /// <reference types="@sveltejs/kit" />
 
-// better-auth: User type available in event.locals across all server routes
+import type { WPUser } from '$lib/types/user';
+
 declare global {
 	namespace App {
 		interface Locals {
-			user: {
-				id: string;
-				email: string;
-				name: string;
-				emailVerified: boolean;
-				createdAt: Date;
-				updatedAt: Date;
-			} | null;
+			user: WPUser | null;
 		}
 	}
 }
-
+export {};
 
 // Private env vars (server-only, accessed via $env/static/private or process.env)
 declare module '$env/static/private' {

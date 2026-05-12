@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { GartenEvent } from '$lib/types/index.js';
-	import { formatGermanDateRange, getGermanMonthShort } from '$lib/utils/date.js';
+	import type { GartenEvent } from "$lib/types/index.js";
+	import { formatGermanDateRange } from "$lib/utils/date.js";
 
 	interface Props {
 		event: GartenEvent;
@@ -12,13 +12,23 @@
 	<div class="event-date-col">
 		<div class="event-badge">
 			<span class="badge-day">{event.startDate.getDate()}</span>
-			<span class="badge-month">{getGermanMonthShort(event.startDate)}</span>
+			<span class="badge-month"
+				>{event.startDate.toLocaleDateString("de-DE", {
+					month: "short",
+				})}</span
+			>
 		</div>
 	</div>
 
 	<div class="event-thumb">
 		{#if event.thumbnail}
-			<img src={event.thumbnail} alt={event.title} loading="lazy" width="120" height="80" />
+			<img
+				src={event.thumbnail}
+				alt={event.title}
+				loading="lazy"
+				width="120"
+				height="80"
+			/>
 		{:else}
 			<div class="thumb-placeholder"></div>
 		{/if}
@@ -28,12 +38,19 @@
 		<h3 class="event-title">{event.title}</h3>
 		<div class="event-meta">
 			<span class="event-location">
-				<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<svg
+					width="12"
+					height="12"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2.5"
+				>
 					<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
 					<circle cx="12" cy="10" r="3" />
 				</svg>
 				{event.city || event.location}
-				{#if event.country && event.country !== 'Schweiz'}
+				{#if event.country && event.country !== "Schweiz"}
 					, {event.country}
 				{/if}
 			</span>
@@ -47,7 +64,14 @@
 	</div>
 
 	<div class="event-arrow">
-		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+		<svg
+			width="16"
+			height="16"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2.5"
+		>
 			<polyline points="9 18 15 12 9 6" />
 		</svg>
 	</div>

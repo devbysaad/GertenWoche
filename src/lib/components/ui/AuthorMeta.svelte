@@ -5,11 +5,10 @@
 	interface Props {
 		author: Author;
 		publishedAt: Date;
-		light?: boolean;  // white text for overlaid cards
-		noLink?: boolean; // use span instead of <a> when inside another <a>
+		light?: boolean;
+		noLink?: boolean;
 	}
 	let { author, publishedAt, light = false, noLink = false }: Props = $props();
-
 
 	const dateStr = $derived(formatGermanDate(publishedAt));
 </script>

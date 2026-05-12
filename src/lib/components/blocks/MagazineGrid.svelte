@@ -175,7 +175,7 @@
 	/* Author: visible below badge on center card */
 	.mag-author {
 		position: absolute;
-		bottom: 26px;   /* sits just above the badge (badge is at 8px, badge ~18px tall) */
+		bottom: 26px;
 		left: 8px;
 		z-index: 3;
 		font-family: 'Open Sans', sans-serif;

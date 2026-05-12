@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ArticlePreview } from '$lib/types/index.js';
-	import ArticleCarousel from '$lib/components/articles/ArticleCarousel.svelte';
+	import ArticleCarousel from '../articles/ArticleCarousel.svelte';
 
 	interface Props {
 		articles: ArticlePreview[];

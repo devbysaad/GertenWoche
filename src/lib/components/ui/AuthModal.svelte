@@ -97,7 +97,6 @@
 	async function handleRecover(e: SubmitEvent) {
 		e.preventDefault();
 		reset(); loading = true;
-		// Password recovery requires email infrastructure — show info for now
 		successMsg = 'Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.';
 		loading = false;
 	}
@@ -376,7 +375,6 @@
 		margin-bottom: 20px;
 	}
 
-	/* Inline feedback messages */
 	.msg {
 		font-family: var(--font-body);
 		font-size: 13px;
@@ -488,15 +486,6 @@
 	.link-btn.forgot {
 		text-align: right;
 		font-size: 12px;
-	}
-
-	.modal-info {
-		font-size: 12px;
-		color: var(--color-text-muted);
-		background: var(--color-bg);
-		padding: 10px 12px;
-		border-radius: var(--radius-sm);
-		margin: 0;
 	}
 
 	.modal-note {
