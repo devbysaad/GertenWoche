@@ -7,8 +7,9 @@
 
 	interface Props {
 		weather: { temp: number | null; city: string };
+		user?: { name: string; username: string; isPro: boolean; avatar?: string } | null;
 	}
-	let { weather }: Props = $props();
+	let { weather, user = null }: Props = $props();
 
 	const today = formatGermanFull(new Date());
 
@@ -26,6 +27,11 @@
 	}
 	function scheduleClose() {
 		menuTimeout = setTimeout(() => { menuOpen = false; }, 150);
+	}
+
+	async function logout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		window.location.reload();
 	}
 
 	// ── Search popup state ──────────────────────────────────────
@@ -74,7 +80,7 @@
 		debounce = setTimeout(async () => {
 			try {
 				const res = await fetch(
-					`https://gartenwoche.ch/wp-json/wp/v2/posts?search=${encodeURIComponent(searchQuery)}&per_page=5&_embed`,
+					`https://gartenwoche.ch/wp-json/wp/v2/posts?search=${encodeURIComponent(searchQuery)}&per_page=6&_embed`,
 					{ signal: AbortSignal.timeout(4000) }
 				);
 				if (!res.ok) { searchResults = []; return; }
@@ -126,15 +132,32 @@
 		<!-- Mein Konto with hover dropdown -->
 		<div
 			class="mein-konto-wrap"
+			role="navigation"
+			aria-label="Benutzerkonto"
 			onmouseenter={openMenu}
 			onmouseleave={scheduleClose}
 		>
 			<button type="button" class="mein-konto-btn" aria-haspopup="true" aria-expanded={menuOpen}>
-				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-					<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-					<circle cx="12" cy="7" r="4"/>
-				</svg>
-				<span>Mein Konto</span>
+				{#if user}
+					<!-- Logged-in: grey avatar circle + text -->
+					<div class="user-avatar-mini">
+						{#if user.avatar}
+							<img src={user.avatar} alt={user.name} />
+						{:else}
+							<svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22" aria-hidden="true">
+								<path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+							</svg>
+						{/if}
+					</div>
+					<span class="konto-label">Mein Konto</span>
+				{:else}
+					<!-- Guest: person icon + text -->
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+						<circle cx="12" cy="7" r="4"/>
+					</svg>
+					<span>Mein Konto</span>
+				{/if}
 			</button>
 
 			{#if menuOpen}
@@ -145,18 +168,35 @@
 					role="menu"
 					tabindex="-1"
 				>
-					<button
-						type="button"
-						class="konto-item"
-						role="menuitem"
-						onclick={() => { menuOpen = false; modalStore.openLogin(); }}
-					>Anmeldung</button>
-					<button
-						type="button"
-						class="konto-item"
-						role="menuitem"
-						onclick={() => { menuOpen = false; modalStore.openRegister(); }}
-					>Registrieren</button>
+					{#if user}
+						<!-- Logged-in dropdown -->
+						<span class="konto-greeting">Hallo, {user.username}</span>
+						<hr class="konto-divider" />
+						<a href="/mein-konto" class="konto-item konto-link" role="menuitem" onclick={() => (menuOpen = false)}>Mein Konto</a>
+						<a href="/mein-konto?tab=details" class="konto-item konto-link" role="menuitem" onclick={() => (menuOpen = false)}>Kontodetails</a>
+						<a href="/mein-konto?tab=subs" class="konto-item konto-link" role="menuitem" onclick={() => (menuOpen = false)}>Abonnements</a>
+						<hr class="konto-divider" />
+						<button
+							type="button"
+							class="konto-item konto-logout"
+							role="menuitem"
+							onclick={() => { menuOpen = false; logout(); }}
+						>Ausloggen ⇥</button>
+					{:else}
+						<!-- Guest dropdown -->
+						<button
+							type="button"
+							class="konto-item"
+							role="menuitem"
+							onclick={() => { menuOpen = false; modalStore.openLogin(); }}
+						>Anmeldung</button>
+						<button
+							type="button"
+							class="konto-item"
+							role="menuitem"
+							onclick={() => { menuOpen = false; modalStore.openRegister(); }}
+						>Registrieren</button>
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -194,15 +234,15 @@
 				{#if searchOpen}
 				<div class="search-popup" role="dialog" aria-label="Suche">
 					<form class="search-row" onsubmit={(e) => { e.preventDefault(); submitSearch(); }}>
-						<input
-							bind:this={searchInput}
-							bind:value={searchQuery}
-							oninput={onSearchInput}
-							type="search"
-							class="search-input"
-							placeholder="type here..."
-							autocomplete="off"
-						/>
+				<input
+						bind:this={searchInput}
+						bind:value={searchQuery}
+						oninput={onSearchInput}
+						type="search"
+						class="search-input"
+						placeholder="Suche eingeben…"
+						autocomplete="off"
+					/>
 						<button type="submit" class="search-go">Suche →</button>
 					</form>
 					{#if searchResults.length > 0}
@@ -361,6 +401,55 @@
 	.konto-item:hover {
 		background: #F7F7F7;
 		color: #2D1B69;
+	}
+
+	/* Logged-in dropdown extras */
+	.konto-greeting {
+		display: block;
+		padding: 8px 16px 6px;
+		font-family: 'Roboto', sans-serif;
+		font-size: 12px;
+		color: #999;
+		white-space: nowrap;
+		cursor: default;
+		user-select: none;
+	}
+	.konto-divider {
+		border: none;
+		border-top: 1px solid #E0E0E0;
+		margin: 4px 0;
+	}
+	.konto-link {
+		display: block;
+		text-decoration: none;
+	}
+	.konto-logout {
+		color: #888;
+		width: 100%;
+	}
+	.konto-logout:hover { color: #c00; }
+
+	/* Avatar mini in header button */
+	.user-avatar-mini {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		background: #C0C0C0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		overflow: hidden;
+		color: #fff;
+	}
+	.user-avatar-mini img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.konto-label {
+		color: #5a9e3a;
+		font-weight: 600;
 	}
 
 	/* ── Header Lower Layout ────────────────────────────────────── */

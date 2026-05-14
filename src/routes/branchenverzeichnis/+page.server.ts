@@ -1,10 +1,12 @@
 import type { PageServerLoad } from './$types.js';
-import { getDirectoryEntries } from '$lib/api/index.js';
+import { DIRECTORY_ENTRIES } from '$lib/data/directory.js';
 
 export const load: PageServerLoad = async ({ url }) => {
-	const entries = await getDirectoryEntries();
+	// Use static data as primary source (WP directory API is not public)
+	const entries = DIRECTORY_ENTRIES;
 	const search = url.searchParams.get('q') ?? '';
 	const catFilter = url.searchParams.get('cat') ?? '';
+	const alphaFilter = url.searchParams.get('alpha') ?? '';
 
 	const categories = [...new Set(entries.map((e) => e.category).filter(Boolean))].sort() as string[];
 
@@ -15,8 +17,9 @@ export const load: PageServerLoad = async ({ url }) => {
 			e.city?.toLowerCase().includes(search.toLowerCase()) ||
 			e.description?.toLowerCase().includes(search.toLowerCase());
 		const matchCat = !catFilter || e.category === catFilter;
-		return matchSearch && matchCat;
+		const matchAlpha = !alphaFilter || e.name.toUpperCase().startsWith(alphaFilter);
+		return matchSearch && matchCat && matchAlpha;
 	});
 
-	return { entries: filtered, allEntries: entries, categories, search, catFilter };
+	return { entries: filtered, allEntries: entries, categories, search, catFilter, alphaFilter };
 };

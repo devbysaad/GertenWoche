@@ -3,8 +3,8 @@ import {
 	getArticles,
 	getArticlesByCategory,
 	getEvents,
-	getDirectoryEntries
 } from '$lib/api/index.js';
+import { DIRECTORY_ENTRIES } from '$lib/data/directory.js';
 
 export const load: PageServerLoad = async () => {
 	// Fetch all data in parallel
@@ -18,7 +18,6 @@ export const load: PageServerLoad = async () => {
 		produktschau,
 		rasen,
 		events,
-		directory
 	] = await Promise.all([
 		getArticles({ limit: 20 }),
 		getArticlesByCategory('pflanzenempfehlungen', 8),
@@ -29,18 +28,30 @@ export const load: PageServerLoad = async () => {
 		getArticlesByCategory('produktschau', 5),
 		getArticlesByCategory('rasen', 5),
 		getEvents(),
-		getDirectoryEntries()
 	]);
 
-	const hero = allArticles[0];
-	const featured = allArticles.slice(1, 5);
-	const carouselArticles = allArticles.slice(5, 8);
-	const rasenMain = rasen[0] ?? allArticles[8];
+	const directory = DIRECTORY_ENTRIES.slice(0, 8);
+
+	// ── Article slots (no overlaps) ──────────────────────────
+	const hero           = allArticles[0];          // main hero image (left)
+	const heroSide       = allArticles.slice(1, 3); // 2 right-stacked articles in hero
+	const featuredOne    = allArticles[3];           // 1 featured article below hero
+	const gridArticles   = allArticles.slice(4, 7);  // 3-col grid (3 articles)
+	const carouselArticles = allArticles.slice(7, 10);
+	const rasenMain      = rasen[0] ?? allArticles[10];
 	const rasenSecondary = rasen.slice(1, 5);
+
+	// Exclusive articles
+	const exclusiveIds = ['21', '1', '3', '2', '20'];
+	const exclusiveArticles = allArticles
+		.filter(a => exclusiveIds.includes(a.id))
+		.sort((a, b) => exclusiveIds.indexOf(a.id) - exclusiveIds.indexOf(b.id));
 
 	return {
 		hero,
-		featured,
+		heroSide,
+		featuredOne,
+		gridArticles,
 		pflanzen,
 		rasenMain,
 		rasenSecondary,
@@ -52,6 +63,7 @@ export const load: PageServerLoad = async () => {
 		pflanzenschutz,
 		rasenCol: rasen.slice(0, 4),
 		directory,
-		events
+		events,
+		exclusiveArticles,
 	};
 };

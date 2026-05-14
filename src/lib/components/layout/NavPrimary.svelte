@@ -80,8 +80,8 @@
 						class="nav-link"
 						class:active={isActive(item.href)}
 						role="menuitem"
-						aria-haspopup={item.children ? 'true' : undefined}
-						aria-expanded={item.children ? String(openMenuMain === item.label) : undefined}
+						aria-haspopup={item.children ? true : undefined}
+						aria-expanded={item.children ? openMenuMain === item.label : undefined}
 					>
 						{item.label}
 						{#if item.children}
@@ -148,8 +148,8 @@
 						class:active={isActive(item.href)}
 						role="menuitem"
 						tabindex={isVisible ? 0 : -1}
-						aria-haspopup={item.children ? 'true' : undefined}
-						aria-expanded={item.children ? String(openMenuSticky === item.label) : undefined}
+						aria-haspopup={item.children ? true : undefined}
+						aria-expanded={item.children ? openMenuSticky === item.label : undefined}
 					>
 						{item.label}
 						{#if item.children}
@@ -237,10 +237,13 @@
 		transition: color 0.15s ease, border-color 0.15s ease;
 	}
 
-	.nav-link:hover,
+	.nav-link:hover {
+		color: #222222;
+		border-bottom-color: #5a9e3a;
+	}
 	.nav-link.active {
-		color: #2D1B69;
-		border-bottom-color: #F7C900;
+		color: #5a9e3a;
+		border-bottom-color: #5a9e3a;
 	}
 
 	.dropdown-arrow {
@@ -280,10 +283,14 @@
 		transition: background 0.12s ease, color 0.12s ease;
 	}
 
-	.dropdown-item:hover,
+	.dropdown-item:hover {
+		background: #F7F7F7;
+		color: #222222;
+	}
 	.dropdown-item.active {
 		background: #F7F7F7;
-		color: #2D1B69;
+		color: #5a9e3a;
+		font-weight: 600;
 	}
 
 	/* =========================================================================
@@ -422,9 +429,12 @@
 		font-weight: 500;
 		color: #333333;
 	}
-	.sticky-nav-bar .dropdown-item:hover,
+	.sticky-nav-bar .dropdown-item:hover {
+		background: #F8F8F8;
+	}
 	.sticky-nav-bar .dropdown-item.active {
 		background: #F8F8F8;
+		color: #5a9e3a;
 	}
 
 	/* =========================================================================
@@ -520,7 +530,7 @@
 		text-decoration: none;
 		transition: color 0.15s, background 0.15s;
 	}
-	.mobile-link:hover { color: #2D1B69; background: #f8f8f8; }
+	.mobile-link:hover { background: #f8f8f8; }
 	.mobile-child {
 		font-size: 13px;
 		font-weight: 400;

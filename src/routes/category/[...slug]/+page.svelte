@@ -131,16 +131,16 @@
 		font-family: 'Roboto', sans-serif;
 		font-size: 13px;
 		font-weight: 500;
-		color: #2D1B69;
-		background: #f0ecf8;
-		border: 1px solid #d0c8e8;
+		color: #444;
+		background: #f0f0f0;
+		border: 1px solid #d0d0d0;
 		padding: 5px 14px;
 		border-radius: 20px;
 		text-decoration: none;
 		transition: all 0.15s;
 	}
 	.subcat-pill:hover {
-		background: #2D1B69;
+		background: #222;
 		color: #fff;
 	}
 	.subcat-count { font-size: 11px; color: #999; }

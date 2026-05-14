@@ -2,25 +2,22 @@
 	import EventListView from '$lib/components/events/EventListView.svelte';
 	import EventMonthView from '$lib/components/events/EventMonthView.svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 
 	let { data } = $props();
 
-	let activeView = $state('list');
 	let calYear = $state(new Date().getFullYear());
 	let calMonth = $state(new Date().getMonth());
 	let showPast = $state(false);
-	$effect(() => { activeView = data.view === 'calendar' ? 'calendar' : 'list'; });
-
-	function switchView(v: string) {
-		activeView = v;
-		goto(`?view=${v}`, { replaceState: true, keepFocus: true });
-	}
+	let filterDropOpen = $state(false);
 
 	function handleNavigate(y: number, m: number) {
 		calYear = y;
 		calMonth = m;
 	}
+
+	function goToday() { showPast = false; }
+	function goPrev()  { showPast = true; }
+	function goNext()  { showPast = false; }
 </script>
 
 <svelte:head>
@@ -31,129 +28,200 @@
 
 <div class="events-page">
 	<div class="container">
-		<div class="events-header">
-			<h1 class="page-title">Veranstaltungen</h1>
-			<div class="view-toggle" role="group" aria-label="Ansicht wählen">
-				<button
-					class="toggle-btn"
-					class:active={activeView === 'list'}
-					onclick={() => switchView('list')}
-				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-					Liste
+
+		<!-- Top nav bar: arrows + Today + Future dropdown -->
+		<div class="ev-topbar">
+			<button class="nav-arrow" onclick={goPrev} aria-label="Vorherige" type="button">‹</button>
+			<button class="nav-arrow" onclick={goNext} aria-label="Nächste" type="button">›</button>
+			<button class="today-btn" onclick={goToday} type="button">Heute</button>
+			<div class="filter-wrap">
+				<button class="filter-btn" onclick={() => filterDropOpen = !filterDropOpen} type="button">
+					{showPast ? 'Vergangene' : 'Zukünftige'} <span class="caret">∨</span>
 				</button>
-				<button
-					class="toggle-btn"
-					class:active={activeView === 'calendar'}
-					onclick={() => switchView('calendar')}
-				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-					Kalender
-				</button>
+				{#if filterDropOpen}
+					<div class="filter-drop">
+						<button onclick={() => { showPast = false; filterDropOpen = false; }} type="button">Zukünftige</button>
+						<button onclick={() => { showPast = true; filterDropOpen = false; }} type="button">Vergangene</button>
+					</div>
+				{/if}
 			</div>
 		</div>
 
-		{#if activeView === 'calendar'}
-			<EventMonthView
-				events={data.upcoming}
-				year={calYear}
-				month={calMonth}
-				onNavigate={handleNavigate}
-			/>
-		{:else}
-			<!-- List tabs: upcoming / past -->
-			<div class="list-tabs">
-				<button class="tab-btn" class:active={!showPast} onclick={() => (showPast = false)}>
-					Kommende ({data.upcoming.length})
-				</button>
-				<button class="tab-btn" class:active={showPast} onclick={() => (showPast = true)}>
-					Vergangene ({data.past.length})
-				</button>
-			</div>
+		<!-- Month separator -->
+		<div class="month-separator">
+			<span class="month-label">Mai 2026</span>
+			<hr class="month-line" />
+		</div>
 
-			<EventListView events={showPast ? data.past : data.upcoming} showPast={showPast} />
-		{/if}
+		<!-- Event list -->
+		<EventListView events={showPast ? data.past : data.upcoming} showPast={showPast} />
+
+		<!-- Bottom nav -->
+		<div class="ev-bottombar">
+			<button class="prev-link" onclick={goPrev} type="button">‹ Vorherige Ereignisse</button>
+			<button class="next-link" onclick={goNext} type="button">Nächste Ereignisse ›</button>
+		</div>
+
+		<!-- Subscribe to calendar -->
+		<div class="subscribe-wrap">
+			<button class="subscribe-btn" type="button">
+				Kalender abonnieren <span class="caret">∨</span>
+			</button>
+		</div>
+
 	</div>
 </div>
 
 <style>
 	.events-page {
 		padding: 24px 0 48px;
+		background: #fff;
 	}
 
-	.events-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 16px;
-		margin-bottom: 28px;
-		flex-wrap: wrap;
-	}
-
-	.page-title {
-		font-family: var(--font-heading);
-		font-size: 32px;
-		font-weight: 900;
-		color: var(--color-text);
-		margin: 0;
-		border-left: 4px solid var(--color-accent);
-		padding-left: 12px;
-	}
-
-	.view-toggle {
-		display: flex;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		overflow: hidden;
-	}
-
-	.toggle-btn {
+	/* Top nav bar */
+	.ev-topbar {
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		padding: 8px 16px;
-		font-family: var(--font-heading);
-		font-size: 13px;
-		font-weight: 600;
-		background: var(--color-surface);
-		border: none;
+		margin-bottom: 4px;
+	}
+
+	.nav-arrow {
+		width: 32px;
+		height: 32px;
+		background: none;
+		border: 1px solid #CCC;
+		border-radius: 2px;
+		font-size: 20px;
+		color: #333;
 		cursor: pointer;
-		color: var(--color-text-muted);
-		transition: all 0.15s ease;
-	}
-
-	.toggle-btn.active {
-		background: var(--color-primary);
-		color: #fff;
-	}
-
-	.toggle-btn:hover:not(.active) {
-		background: var(--color-bg);
-	}
-
-	.list-tabs {
 		display: flex;
-		gap: 0;
-		margin-bottom: 24px;
-		border-bottom: 2px solid var(--color-border);
+		align-items: center;
+		justify-content: center;
+		line-height: 1;
+		padding: 0 0 2px;
+		transition: border-color 0.15s;
+	}
+	.nav-arrow:hover { border-color: #888; }
+
+	.today-btn {
+		padding: 6px 14px;
+		background: none;
+		border: 1px solid #CCC;
+		border-radius: 2px;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: #333;
+		cursor: pointer;
+		transition: border-color 0.15s;
+	}
+	.today-btn:hover { border-color: #888; }
+
+	.filter-wrap {
+		position: relative;
+		margin-left: 10px;
 	}
 
-	.tab-btn {
-		padding: 10px 20px;
-		font-family: var(--font-heading);
-		font-size: 13px;
-		font-weight: 700;
+	.filter-btn {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 0;
 		background: none;
 		border: none;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 22px;
+		font-weight: 700;
+		color: #222;
 		cursor: pointer;
-		color: var(--color-text-muted);
-		border-bottom: 3px solid transparent;
-		margin-bottom: -2px;
-		transition: all 0.2s ease;
 	}
 
-	.tab-btn.active {
-		color: var(--color-primary);
-		border-bottom-color: var(--color-primary);
+	.caret { font-size: 13px; color: #666; }
+
+	.filter-drop {
+		position: absolute;
+		top: calc(100% + 4px);
+		left: 0;
+		background: #fff;
+		border: 1px solid #E0E0E0;
+		box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+		z-index: 50;
+		min-width: 160px;
 	}
+	.filter-drop button {
+		display: block;
+		width: 100%;
+		text-align: left;
+		padding: 10px 16px;
+		background: none;
+		border: none;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		color: #333;
+		cursor: pointer;
+	}
+	.filter-drop button:hover { background: #F7F7F7; }
+
+	/* Month label + horizontal rule */
+	.month-separator {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 10px 0;
+	}
+	.month-label {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		font-weight: 600;
+		color: #888;
+		white-space: nowrap;
+	}
+	.month-line {
+		flex: 1;
+		border: none;
+		border-top: 1px solid #E0E0E0;
+		margin: 0;
+	}
+
+	/* Bottom nav */
+	.ev-bottombar {
+		display: flex;
+		justify-content: space-between;
+		padding: 20px 0;
+		border-top: 1px solid #E0E0E0;
+		margin-top: 4px;
+	}
+	.prev-link, .next-link {
+		background: none;
+		border: none;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		color: #888;
+		cursor: pointer;
+		padding: 0;
+	}
+	.prev-link:hover, .next-link:hover { color: #333; }
+
+	/* Subscribe */
+	.subscribe-wrap {
+		display: flex;
+		justify-content: flex-end;
+		padding-top: 12px;
+	}
+	.subscribe-btn {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 20px;
+		background: #fff;
+		border: 1px solid #2D1B69;
+		border-radius: 2px;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		font-weight: 600;
+		color: #2D1B69;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	.subscribe-btn:hover { background: #F5F5FF; }
 </style>

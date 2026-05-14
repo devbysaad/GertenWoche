@@ -65,7 +65,7 @@
 
 	function highlight(text: string, q: string): string {
 		if (!q) return text;
-		const escaped = q.replace(/[.*+?^${}()|[\]\]/g, '\\$&');
+		const escaped = q.replace(/[.*+?^${}()|\[\]\\]/g, '\\$&');
 		return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
 	}
 </script>
@@ -105,7 +105,7 @@
 					oninput={onInput}
 					onkeydown={onKeydown}
 					type="search"
-					placeholder="type here..."
+					placeholder="Suche eingeben…"
 					class="search-input"
 					aria-label="Suchbegriff eingeben"
 					autocomplete="off"

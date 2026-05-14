@@ -1,34 +1,102 @@
-<script lang="ts">
-	import Breadcrumb from '$lib/components/layout/Breadcrumb.svelte';
-
-	const crumbs = [{ label: 'Impressum' }];
-</script>
-
 <svelte:head>
 	<title>Impressum | Gartenwoche</title>
-	<meta name="description" content="Impressum und Angaben gemäss Art. 5 UWG für Gartenwoche.ch." />
-	<meta name="robots" content="noindex" />
+	<meta name="robots" content="noindex, follow" />
 </svelte:head>
 
-<div class="static-page">
-	<div class="container container-narrow">
-		<Breadcrumb crumbs={crumbs} />
-		<h1 class="static-title">Impressum</h1>
-		<div class="prose">
-			<h2>Angaben gemäss Art. 5 UWG</h2>
-			<p><strong>Gartenwoche</strong><br />
-			Das unabhängige Gartenmagazin<br />
-			Schweiz</p>
+<main class="legal-page">
+	<div class="container">
+		<article class="content">
+			<h1>Impressum</h1>
 
-			<h2>Inhaber</h2>
-			<p>Peter Küng<br />
-			E-Mail: <a href="mailto:redaktion@gartenwoche.ch">redaktion@gartenwoche.ch</a></p>
+			<section>
+				<h2>Gartenwoche</h2>
+				<p>
+					<strong>Garden Media Ltd.</strong><br />
+					Via Campagna 19<br />
+					6595 Riazzino
+				</p>
+			</section>
 
-			<h2>Haftungsausschluss</h2>
-			<p>Die Inhalte unserer Seiten wurden mit grösster Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.</p>
+			<section>
+				<h2>Kontakt</h2>
+				<p>
+					Telefon: <a href="tel:+41762420025">+41 (0)76 24 200 25</a><br />
+					E-Mail: <a href="mailto:info@gartenwoche.ch">info@gartenwoche.ch</a><br />
+					Web: <a href="https://www.gartenwoche.ch">www.gartenwoche.ch</a>
+				</p>
+			</section>
 
-			<h2>Urheberrecht</h2>
-			<p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem Schweizer Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung ausserhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.</p>
-		</div>
+			<section>
+				<h2>Rechtliche Hinweise</h2>
+				
+				<h3>Haftung für Inhalte:</h3>
+				<p>Die Inhalte dieser Seiten wurden mit grösster Sorgfalt erstellt. Wir übernehmen jedoch keine Gewähr für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte.</p>
+
+				<h3>Haftung für Links:</h3>
+				<p>Unsere Website enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.</p>
+
+				<h3>Urheberrecht:</h3>
+				<p>Alle Inhalte (Texte, Bilder, Grafiken) auf diesen Seiten sind urheberrechtlich geschützt. Jede Verwertung ausserhalb der Grenzen des Urheberrechts bedarf der schriftlichen Zustimmung des jeweiligen Rechteinhabers.</p>
+			</section>
+
+		</article>
 	</div>
-</div>
+</main>
+
+<style>
+	.legal-page {
+		padding: 60px 0;
+		background: #fff;
+	}
+
+	.content {
+		max-width: 800px;
+		margin: 0 auto;
+		background: #fff;
+	}
+
+	h1 {
+		font-family: 'Roboto', sans-serif;
+		font-size: 32px;
+		font-weight: 700;
+		color: #222;
+		margin-bottom: 32px;
+	}
+
+	section {
+		margin-bottom: 32px;
+	}
+
+	h2 {
+		font-family: 'Roboto', sans-serif;
+		font-size: 20px;
+		font-weight: 700;
+		color: #2d1b69;
+		margin-bottom: 12px;
+	}
+
+	h3 {
+		font-family: 'Roboto', sans-serif;
+		font-size: 16px;
+		font-weight: 700;
+		color: #222;
+		margin: 20px 0 8px;
+	}
+
+	p {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 15px;
+		line-height: 1.6;
+		color: #444;
+		margin-bottom: 12px;
+	}
+
+	a {
+		color: #5a9e3a;
+		text-decoration: none;
+	}
+
+	a:hover {
+		text-decoration: underline;
+	}
+</style>

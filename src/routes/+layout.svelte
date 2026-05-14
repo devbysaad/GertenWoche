@@ -4,6 +4,7 @@
 	import NavPrimary from '$lib/components/layout/NavPrimary.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import LoginModal from '$lib/components/ui/LoginModal.svelte';
+	import AdSidebar from '$lib/components/ui/AdSidebar.svelte';
 	import { modalStore } from '$lib/stores/modal.store.js';
 	import { authStore } from '$lib/stores/auth.store.js';
 	import { organizationSchema, websiteSchema } from '$lib/utils/seo.js';
@@ -24,6 +25,7 @@
 	<title>Gartenwoche – Das unabhängige Gartenmagazin</title>
 	<meta name="description" content="Gartenwoche – Ihr Schweizer Gartenmagazin für Pflanzen, Gartenpraxis, Aktuelles und Veranstaltungen." />
 	<link rel="canonical" href="https://gartenwoche.ch" />
+	<meta name="robots" content="max-image-preview:large" />
 
 	<!-- Default OpenGraph -->
 	<meta property="og:title" content="Gartenwoche – Das unabhängige Gartenmagazin" />
@@ -43,8 +45,12 @@
 <!-- Modals -->
 <LoginModal open={$modalStore.loginOpen} activeTab={$modalStore.activeTab} />
 
-<!-- Page structure: Header → Nav → Main → Footer (NO TopBar) -->
-<HeaderMain weather={data.weather} />
+<!-- Fixed sidebar ads (only visible at 1540px+) -->
+<AdSidebar position="left" />
+<AdSidebar position="right" />
+
+<!-- Page structure: Header → Nav → Main → Footer -->
+<HeaderMain weather={data.weather} user={data.user} />
 <NavPrimary />
 
 <main id="main-content">
@@ -52,6 +58,8 @@
 </main>
 
 <Footer />
+
+
 
 <style>
 	:global(.skip-link) {

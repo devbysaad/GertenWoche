@@ -5,121 +5,112 @@
 		entries: DirectoryEntry[];
 	}
 	let { entries }: Props = $props();
-
-	function getInitials(name: string): string {
-		return name
-			.split(' ')
-			.slice(0, 2)
-			.map((w) => w[0])
-			.join('')
-			.toUpperCase();
-	}
 </script>
 
-<section class="directory-logos">
-	<div class="dir-header">
-		<h2 class="section-heading">Branchenverzeichnis</h2>
-		<a href="/branchenverzeichnis" class="dir-all">Alle anzeigen →</a>
-	</div>
+<section class="dir-widget" aria-label="Branchenverzeichnis">
+	<h2 class="dir-heading">Branchenverzeichnis</h2>
+	<hr class="dir-rule" />
 
-	<div class="logos-strip">
+	<ul class="dir-list">
 		{#each entries as entry}
-			<a href="/branchenverzeichnis/eintrag/{entry.slug}" class="logo-item" title={entry.name}>
-				{#if entry.logo}
-					<img src={entry.logo} alt={entry.name} loading="lazy" width="120" height="60" />
-				{:else}
-					<div class="logo-initials">
-						{getInitials(entry.name)}
+			<li class="dir-item">
+				<a href="/branchenverzeichnis/eintrag/{entry.slug}" class="dir-link">
+					<div class="dir-logo">
+						{#if entry.logo && entry.logo.trim() !== ''}
+							<img
+								src={entry.logo}
+								alt={entry.name}
+								loading="lazy"
+								width="50"
+								height="40"
+							/>
+						{:else}
+							<div class="dir-logo-ph"></div>
+						{/if}
 					</div>
-				{/if}
-				<span class="logo-name">{entry.name}</span>
-			</a>
+					<span class="dir-name">{entry.name}</span>
+				</a>
+			</li>
 		{/each}
-	</div>
+	</ul>
 </section>
 
 <style>
-	.directory-logos {
-		margin-bottom: 32px;
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		padding: 20px;
+	.dir-widget {
+		padding: 0;
+		margin: 0 0 20px;
 	}
 
-	.dir-header {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		margin-bottom: 16px;
-	}
-
-	.dir-all {
-		font-family: var(--font-heading);
-		font-size: 12px;
+	/* Heading */
+	.dir-heading {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 17px;
 		font-weight: 600;
-		color: var(--color-primary);
-		transition: opacity 0.2s;
+		color: #222;
+		margin: 0 0 4px;
+		padding-bottom: 4px;
+		border-bottom: 2px solid #E0E0E0;
+		display: inline-block;
 	}
 
-	.dir-all:hover {
-		opacity: 0.75;
-		color: var(--color-primary);
+	/* Thin grey separator */
+	.dir-rule {
+		border: none;
+		border-top: 1px solid #E0E0E0;
+		margin: 0 0 10px;
 	}
 
-	.logos-strip {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
-	}
-
-	.logo-item {
+	/* Vertical list */
+	.dir-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
 		display: flex;
 		flex-direction: column;
-		align-items: center;
 		gap: 6px;
-		padding: 10px 12px;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
-		transition: all 0.2s ease;
+	}
+
+	.dir-item { margin: 0; padding: 0; }
+
+	/* Row: logo + name side by side */
+	.dir-link {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 		text-decoration: none;
-		min-width: 110px;
 	}
+	.dir-link:hover .dir-name { color: #555; }
 
-	.logo-item:hover {
-		border-color: var(--color-primary);
-		box-shadow: 0 2px 8px rgba(45, 27, 105, 0.12);
-	}
-
-	.logo-item img {
-		max-width: 100px;
-		max-height: 50px;
-		object-fit: contain;
-	}
-
-	.logo-initials {
-		width: 64px;
+	/* Logo: 50×40, natural aspect ratio */
+	.dir-logo {
+		width: 50px;
 		height: 40px;
-		background: var(--color-primary);
-		color: #fff;
-		font-family: var(--font-heading);
-		font-size: 16px;
-		font-weight: 900;
+		flex-shrink: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--radius-sm);
+	}
+	.dir-logo img {
+		max-width: 50px;
+		max-height: 40px;
+		width: auto;
+		height: auto;
+		object-fit: contain;
+		display: block;
+	}
+	.dir-logo-ph {
+		width: 50px;
+		height: 40px;
+		background: #EBEBEB;
 	}
 
-	.logo-name {
-		font-family: var(--font-heading);
-		font-size: 10px;
-		font-weight: 600;
-		color: var(--color-text-muted);
-		text-align: center;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		max-width: 100px;
+	/* Company name */
+	.dir-name {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 15px;
+		font-weight: 400;
+		color: #222;
+		line-height: 1.3;
+		transition: color 0.15s;
 	}
 </style>

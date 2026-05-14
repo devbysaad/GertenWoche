@@ -24,32 +24,46 @@
 {#if variant === "homepage"}
 	<section class="hero-section" aria-label="Hauptartikel">
 		<div class="homepage-grid">
-			<!-- LEFT: 70% — pure image, no overlay, no gradient -->
+			<!-- LEFT: large hero image -->
 			<a href={url} class="hero-img-link" tabindex="0">
-				{#if article.thumbnail}
+				{#if article.thumbnail && article.thumbnail.trim() !== ''}
 					<img
 						src={article.thumbnail}
 						alt={article.title}
 						loading="eager"
+						fetchpriority="high"
 						class="hero-img"
 					/>
 				{:else}
-					<div class="hero-img hero-img-ph"></div>
+					<div class="hero-img hero-fallback">
+						<span class="fallback-label">{article.category.name}</span>
+					</div>
 				{/if}
 			</a>
 
-			<!-- RIGHT: 30% — mint text panel -->
-			<div class="hero-text-panel">
-				<span class="hero-cat-badge">{article.category.name}</span>
-				<a href={url} class="hero-title-link">
-					<h1 class="hero-title">{article.title}</h1>
+
+			<!-- RIGHT: 1 article — large top image + text below -->
+			{#if rightStack[0]}
+				{@const art = rightStack[0]}
+				{@const artUrl = `/${art.urlPath}`}
+				<a href={artUrl} class="hero-right-card">
+					<div class="hrc-img">
+						{#if art.thumbnail && art.thumbnail.trim() !== ''}
+							<img src={art.thumbnail} alt={art.title} loading="lazy" />
+						{:else}
+							<div class="hrc-ph"></div>
+						{/if}
+						<span class="hrc-badge">{art.category.name}</span>
+					</div>
+					<div class="hrc-body">
+						<p class="hrc-title">{art.title}</p>
+						{#if art.excerpt}
+							<p class="hrc-excerpt">{art.excerpt}</p>
+						{/if}
+						<span class="hrc-author">{art.author.name}</span>
+					</div>
 				</a>
-				<p class="hero-author">{article.author.name}</p>
-				{#if article.excerpt}
-					<p class="hero-excerpt">{article.excerpt}</p>
-				{/if}
-				<a href={url} class="hero-read-more">Mehr lesen →</a>
-			</div>
+			{/if}
 		</div>
 	</section>
 
@@ -65,14 +79,14 @@
 					{@const artUrl = `/${art.urlPath}`}
 					<a href={artUrl} class="side-card">
 						<div class="side-img">
-							{#if art.thumbnail}
+							{#if art.thumbnail && art.thumbnail.trim() !== ''}
 								<img
 									src={art.thumbnail}
 									alt={art.title}
 									loading="lazy"
 								/>
 							{:else}
-								<div class="img-ph"></div>
+								<div class="img-ph img-gradient"></div>
 							{/if}
 						</div>
 						<div class="side-overlay">
@@ -88,14 +102,15 @@
 			<!-- CENTER: large hero -->
 			<a href={url} class="mosaic-center">
 				<div class="center-img">
-					{#if article.thumbnail}
+					{#if article.thumbnail && article.thumbnail.trim() !== ''}
 						<img
 							src={article.thumbnail}
 							alt={article.title}
 							loading="eager"
+							fetchpriority="high"
 						/>
 					{:else}
-						<div class="img-ph"></div>
+						<div class="img-ph img-gradient"></div>
 					{/if}
 				</div>
 				<div class="center-overlay">
@@ -111,14 +126,14 @@
 					{@const artUrl = `/${art.urlPath}`}
 					<a href={artUrl} class="side-card">
 						<div class="side-img">
-							{#if art.thumbnail}
+							{#if art.thumbnail && art.thumbnail.trim() !== ''}
 								<img
 									src={art.thumbnail}
 									alt={art.title}
 									loading="lazy"
 								/>
 							{:else}
-								<div class="img-ph"></div>
+								<div class="img-ph img-gradient"></div>
 							{/if}
 						</div>
 						<div class="side-overlay">
@@ -139,11 +154,11 @@
 		margin-bottom: 28px;
 	}
 
-	/* ── Category badge (shared) ── */
+	/* ── Category badge (mosaic shared) ── */
 	.cat-badge {
 		display: inline-block;
-		background: #f7c900;
-		color: #222;
+		background: rgba(0,0,0,0.65);
+		color: #fff;
 		font-family: "Roboto", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
@@ -163,16 +178,37 @@
 		height: 100%;
 		background: #333;
 	}
+	.img-gradient {
+		background: linear-gradient(135deg, #1a3a2a 0%, #2a2a2a 100%);
+	}
+
+	/* Homepage hero fallback */
+	.hero-fallback {
+		background: linear-gradient(135deg, #2a2a2a 0%, #444 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.fallback-label {
+		font-family: 'Roboto', sans-serif;
+		font-size: 24px;
+		font-weight: 900;
+		color: rgba(255, 255, 255, 0.25);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+	}
 
 	/* ══════════════════════════════════════
 	   HOMEPAGE: 70% image | 30% text panel
 	   ══════════════════════════════════════ */
 	.homepage-grid {
 		display: grid;
-		grid-template-columns: 70% 30%;
+		grid-template-columns: 65% 35%;
 		gap: 0;
 		height: 460px;
 		margin-bottom: 28px;
+		border: 1px solid #E0E0E0;
+		overflow: hidden;
 	}
 
 	/* LEFT: pure image link — no overlay, no gradient */
@@ -196,7 +232,7 @@
 	.hero-img-ph {
 		width: 100%;
 		height: 100%;
-		background: #e0e0e0;
+		background: #ccc;
 	}
 
 	/* RIGHT: mint-tinted text panel */
@@ -210,11 +246,11 @@
 		overflow: hidden;
 	}
 
-	/* Badge */
+	/* Badge in hero — neutral dark */
 	.hero-cat-badge {
 		display: inline-block;
-		background: #f7c900;
-		color: #2d1b69;
+		background: #333;
+		color: #fff;
 		font-family: "Roboto", sans-serif;
 		font-size: 11px;
 		font-weight: 700;
@@ -242,9 +278,7 @@
 		overflow: hidden;
 		transition: color 0.15s;
 	}
-	.hero-title-link:hover .hero-title {
-		color: #2d1b69;
-	}
+	.hero-title-link:hover .hero-title { color: #444; }
 
 	/* Author */
 	.hero-author {
@@ -272,13 +306,102 @@
 	.hero-read-more {
 		font-family: "Roboto", sans-serif;
 		font-size: 13px;
-		color: #2d1b69;
+		color: #555;
 		text-decoration: none;
 		margin-top: auto;
-		transition: opacity 0.15s;
+		transition: color 0.15s;
 	}
-	.hero-read-more:hover {
-		opacity: 0.7;
+	.hero-read-more:hover { color: #222; }
+
+	/* ── RIGHT CARD: 1 article, large image + text ── */
+	.hero-right-card {
+		display: flex;
+		flex-direction: column;
+		text-decoration: none;
+		overflow: hidden;
+		height: 100%;
+		border-left: 1px solid #E0E0E0;
+		background: #fff;
+		transition: background 0.15s;
+	}
+	.hero-right-card:hover { background: #fafafa; }
+
+	/* Image: top portion, fills width */
+	.hrc-img {
+		position: relative;
+		flex: 0 0 55%;
+		overflow: hidden;
+		background: #e0e0e0;
+	}
+	.hrc-img img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+		transition: transform 0.3s ease;
+	}
+	.hero-right-card:hover .hrc-img img { transform: scale(1.04); }
+	.hrc-ph {
+		width: 100%;
+		height: 100%;
+		background: #e0e0e0;
+	}
+
+	/* Badge overlaid bottom-left of the image */
+	.hrc-badge {
+		position: absolute;
+		bottom: 8px;
+		left: 10px;
+		font-family: "Roboto", sans-serif;
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #fff;
+		background: rgba(0,0,0,0.55);
+		padding: 2px 7px;
+		border-radius: 2px;
+	}
+
+	/* Body: title + excerpt + author */
+	.hrc-body {
+		flex: 1;
+		padding: 14px 16px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		overflow: hidden;
+	}
+	.hrc-title {
+		font-family: "Roboto", sans-serif;
+		font-size: 16px;
+		font-weight: 700;
+		color: #222;
+		margin: 0;
+		line-height: 1.35;
+		display: -webkit-box;
+		-webkit-line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		transition: color 0.15s;
+	}
+	.hero-right-card:hover .hrc-title { color: #444; }
+	.hrc-excerpt {
+		font-family: "Open Sans", sans-serif;
+		font-size: 13px;
+		color: #555;
+		margin: 0;
+		line-height: 1.5;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.hrc-author {
+		font-family: "Open Sans", sans-serif;
+		font-size: 11px;
+		color: #999;
+		margin-top: auto;
 	}
 
 	/* ══════════════════════════════════════
@@ -411,9 +534,14 @@
 		.hero-img-link {
 			height: 300px;
 		}
-		.hero-text-panel {
-			padding: 20px 16px;
+		.hero-text-panel { padding: 20px 16px; }
+		.hero-right-card {
+			border-left: none;
+			border-top: 1px solid #E0E0E0;
+			height: auto;
+			min-height: 200px;
 		}
+		.hrc-img { flex: 0 0 140px; }
 		.mosaic-grid {
 			grid-template-columns: 1fr;
 			height: auto;
@@ -430,18 +558,39 @@
 			order: -1;
 		}
 	}
-	@media (max-width: 480px) {
+	@media (max-width: 700px) {
+		.homepage-grid {
+			grid-template-columns: 1fr;
+			grid-template-rows: 240px auto;
+			height: auto;
+		}
+		.hero-img-link { height: 240px; }
+		.hero-right-card {
+			border-left: none;
+			border-top: 1px solid #E0E0E0;
+			flex-direction: row;
+			height: 130px;
+		}
+		.hrc-img {
+			flex: 0 0 120px;
+		}
+		.hrc-body { padding: 10px 12px; }
 		.mosaic-side {
 			grid-template-columns: 1fr;
 		}
-		.side-card {
-			height: 140px;
-		}
+		.side-card { height: 140px; }
 		.mosaic-center {
 			height: 220px;
+			order: -1;
 		}
-		.hero-img-link {
-			height: 220px;
+	}
+	@media (max-width: 480px) {
+		.homepage-grid {
+			grid-template-rows: 200px auto;
 		}
+		.hero-img-link { height: 200px; }
+		.mosaic-side { grid-template-columns: 1fr; }
+		.side-card { height: 140px; }
+		.mosaic-center { height: 220px; }
 	}
 </style>

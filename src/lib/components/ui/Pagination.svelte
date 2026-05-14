@@ -96,15 +96,14 @@
 		font-family: 'Roboto', sans-serif !important;
 		font-size: 13px !important;
 		font-weight: 400 !important;
-		color: #2D1B69 !important;
+		color: #555 !important;
 		text-decoration: none !important;
 		line-height: 1 !important;
 		cursor: pointer;
 		transition: opacity 0.15s;
 	}
 	.gw-arrow:hover {
-		opacity: 0.7;
-		color: #2D1B69 !important;
+		color: #222 !important;
 	}
 
 	.gw-numbers {
@@ -131,11 +130,11 @@
 		transition: color 0.15s;
 	}
 	.gw-num:hover {
-		color: #2D1B69 !important;
+		color: #222 !important;
 	}
 
 	.gw-num.gw-current {
-		color: #2D1B69 !important;
+		color: #5a9e3a !important;
 		font-weight: 700 !important;
 		pointer-events: none;
 		cursor: default;

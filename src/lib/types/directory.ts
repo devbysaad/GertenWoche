@@ -5,9 +5,10 @@ export interface DirectoryEntry {
 	logo: string;
 	description: string;
 	address: string;
+	zip?: string;
 	city?: string;
 	country?: string;
-	phone?: string;
+	phone?: string[];    // array — some entries have 2 numbers
 	email?: string;
 	website?: string;
 	category: string;

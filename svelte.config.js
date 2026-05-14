@@ -38,7 +38,7 @@ const config = {
 				'font-src': ['self', 'https://fonts.gstatic.com'],
 				'img-src': ['self', 'data:', 'https:', 'blob:'],
 				'connect-src': ['self', 'https://gartenwoche.ch', 'https://api.openweathermap.org'],
-				'frame-src': ['https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://player.vimeo.com'],
+				'frame-src': ['https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://player.vimeo.com', 'https://www.awin1.com'],
 				'media-src': ['self', 'https://vimeo.com', 'https://*.vimeocdn.com'],
 				'object-src': ['none'],
 				'base-uri': ['self'],

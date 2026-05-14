@@ -2,203 +2,157 @@
 	import type { GartenEvent } from "$lib/types/index.js";
 	import { formatGermanDateRange } from "$lib/utils/date.js";
 
+	const DAYS = ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'];
+
 	interface Props {
 		event: GartenEvent;
 	}
 	let { event }: Props = $props();
+
+	const dayName = $derived(DAYS[event.startDate.getDay()]);
+	const dayNum  = $derived(event.startDate.getDate());
+	const dateRange = $derived(formatGermanDateRange(event.startDate, event.endDate));
+
+	// Truncate description to ~250 chars
+	const excerpt = $derived(() => {
+		if (!event.description) return '';
+		const text = event.description.replace(/<[^>]+>/g, '');
+		return text.length > 260 ? text.slice(0, 257) + ' [...]' : text;
+	});
 </script>
 
-<a href="/veranstaltung/{event.slug}" class="event-card">
-	<div class="event-date-col">
-		<div class="event-badge">
-			<span class="badge-day">{event.startDate.getDate()}</span>
-			<span class="badge-month"
-				>{event.startDate.toLocaleDateString("de-DE", {
-					month: "short",
-				})}</span
-			>
-		</div>
+<article class="ev-row">
+	<!-- Left: day number -->
+	<div class="ev-date-col">
+		<span class="ev-dayname">{dayName}</span>
+		<span class="ev-daynum">{dayNum}</span>
 	</div>
 
-	<div class="event-thumb">
-		{#if event.thumbnail}
-			<img
-				src={event.thumbnail}
-				alt={event.title}
-				loading="lazy"
-				width="120"
-				height="80"
-			/>
-		{:else}
-			<div class="thumb-placeholder"></div>
+	<!-- Middle: content -->
+	<div class="ev-content">
+		<p class="ev-range">{dateRange}</p>
+		<h3 class="ev-title">
+			<a href="/veranstaltung/{event.slug}">{event.title}</a>
+		</h3>
+		{#if event.city || event.location}
+			<p class="ev-loc">
+				<strong>{event.city || event.location}</strong>
+				{#if event.address}, {event.address}{/if}
+				{#if event.country && event.country !== 'Schweiz'},{event.country}{/if}
+			</p>
+		{/if}
+		{#if excerpt()}
+			<p class="ev-desc">{excerpt()}</p>
 		{/if}
 	</div>
 
-	<div class="event-info">
-		<h3 class="event-title">{event.title}</h3>
-		<div class="event-meta">
-			<span class="event-location">
-				<svg
-					width="12"
-					height="12"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2.5"
-				>
-					<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-					<circle cx="12" cy="10" r="3" />
-				</svg>
-				{event.city || event.location}
-				{#if event.country && event.country !== "Schweiz"}
-					, {event.country}
-				{/if}
-			</span>
-			<span class="event-dates">
-				{formatGermanDateRange(event.startDate, event.endDate)}
-			</span>
+	<!-- Right: image -->
+	{#if event.thumbnail}
+		<div class="ev-img-col">
+			<a href="/veranstaltung/{event.slug}" tabindex="-1" aria-hidden="true">
+				<img src={event.thumbnail} alt={event.title} loading="lazy" />
+			</a>
 		</div>
-		{#if event.organizer}
-			<span class="event-organizer">Veranstalter: {event.organizer}</span>
-		{/if}
-	</div>
-
-	<div class="event-arrow">
-		<svg
-			width="16"
-			height="16"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2.5"
-		>
-			<polyline points="9 18 15 12 9 6" />
-		</svg>
-	</div>
-</a>
+	{/if}
+</article>
 
 <style>
-	.event-card {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-		padding: 16px;
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		text-decoration: none;
-		transition: all 0.2s ease;
+	.ev-row {
+		display: grid;
+		grid-template-columns: 56px 1fr auto;
+		gap: 24px;
+		padding: 24px 0;
+		border-top: 1px solid #E0E0E0;
+		align-items: start;
 	}
 
-	.event-card:hover {
-		box-shadow: 0 4px 16px rgba(45, 27, 105, 0.1);
-		border-color: var(--color-primary);
-		transform: translateY(-1px);
-	}
-
-	.event-date-col {
-		flex-shrink: 0;
-	}
-
-	.event-badge {
-		background: var(--color-primary);
-		color: #fff;
-		width: 54px;
-		height: 54px;
-		border-radius: var(--radius-sm);
+	/* Date column */
+	.ev-date-col {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		line-height: 1;
-		gap: 2px;
+		padding-top: 2px;
 	}
 
-	.badge-day {
-		font-family: var(--font-heading);
-		font-size: 22px;
-		font-weight: 900;
-	}
-
-	.badge-month {
-		font-family: var(--font-heading);
-		font-size: 11px;
-		font-weight: 600;
+	.ev-dayname {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 12px;
+		font-weight: 400;
+		color: #888;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 	}
 
-	.event-thumb {
-		flex-shrink: 0;
-		width: 120px;
-		height: 80px;
-		border-radius: var(--radius-sm);
-		overflow: hidden;
+	.ev-daynum {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 36px;
+		font-weight: 300;
+		color: #222;
+		line-height: 1;
+		margin-top: 2px;
 	}
 
-	.event-thumb img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
+	/* Content */
+	.ev-content { min-width: 0; }
+
+	.ev-range {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: #888;
+		margin: 0 0 4px;
 	}
 
-	.thumb-placeholder {
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(135deg, #e0e0e0, #ececec);
-	}
-
-	.event-info {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-
-	.event-title {
-		font-family: var(--font-heading);
-		font-size: 16px;
+	.ev-title {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 19px;
 		font-weight: 700;
-		color: var(--color-text);
-		margin: 0;
+		color: #222;
+		margin: 0 0 8px;
 		line-height: 1.3;
 	}
 
-	.event-meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
+	.ev-title a {
+		text-decoration: none;
+		color: inherit;
 	}
 
-	.event-location,
-	.event-dates {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		font-family: var(--font-body);
-		font-size: 13px;
-		color: var(--color-text-muted);
+	.ev-title a:hover {
+		color: #5a9e3a;
 	}
 
-	.event-organizer {
-		font-family: var(--font-body);
-		font-size: 12px;
-		color: var(--color-text-faint);
+	.ev-loc {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		color: #333;
+		margin: 0 0 10px;
 	}
 
-	.event-arrow {
+	.ev-desc {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		line-height: 1.6;
+		color: #555;
+		margin: 0;
+	}
+
+	/* Image */
+	.ev-img-col {
+		width: 160px;
 		flex-shrink: 0;
-		color: var(--color-text-faint);
-		transition: color 0.2s ease;
 	}
 
-	.event-card:hover .event-arrow {
-		color: var(--color-primary);
+	.ev-img-col img {
+		display: block;
+		width: 160px;
+		height: 120px;
+		object-fit: cover;
 	}
 
-	@media (max-width: 599px) {
-		.event-thumb {
+	@media (max-width: 700px) {
+		.ev-row {
+			grid-template-columns: 48px 1fr;
+		}
+		.ev-img-col {
 			display: none;
 		}
 	}

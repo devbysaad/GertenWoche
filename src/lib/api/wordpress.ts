@@ -39,7 +39,18 @@ interface WpPost {
 	tags: number[];
 	comment_count: number;
 	_embedded?: {
-		'wp:featuredmedia'?: Array<{ source_url: string; alt_text?: string }>;
+		'wp:featuredmedia'?: Array<{
+			source_url: string;
+			alt_text?: string;
+			media_details?: {
+				sizes?: {
+					full?: { source_url: string };
+					large?: { source_url: string };
+					medium_large?: { source_url: string };
+					medium?: { source_url: string };
+				};
+			};
+		}>;
 		author?: Array<{ id: number; name: string; slug: string; avatar_urls?: Record<string, string>; description?: string }>;
 		'wp:term'?: Array<Array<{ id: number; name: string; slug: string; taxonomy: string }>>;
 	};
@@ -260,8 +271,15 @@ function transformPost(
 	}
 	if (!author) author = authors[0] ?? FALLBACK_AUTHORS[0];
 
-	// --- Critical fix: use _embedded featured media ---
-	const thumbnail = embedded?.['wp:featuredmedia']?.[0]?.source_url ?? '';
+	// --- Critical fix: use _embedded featured media with fallback chain ---
+	const featuredMedia = embedded?.['wp:featuredmedia']?.[0];
+	const thumbnail =
+		featuredMedia?.source_url
+		?? featuredMedia?.media_details?.sizes?.full?.source_url
+		?? featuredMedia?.media_details?.sizes?.large?.source_url
+		?? featuredMedia?.media_details?.sizes?.medium_large?.source_url
+		?? featuredMedia?.media_details?.sizes?.medium?.source_url
+		?? '';
 
 	const tags = tagTerms.map((t) => t.slug);
 	const rawExcerpt = stripHtml(wpPost.excerpt.rendered).slice(0, 180);

@@ -66,7 +66,7 @@
 		position: relative;
 		padding-bottom: 62%; /* ~16:10 like live site */
 		overflow: hidden;
-		background: #e8e8e8;
+		background: #e0e0e0;
 	}
 
 	.card-thumb img {
@@ -85,7 +85,7 @@
 	.thumb-placeholder {
 		position: absolute;
 		inset: 0;
-		background: #e0e0e0;
+		background: #ddd;
 	}
 
 	/* Category badge — overlaid bottom-left of image */
@@ -94,7 +94,13 @@
 		bottom: 8px;
 		left: 8px;
 		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: #fff;
+		background: rgba(0,0,0,0.55);
 		padding: 2px 7px;
+		border-radius: 2px;
 		z-index: 1;
 	}
 
@@ -127,9 +133,7 @@
 		transition: color 0.15s ease;
 	}
 
-	.card-title a:hover {
-		color: #2D1B69;
-	}
+	.card-title a:hover { color: #444; }
 
 	.card-excerpt {
 		font-family: Verdana, Geneva, sans-serif;

@@ -137,8 +137,8 @@
 		left: 8px;
 		z-index: 2;
 		display: inline-block;
-		background: #F7C900;
-		color: #2D1B69;
+		background: rgba(0,0,0,0.65);
+		color: #ffffff;
 		font-family: 'Roboto', sans-serif;
 		font-size: 11px;
 		font-weight: 700;
@@ -246,8 +246,8 @@
 		left: 6px;
 		z-index: 1;
 		display: inline-block;
-		background: #F7C900;
-		color: #2D1B69;
+		background: rgba(0,0,0,0.65);
+		color: #ffffff;
 		font-family: 'Roboto', sans-serif;
 		font-size: 10px;
 		font-weight: 700;
@@ -276,7 +276,7 @@
 		overflow: hidden;
 		transition: color 0.15s;
 	}
-	.rem-card:hover .rem-title { color: #2D1B69; }
+	.rem-card:hover .rem-title { color: #222; }
 
 	/* "Von Author · Date": Open Sans 12px #555 */
 	.rem-meta {

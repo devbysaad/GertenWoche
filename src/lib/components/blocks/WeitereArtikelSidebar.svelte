@@ -155,7 +155,7 @@
 	.thumb-ph {
 		width: 100%;
 		height: 100%;
-		background: #e0e0e0;
+		background: linear-gradient(135deg, #1a3a2a 0%, #2D1B69 100%);
 	}
 
 	/* Text: flows to the right of the float */
