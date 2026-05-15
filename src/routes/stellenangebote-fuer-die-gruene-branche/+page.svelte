@@ -1,5 +1,8 @@
 <script lang="ts">
+	import type { JobListing } from '$lib/types/index.js';
 	import Breadcrumb from '$lib/components/layout/Breadcrumb.svelte';
+
+	let { data } = $props();
 
 	const crumbs = [{ label: 'Stellenangebote für die grüne Branche' }];
 
@@ -14,27 +17,31 @@
 		'Vollzeit 80-100%'
 	];
 
-	let keyword = $state('');
-	let location = $state('');
-	let selectedTypes = $state(new Set(JOB_TYPES));
-	let searched = $state(false);
+	// Client-side filter state (pre-populated from server filter)
+	let keyword  = $state(data.filter.keyword);
+	let location = $state(data.filter.location);
+	let selectedType = $state(data.filter.type ?? '');
 
-	function toggleType(type: string) {
-		const next = new Set(selectedTypes);
-		if (next.has(type)) next.delete(type);
-		else next.add(type);
-		selectedTypes = next;
-	}
-
-	function search() {
-		searched = true;
-	}
+	// Live-filter the server-side results on the client
+	const filtered = $derived(
+		data.jobs.filter((job: JobListing) => {
+			const kw = keyword.toLowerCase();
+			const loc = location.toLowerCase();
+			const matchKw  = !kw  || job.title.toLowerCase().includes(kw) || job.company.toLowerCase().includes(kw);
+			const matchLoc = !loc || job.location.toLowerCase().includes(loc);
+			const matchType = !selectedType || job.type === selectedType;
+			return matchKw && matchLoc && matchType;
+		})
+	);
 
 	function reset() {
 		keyword = '';
 		location = '';
-		selectedTypes = new Set(JOB_TYPES);
-		searched = false;
+		selectedType = '';
+	}
+
+	function formatDate(d: Date): string {
+		return new Date(d).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' });
 	}
 </script>
 
@@ -46,7 +53,6 @@
 <div class="jobs-page">
 	<div class="container">
 		<Breadcrumb crumbs={crumbs} />
-
 		<h1 class="page-title">Stellenangebote in der grünen Branche</h1>
 
 		<!-- Search form -->
@@ -55,7 +61,7 @@
 				<input
 					type="text"
 					bind:value={keyword}
-					placeholder="Volltext"
+					placeholder="Volltext (Stellentitel, Firma…)"
 					class="search-input"
 					aria-label="Stichwort"
 				/>
@@ -67,20 +73,18 @@
 					aria-label="Ort"
 				/>
 			</div>
-			<button class="search-btn" onclick={search} type="button">
-				Jobs suchen
-			</button>
+			<button class="search-btn" type="button">Jobs suchen</button>
 		</div>
 
-		<!-- Employment type checkboxes -->
+		<!-- Employment type filters -->
 		<div class="type-filters" role="group" aria-label="Beschäftigungsart">
+			<label class="type-check">
+				<input type="radio" name="job-type" value="" bind:group={selectedType} />
+				Alle
+			</label>
 			{#each JOB_TYPES as type}
 				<label class="type-check">
-					<input
-						type="checkbox"
-						checked={selectedTypes.has(type)}
-						onchange={() => toggleType(type)}
-					/>
+					<input type="radio" name="job-type" value={type} bind:group={selectedType} />
 					{type}
 				</label>
 			{/each}
@@ -89,18 +93,72 @@
 		<!-- Results bar -->
 		<div class="results-bar">
 			<span class="results-count">
-				Suche abgeschlossen. 0 passende Einträge gefunden.
+				{filtered.length} {filtered.length === 1 ? 'Eintrag' : 'Einträge'} gefunden
 			</span>
 			<div class="results-actions">
-				<a href="/stellenangebote-fuer-die-gruene-branche/rss" class="action-link">RSS</a>
 				<button class="action-link" onclick={reset} type="button">Zurücksetzen</button>
 			</div>
 		</div>
 
-		<!-- Empty state -->
-		<div class="empty-state">
-			<p>Es gibt keine Einträge, die Ihrer Suche entsprechen.</p>
-		</div>
+		<!-- Job listings -->
+		{#if filtered.length === 0}
+			<div class="empty-state">
+				{#if data.jobs.length === 0}
+					<p>Aktuell sind keine Stellenangebote eingetragen.</p>
+				{:else}
+					<p>Es gibt keine Einträge, die Ihrer Suche entsprechen.</p>
+				{/if}
+			</div>
+		{:else}
+			<div class="jobs-list">
+				{#each filtered as job}
+					<a href={job.url} target="_blank" rel="noopener noreferrer" class="job-card">
+						<!-- Logo -->
+						<div class="job-logo">
+							{#if job.logo}
+								<img src={job.logo} alt={job.company} width="56" height="56" />
+							{:else}
+								<div class="logo-placeholder">
+									{job.company.charAt(0).toUpperCase()}
+								</div>
+							{/if}
+						</div>
+
+						<!-- Content -->
+						<div class="job-body">
+							<div class="job-top">
+								<h2 class="job-title">{job.title}</h2>
+								<span class="job-type-badge">{job.type}</span>
+							</div>
+							<div class="job-meta">
+								<span class="job-company">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+									{job.company}
+								</span>
+								{#if job.location}
+									<span class="job-location">
+										<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+										{job.location}
+									</span>
+								{/if}
+								<span class="job-date">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+									{formatDate(job.postedAt)}
+								</span>
+							</div>
+							{#if job.excerpt}
+								<p class="job-excerpt">{job.excerpt}</p>
+							{/if}
+						</div>
+
+						<!-- CTA -->
+						<div class="job-cta">
+							<span class="apply-btn">Bewerben →</span>
+						</div>
+					</a>
+				{/each}
+			</div>
+		{/if}
 
 		<!-- Post a job CTA -->
 		<div class="post-job">
@@ -124,7 +182,7 @@
 		margin: 0 0 20px;
 	}
 
-	/* Search box */
+	/* ── Search ── */
 	.search-box {
 		border: 1px solid #ccc;
 		margin-bottom: 0;
@@ -146,14 +204,8 @@
 		outline: none;
 		width: 100%;
 	}
-
-	.search-input:last-child {
-		border-right: none;
-	}
-
-	.search-input::placeholder {
-		color: #aaa;
-	}
+	.search-input:last-child { border-right: none; }
+	.search-input::placeholder { color: #aaa; }
 
 	.search-btn {
 		display: block;
@@ -166,15 +218,11 @@
 		font-weight: 700;
 		border: none;
 		cursor: pointer;
-		text-align: center;
 		transition: background 0.15s;
 	}
+	.search-btn:hover { background: #333; }
 
-	.search-btn:hover {
-		background: #333;
-	}
-
-	/* Type filters */
+	/* ── Type filters ── */
 	.type-filters {
 		display: flex;
 		flex-wrap: wrap;
@@ -194,15 +242,12 @@
 		cursor: pointer;
 		white-space: nowrap;
 	}
-
-	.type-check input[type="checkbox"] {
-		accent-color: #2D6A4F;
-		width: 14px;
-		height: 14px;
+	.type-check input[type="radio"] {
+		accent-color: #5a9e3a;
 		cursor: pointer;
 	}
 
-	/* Results bar */
+	/* ── Results bar ── */
 	.results-bar {
 		display: flex;
 		align-items: center;
@@ -218,40 +263,152 @@
 		color: #555;
 	}
 
-	.results-actions {
-		display: flex;
-		gap: 12px;
-	}
-
 	.action-link {
 		font-family: 'Open Sans', sans-serif;
 		font-size: 13px;
 		color: #5a9e3a;
-		text-decoration: none;
 		background: none;
 		border: none;
 		cursor: pointer;
 		padding: 0;
 	}
+	.action-link:hover { text-decoration: underline; }
 
-	.action-link:hover {
-		text-decoration: underline;
+	/* ── Job cards ── */
+	.jobs-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		background: #E0E0E0;
+		border: 1px solid #E0E0E0;
 	}
 
-	/* Empty state */
+	.job-card {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 16px 20px;
+		background: #fff;
+		text-decoration: none;
+		transition: background 0.15s;
+	}
+	.job-card:hover { background: #fafafa; }
+
+	.job-logo {
+		flex-shrink: 0;
+		width: 56px;
+		height: 56px;
+	}
+	.job-logo img {
+		width: 56px;
+		height: 56px;
+		object-fit: contain;
+		border: 1px solid #E8E8E8;
+		border-radius: 4px;
+		background: #fff;
+		padding: 4px;
+	}
+	.logo-placeholder {
+		width: 56px;
+		height: 56px;
+		background: #E8F5E9;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: 'Roboto', sans-serif;
+		font-size: 22px;
+		font-weight: 700;
+		color: #5a9e3a;
+	}
+
+	.job-body { flex: 1; min-width: 0; }
+
+	.job-top {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 6px;
+	}
+
+	.job-title {
+		font-family: 'Roboto', sans-serif;
+		font-size: 15px;
+		font-weight: 700;
+		color: #222;
+		margin: 0;
+		line-height: 1.3;
+	}
+	.job-card:hover .job-title { color: #5a9e3a; }
+
+	.job-type-badge {
+		flex-shrink: 0;
+		font-family: 'Roboto', sans-serif;
+		font-size: 11px;
+		font-weight: 600;
+		color: #555;
+		background: #F0F0F0;
+		padding: 2px 8px;
+		border-radius: 2px;
+		white-space: nowrap;
+	}
+
+	.job-meta {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 12px;
+		margin-bottom: 4px;
+	}
+
+	.job-company,
+	.job-location,
+	.job-date {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 12px;
+		color: #666;
+	}
+
+	.job-excerpt {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: #555;
+		margin: 4px 0 0;
+		line-height: 1.5;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.job-cta {
+		flex-shrink: 0;
+	}
+	.apply-btn {
+		font-family: 'Roboto', sans-serif;
+		font-size: 12px;
+		font-weight: 700;
+		color: #5a9e3a;
+		white-space: nowrap;
+	}
+
+	/* ── Empty state ── */
 	.empty-state {
-		padding: 12px 0 24px;
+		padding: 32px 0;
+		text-align: center;
 	}
-
 	.empty-state p {
 		font-family: 'Open Sans', sans-serif;
 		font-size: 14px;
-		font-style: italic;
-		color: #5a9e3a;
+		color: #888;
 		margin: 0;
 	}
 
-	/* Post job */
+	/* ── Post job CTA ── */
 	.post-job {
 		margin-top: 40px;
 		padding-top: 24px;
@@ -260,14 +417,12 @@
 		align-items: center;
 		gap: 16px;
 	}
-
 	.post-job p {
 		font-family: 'Open Sans', sans-serif;
 		font-size: 14px;
 		color: #555;
 		margin: 0;
 	}
-
 	.post-link {
 		font-family: 'Open Sans', sans-serif;
 		font-size: 14px;
@@ -275,27 +430,14 @@
 		color: #5a9e3a;
 		text-decoration: none;
 	}
+	.post-link:hover { text-decoration: underline; }
 
-	.post-link:hover {
-		text-decoration: underline;
-	}
-
-	/* Responsive */
-	@media (max-width: 600px) {
-		.search-inputs {
-			grid-template-columns: 1fr;
-		}
-		.search-input {
-			border-right: none;
-			border-bottom: 1px solid #ccc;
-		}
-		.type-filters {
-			gap: 6px 12px;
-		}
-		.results-bar {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 6px;
-		}
+	/* ── Responsive ── */
+	@media (max-width: 700px) {
+		.search-inputs { grid-template-columns: 1fr; }
+		.search-input { border-right: none; border-bottom: 1px solid #ccc; }
+		.job-card { flex-wrap: wrap; }
+		.job-cta { display: none; }
+		.job-top { flex-direction: column; }
 	}
 </style>

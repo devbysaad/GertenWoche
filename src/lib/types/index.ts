@@ -4,3 +4,4 @@ export type { Author } from './author.js';
 export type { GartenEvent } from './event.js';
 export type { DirectoryEntry } from './directory.js';
 export type { User } from './user.js';
+export type { JobListing } from './job.js';

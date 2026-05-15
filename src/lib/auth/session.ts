@@ -34,10 +34,10 @@ function b64url(buf: ArrayBuffer): string {
 
 async function signToken(payload: SessionPayload): Promise<string> {
 	const key = await getCryptoKey();
-	const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: 'HS256' })));
-	const body = b64url(new TextEncoder().encode(JSON.stringify(payload)));
+	const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: 'HS256' })).buffer as ArrayBuffer);
+	const body = b64url(new TextEncoder().encode(JSON.stringify(payload)).buffer as ArrayBuffer);
 	const sig = b64url(
-		await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${header}.${body}`))
+		await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${header}.${body}`).buffer as ArrayBuffer)
 	);
 	return `${header}.${body}.${sig}`;
 }

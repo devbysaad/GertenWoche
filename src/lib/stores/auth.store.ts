@@ -26,19 +26,20 @@ function createAuthStore() {
 			update((s) => ({ ...s, loading }));
 		},
 
-		/** Call after successful login/register API response */
-		async login(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+		/** Call after successful login API response */
+		async login(username: string, password: string): Promise<{ ok: boolean; error?: string }> {
 			update((s) => ({ ...s, loading: true }));
 			try {
 				const res = await fetch('/api/auth/login', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ email, password })
+					body: JSON.stringify({ username, password }), // WP JWT needs `username`
+					credentials: 'include'
 				});
 				const data = await res.json();
 				if (!res.ok) {
 					update((s) => ({ ...s, loading: false }));
-					return { ok: false, error: data.message ?? 'Anmeldung fehlgeschlagen' };
+					return { ok: false, error: data.error ?? data.message ?? 'Anmeldung fehlgeschlagen' };
 				}
 				update((s) => ({ ...s, user: data.user, loading: false }));
 				return { ok: true };

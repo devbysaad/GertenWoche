@@ -6,6 +6,7 @@ export interface GartenEvent {
 	startDate: Date;
 	endDate: Date;
 	location: string;
+	address?: string;
 	city: string;
 	country: string;
 	thumbnail: string;

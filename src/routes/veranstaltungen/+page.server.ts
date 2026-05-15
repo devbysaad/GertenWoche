@@ -1,13 +1,58 @@
 import type { PageServerLoad } from './$types.js';
-import { getEvents } from '$lib/api/index.js';
+import { fetchEvents } from '$lib/api/events.js';
 
 export const load: PageServerLoad = async ({ url }) => {
-	const view = url.searchParams.get('view') ?? 'list';
-	const events = await getEvents();
+	const view   = url.searchParams.get('view')   ?? 'list';
+	const month  = url.searchParams.get('month')  ?? null;  // "2026-05"
+	const search = url.searchParams.get('search') ?? '';
 
 	const now = new Date();
-	const upcoming = events.filter((e) => e.endDate >= now);
-	const past = events.filter((e) => e.endDate < now);
 
-	return { upcoming, past, view };
+	// Determine which month to display
+	let displayDate: Date;
+	if (month) {
+		const [y, m] = month.split('-').map(Number);
+		displayDate = new Date(y, m - 1, 1);
+	} else {
+		displayDate = new Date(now.getFullYear(), now.getMonth(), 1);
+	}
+
+	const y = displayDate.getFullYear();
+	const m = displayDate.getMonth(); // 0-indexed
+
+	// Date range for the displayed month (first day .. last day)
+	const firstOfMonth = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+	const lastDay = new Date(y, m + 1, 0).getDate();
+	const lastOfMonth = `${y}-${String(m + 1).padStart(2, '0')}-${lastDay}`;
+
+	// For list view: load current month + 2 months forward (upcoming range)
+	// For month/day view: just that month
+	const isPastMonth = displayDate < new Date(now.getFullYear(), now.getMonth(), 1);
+	const isFutureMonth = displayDate > new Date(now.getFullYear(), now.getMonth(), 1);
+
+	// Extend range for list view (show 3 months of upcoming events)
+	const rangeEnd = view === 'list' && !isPastMonth
+		? `${y + (m + 3 > 11 ? 1 : 0)}-${String(((m + 3) % 12) + 1).padStart(2, '0')}-01`
+		: lastOfMonth;
+
+	const [monthEvents, upcomingEvents] = await Promise.all([
+		// Events for the selected month (calendar/day view)
+		fetchEvents({ startDate: firstOfMonth, endDate: lastOfMonth }),
+		// Upcoming events from today (list view default)
+		!month ? fetchEvents({ startDate: now.toISOString().slice(0, 10) }) : Promise.resolve([])
+	]);
+
+	// For list view without a specific month, show upcoming; otherwise show month events
+	const events = !month && view === 'list' ? upcomingEvents : monthEvents;
+
+	return {
+		events,
+		view,
+		month: month ?? `${y}-${String(m + 1).padStart(2, '0')}`,
+		displayYear: y,
+		displayMonth: m,  // 0-indexed
+		search,
+		isPastMonth,
+		totalCount: events.length
+	};
 };

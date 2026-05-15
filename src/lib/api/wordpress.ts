@@ -38,6 +38,8 @@ interface WpPost {
 	categories: number[];
 	tags: number[];
 	comment_count: number;
+	meta?: Record<string, unknown>;  // arbitrary post meta
+	acf?: Record<string, unknown>;   // ACF fields
 	_embedded?: {
 		'wp:featuredmedia'?: Array<{
 			source_url: string;
@@ -303,7 +305,12 @@ function transformPost(
 		publishedAt: new Date(wpPost.date),
 		updatedAt: new Date(wpPost.modified),
 		thumbnail,
-		isPro: false,
+		isPro:    !!(
+			wpPost.meta?.is_premium ||
+			wpPost.meta?.['_is_pro'] ||
+			wpPost.acf?.premium_content ||
+			wpPost.acf?.is_pro
+		),
 		tags,
 		commentCount: wpPost.comment_count ?? 0
 	};

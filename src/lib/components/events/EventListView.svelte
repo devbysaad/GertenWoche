@@ -7,7 +7,7 @@
 		events: GartenEvent[];
 		showPast?: boolean;
 	}
-	let { events, showPast = false }: Props = $props();
+	let { events = [], showPast = false }: Props = $props();
 
 	// Group events by month
 	const grouped = $derived(() => {

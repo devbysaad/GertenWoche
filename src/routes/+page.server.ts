@@ -2,8 +2,8 @@ import type { PageServerLoad } from './$types.js';
 import {
 	getArticles,
 	getArticlesByCategory,
-	getEvents,
 } from '$lib/api/index.js';
+import { fetchEvents } from '$lib/api/events.js';
 import { DIRECTORY_ENTRIES } from '$lib/data/directory.js';
 
 export const load: PageServerLoad = async () => {
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async () => {
 		getArticlesByCategory('pflanzenschutz', 4),
 		getArticlesByCategory('produktschau', 5),
 		getArticlesByCategory('rasen', 5),
-		getEvents(),
+		fetchEvents(),   // upcoming events via Tribe REST v1
 	]);
 
 	const directory = DIRECTORY_ENTRIES.slice(0, 8);

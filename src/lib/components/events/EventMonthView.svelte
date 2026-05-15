@@ -7,7 +7,7 @@
 		month: number; // 0-indexed
 		onNavigate: (year: number, month: number) => void;
 	}
-	let { events, year, month, onNavigate }: Props = $props();
+	let { events = [], year, month, onNavigate }: Props = $props();
 
 	const DAYS_DE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 	const MONTHS_DE = [
