@@ -79,7 +79,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// ── Resolve session from WordPress JWT cookie ──
 	try {
 		const token = event.cookies.get('wp_token');
-		event.locals.user = token ? await validateToken(token) : null;
+		if (token) {
+			// Race against a 9s timeout so slow WP never blocks page renders
+			const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 9_000));
+			event.locals.user = await Promise.race([validateToken(token), timeout]);
+		} else {
+			event.locals.user = null;
+		}
 	} catch {
 		event.locals.user = null;
 	}

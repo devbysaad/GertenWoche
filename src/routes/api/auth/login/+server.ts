@@ -14,10 +14,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
 		cookies.set('wp_token', user.token, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'strict',
-			maxAge: 60 * 60 * 24 * 7,
-			path: '/'
+			secure:   process.env.NODE_ENV === 'production',
+			sameSite: 'lax',   // 'strict' breaks cookie on any external navigation
+			maxAge:   60 * 60 * 24 * 7, // 7 days
+			path:     '/'
 		});
 
 		const { token, ...safeUser } = user;
