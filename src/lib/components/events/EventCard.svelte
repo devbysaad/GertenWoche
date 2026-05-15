@@ -9,9 +9,13 @@
 	}
 	let { event }: Props = $props();
 
-	const dayName = $derived(DAYS[event.startDate.getDay()]);
-	const dayNum  = $derived(event.startDate.getDate());
-	const dateRange = $derived(formatGermanDateRange(event.startDate, event.endDate));
+	// Normalize dates — SSR may deserialize Date objects as ISO strings
+	const startDate = $derived(event.startDate instanceof Date ? event.startDate : new Date(event.startDate as unknown as string));
+	const endDate   = $derived(event.endDate   instanceof Date ? event.endDate   : new Date(event.endDate   as unknown as string));
+
+	const dayName   = $derived(DAYS[startDate.getDay()]);
+	const dayNum    = $derived(startDate.getDate());
+	const dateRange = $derived(formatGermanDateRange(startDate, endDate));
 
 	// Truncate description to ~250 chars
 	const excerpt = $derived(() => {

@@ -7,18 +7,27 @@
 
 	let { data } = $props();
 
+	// ── Normalize dates (SSR may deserialize Date objects as strings) ──
+	function normEvent(e: any) {
+		return {
+			...e,
+			startDate: e.startDate instanceof Date ? e.startDate : new Date(e.startDate),
+			endDate:   e.endDate   instanceof Date ? e.endDate   : new Date(e.endDate)
+		};
+	}
+	const allEvents = $derived.by(() => (data.events ?? []).map(normEvent));
+
 	// ── Local state ────────────────────────────────────────────
 	let searchQuery  = $state(data.search ?? '');
 	let activeView   = $state(data.view ?? 'list');
-	let calYear      = $state(data.displayYear);
-	let calMonth     = $state(data.displayMonth); // 0-indexed
+	let calYear      = $state(data.displayYear ?? new Date().getFullYear());
+	let calMonth     = $state(data.displayMonth ?? new Date().getMonth()); // 0-indexed
 
 	// ── Filter events client-side by search query ───────────────
-	const filtered = $derived(() => {
-		const events = data.events ?? [];
-		if (!searchQuery.trim()) return events;
+	const filtered = $derived.by(() => {
+		if (!searchQuery.trim()) return allEvents;
 		const q = searchQuery.toLowerCase();
-		return events.filter(e =>
+		return allEvents.filter((e: any) =>
 			e.title.toLowerCase().includes(q) ||
 			e.description.replace(/<[^>]+>/g, '').toLowerCase().includes(q) ||
 			(e.city ?? '').toLowerCase().includes(q) ||
@@ -53,12 +62,12 @@
 	// ── Day view state ─────────────────────────────────────────
 	let selectedDay = $state<Date | null>(null);
 
-	const dayEvents = $derived(() => {
-		if (!selectedDay) return filtered();
+	const dayEvents = $derived.by(() => {
+		if (!selectedDay) return allEvents;
 		const sel = selectedDay;
-		return (data.events ?? []).filter(e => {
+		return allEvents.filter((e: any) => {
 			const start = new Date(e.startDate.getFullYear(), e.startDate.getMonth(), e.startDate.getDate());
-			const end   = new Date(e.endDate.getFullYear(), e.endDate.getMonth(), e.endDate.getDate());
+			const end   = new Date(e.endDate.getFullYear(),   e.endDate.getMonth(),   e.endDate.getDate());
 			const day   = new Date(sel.getFullYear(), sel.getMonth(), sel.getDate());
 			return day >= start && day <= end;
 		});
@@ -128,7 +137,7 @@
 
 		<!-- ═══ LIST VIEW ═══ -->
 		{#if activeView === 'list'}
-			<EventListView events={filtered()} showPast={data.isPastMonth} />
+			<EventListView events={filtered} showPast={data.isPastMonth ?? false} />
 
 			<!-- Bottom navigation -->
 			<div class="ev-bottombar">
@@ -145,7 +154,7 @@
 		<!-- ═══ MONTH VIEW ═══ -->
 		{:else if activeView === 'month'}
 			<EventMonthView
-				events={data.events ?? []}
+				events={allEvents}
 				year={calYear}
 				month={calMonth}
 				onNavigate={handleNavigate}
@@ -176,11 +185,11 @@
 				<!-- Mini month picker for day view -->
 				<div class="day-mini-cal">
 					<EventMonthView
-						events={data.events ?? []}
-						year={calYear}
-						month={calMonth}
-						onNavigate={handleNavigate}
-					/>
+						events={allEvents}
+`t`t`t`t`tyear={calYear}
+`t`t`t`t`tmonth={calMonth}
+`t`t`t`t`tonNavigate={handleNavigate}
+`t`t`t`t`t/>
 				</div>
 
 				<!-- Events for selected day -->
@@ -192,10 +201,10 @@
 							Klicken Sie auf einen Tag im Kalender
 						{/if}
 					</h3>
-					{#if dayEvents().length === 0}
+					{#if dayEvents.length === 0}
 						<p class="day-empty">Keine Veranstaltungen für diesen Tag.</p>
 					{:else}
-						<EventListView events={dayEvents()} showPast={false} />
+						<EventListView events={dayEvents} showPast={false} />
 					{/if}
 				</div>
 			</div>

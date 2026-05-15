@@ -38,8 +38,9 @@
 				today.getMonth() === month &&
 				today.getDate() === d;
 			const dayEvents = events.filter((e) => {
-				const start = e.startDate;
-				const end = e.endDate;
+				// Normalize to Date in case SSR sent strings
+				const start = e.startDate instanceof Date ? e.startDate : new Date(e.startDate as unknown as string);
+				const end   = e.endDate   instanceof Date ? e.endDate   : new Date(e.endDate   as unknown as string);
 				const cell = new Date(year, month, d);
 				return cell >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) &&
 					cell <= new Date(end.getFullYear(), end.getMonth(), end.getDate());
