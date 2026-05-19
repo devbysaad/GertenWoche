@@ -50,34 +50,7 @@
 </div>
 {/if}
 
-<!--
-	REMAINING ARTICLES — 2-column grid, gap 20px
-	White bg cards: image top (16:9), badge bottom-left on image,
-	title Roboto 15px 700, "Von Author · Date" Open Sans 12px #555
--->
-{#if remaining.length > 0}
-<div class="remaining-grid">
-	{#each remaining as article}
-		{@const url     = `/${article.urlPath}`}
-		{@const dateStr = formatGermanDate(article.publishedAt)}
-		<a href={url} class="rem-card">
-			<div class="rem-img">
-				{#if article.thumbnail}
-					<img src={article.thumbnail} alt={article.title} loading="lazy" />
-				{:else}
-					<div class="rem-img-ph"></div>
-				{/if}
-				<!-- Badge: bottom-left of image -->
-				<span class="rem-badge">{article.category.name}</span>
-			</div>
-			<div class="rem-body">
-				<p class="rem-title">{article.title}</p>
-				<p class="rem-meta">Von {article.author.name} · {dateStr}</p>
-			</div>
-		</a>
-	{/each}
-</div>
-{/if}
+
 
 <style>
 	/* ═══════════════════════════════════════════════════════

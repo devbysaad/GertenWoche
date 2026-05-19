@@ -17,9 +17,10 @@ export const load: PageServerLoad = async () => {
 		pflanzenschutz,
 		produktschau,
 		rasen,
+		aktuelles,
 		events,
 	] = await Promise.all([
-		getArticles({ limit: 20 }),
+		getArticles({ limit: 25 }),
 		getArticlesByCategory('pflanzenempfehlungen', 8),
 		getArticlesByCategory('gartenpraxis', 4),
 		getArticlesByCategory('wissen', 4),
@@ -27,6 +28,7 @@ export const load: PageServerLoad = async () => {
 		getArticlesByCategory('pflanzenschutz', 4),
 		getArticlesByCategory('produktschau', 5),
 		getArticlesByCategory('rasen', 5),
+		getArticlesByCategory('aktuelles', 3),
 		fetchEvents(),   // upcoming events via Tribe REST v1
 	]);
 
@@ -37,7 +39,7 @@ export const load: PageServerLoad = async () => {
 	const heroSide       = allArticles.slice(1, 3); // 2 right-stacked articles in hero
 	const featuredOne    = allArticles[3];           // 1 featured article below hero
 	const gridArticles   = allArticles.slice(4, 7);  // 3-col grid (3 articles)
-	const carouselArticles = allArticles.slice(7, 10);
+	const carouselArticles = allArticles.slice(7, 13); // 6 articles → 5-card mosaic + 1 below
 	const rasenMain      = rasen[0] ?? allArticles[10];
 	const rasenSecondary = rasen.slice(1, 5);
 
@@ -62,6 +64,7 @@ export const load: PageServerLoad = async () => {
 		produktschau,
 		pflanzenschutz,
 		rasenCol: rasen.slice(0, 4),
+		aktuelles,
 		directory,
 		events,
 		exclusiveArticles,

@@ -1,5 +1,7 @@
+import { env } from '$env/dynamic/private';
+
 const WP_URL          = 'https://gartenwoche.ch/wp-json';
-const JWT_ENDPOINT    = `${WP_URL}/jwt-auth/v1/token`;
+const JWT_ENDPOINT    = env.WP_JWT_AUTH_URL ?? `${WP_URL}/jwt-auth/v1/token`;
 const VALIDATE_ENDPOINT = `${WP_URL}/jwt-auth/v1/token/validate`;
 const ME_ENDPOINT     = `${WP_URL}/wp/v2/users/me`;
 const AUTH_TIMEOUT_MS = 8_000; // 8s max — prevents hanging page loads in production

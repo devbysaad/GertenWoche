@@ -469,7 +469,7 @@
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.45);
+		background: rgba(0, 0, 0, 0.6);
 		z-index: 200;
 		animation: fadeIn 0.2s ease;
 	}
@@ -542,18 +542,30 @@
 	   4. RESPONSIVE BREAKPOINTS
 	   ========================================================================= */
 	@media (max-width: 1023px) {
-		/* Hide Desktop links on both Navs */
+		/* The site-nav sits at fixed top over the header to inject hamburger into header row */
+		.site-nav {
+			position: fixed;
+			top: 0;
+			right: 0;
+			width: auto;
+			height: 64px;
+			z-index: 400;
+			background: transparent;
+			pointer-events: none;
+		}
+		.site-nav .nav-inner {
+			pointer-events: all;
+			justify-content: flex-end;
+			height: 64px;
+			padding: 0 8px;
+		}
+		/* Hide desktop link list */
 		.site-nav .nav-list,
 		.sticky-nav-bar {
 			display: none;
 		}
-
-		/* Show Hamburger on Main Nav */
-		.site-nav .nav-inner { 
-			justify-content: flex-end; 
-		}
-		.hamburger { 
-			display: flex; 
+		.hamburger {
+			display: flex;
 		}
 	}
 </style>

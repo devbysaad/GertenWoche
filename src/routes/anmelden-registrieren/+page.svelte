@@ -1,19 +1,17 @@
 <script lang="ts">
-	import { modalStore } from '$lib/stores/modal.store.js';
+	let loading    = $state(false);
+	let errorMsg   = $state('');
+	let successMsg = $state('');
+	let mode       = $state<'login' | 'register' | 'recover'>('login');
 
-	let loading     = $state(false);
-	let errorMsg    = $state('');
-	let successMsg  = $state('');
-	let activeTab   = $state<'login' | 'register' | 'recover'>('login');
+	// Login fields
+	let loginUser = $state('');
+	let loginPw   = $state('');
 
-	// Login
-	let loginEmail    = $state('');
-	let loginPassword = $state('');
-
-	// Register
-	let regEmail    = $state('');
-	let regName     = $state('');
-	let regPassword = $state('');
+	// Register fields
+	let regEmail = $state('');
+	let regName  = $state('');
+	let regPw    = $state('');
 
 	// Recover
 	let recoverEmail = $state('');
@@ -27,12 +25,12 @@
 			const res = await fetch('/api/auth/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+				body: JSON.stringify({ username: loginUser, password: loginPw }),
 				credentials: 'include'
 			});
 			if (!res.ok) {
 				const d = await res.json().catch(() => ({}));
-				errorMsg = d?.message ?? 'Anmeldung fehlgeschlagen.';
+				errorMsg = d?.error ?? d?.message ?? 'Anmeldung fehlgeschlagen.';
 			} else {
 				window.location.href = '/mein-konto';
 			}
@@ -47,7 +45,7 @@
 			const res = await fetch('/api/auth/register', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email: regEmail, name: regName, password: regPassword }),
+				body: JSON.stringify({ email: regEmail, name: regName, password: regPw }),
 				credentials: 'include'
 			});
 			if (!res.ok) {
@@ -64,253 +62,306 @@
 	async function handleRecover(e: SubmitEvent) {
 		e.preventDefault();
 		reset(); loading = true;
-		successMsg = 'Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.';
+		successMsg = 'Falls ein Konto existiert, wurde ein Link gesendet.';
 		loading = false;
 	}
 </script>
 
 <svelte:head>
-	<title>Anmelden / Registrieren | Gartenwoche</title>
-	<meta name="description" content="Melden Sie sich in Ihrem Gartenwoche-Konto an oder erstellen Sie ein neues Konto." />
+	<title>Anmelden - Registrieren | Gartenwoche</title>
+	<meta name="description" content="Melden Sie sich an oder erstellen Sie ein Gartenwoche-Konto." />
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <div class="auth-page">
+	<!-- Page heading -->
+	<h1 class="page-title">Anmelden - Registrieren</h1>
+
+	<!-- Card -->
 	<div class="auth-card">
-		<!-- Header -->
-		<div class="auth-logo">
-			<a href="/">
-				<img src="/Logo_Gartenwoche-1.png" alt="Gartenwoche" class="logo-img" />
-			</a>
-		</div>
 
-		<!-- Tabs -->
-		<div class="auth-tabs" role="tablist">
-			<button
-				role="tab"
-				class:active={activeTab === 'login'}
-				onclick={() => { activeTab = 'login'; reset(); }}
-			>Anmelden</button>
-			<button
-				role="tab"
-				class:active={activeTab === 'register'}
-				onclick={() => { activeTab = 'register'; reset(); }}
-			>Registrieren</button>
-		</div>
+		{#if mode === 'login'}
+			<h2 class="card-heading">Einloggen</h2>
 
-		<!-- Feedback -->
-		{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
-		{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
+			{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
+			{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
 
-		<!-- ── LOGIN ── -->
-		{#if activeTab === 'login'}
 			<form class="auth-form" onsubmit={handleLogin}>
-				<div class="form-group">
-					<label for="p-login-email">E-Mail-Adresse</label>
-					<input id="p-login-email" type="email" autocomplete="email" bind:value={loginEmail} required />
+				<div class="form-row">
+					<label for="login-user">Benutzername oder E-mail Adresse</label>
+					<input id="login-user" type="text" autocomplete="username"
+						bind:value={loginUser} required />
 				</div>
-				<div class="form-group">
-					<label for="p-login-pw">Passwort</label>
-					<input id="p-login-pw" type="password" autocomplete="current-password" bind:value={loginPassword} required />
+
+				<div class="form-row">
+					<div class="pw-label-row">
+						<label for="login-pw">Passwort</label>
+						<button type="button" class="forgot-link"
+							onclick={() => { mode = 'recover'; reset(); }}>
+							Passwort vergessen?
+						</button>
+					</div>
+					<input id="login-pw" type="password" autocomplete="current-password"
+						bind:value={loginPw} required />
 				</div>
-				<button type="button" class="link-btn" onclick={() => { activeTab = 'recover'; reset(); }}>
-					Passwort vergessen?
-				</button>
+
 				<button type="submit" class="submit-btn" disabled={loading}>
-					{loading ? 'Wird geladen…' : 'Anmelden'}
+					{loading ? 'Wird geladen…' : 'Einloggen'}
 				</button>
+
+				<p class="switch-hint">
+					Sie haben kein Konto?
+					<button type="button" class="switch-link"
+						onclick={() => { mode = 'register'; reset(); }}>
+						Registrieren
+					</button>
+				</p>
 			</form>
 
-		<!-- ── REGISTER ── -->
-		{:else if activeTab === 'register'}
+		{:else if mode === 'register'}
+			<h2 class="card-heading">Registrieren</h2>
+
+			{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
+			{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
+
 			<form class="auth-form" onsubmit={handleRegister}>
-				<div class="form-group">
-					<label for="p-reg-email">E-Mail-Adresse</label>
-					<input id="p-reg-email" type="email" autocomplete="email" bind:value={regEmail} required />
+				<div class="form-row">
+					<label for="reg-name">Benutzername *</label>
+					<input id="reg-name" type="text" autocomplete="username"
+						bind:value={regName} required />
 				</div>
-				<div class="form-group">
-					<label for="p-reg-name">Name</label>
-					<input id="p-reg-name" type="text" autocomplete="name" bind:value={regName} required />
+				<div class="form-row">
+					<label for="reg-email">E-Mail-Adresse *</label>
+					<input id="reg-email" type="email" autocomplete="email"
+						bind:value={regEmail} required />
 				</div>
-				<div class="form-group">
-					<label for="p-reg-pw">Passwort (min. 8 Zeichen)</label>
-					<input id="p-reg-pw" type="password" autocomplete="new-password" minlength="8" bind:value={regPassword} required />
+				<div class="form-row">
+					<label for="reg-pw">Passwort (min. 8 Zeichen) *</label>
+					<input id="reg-pw" type="password" autocomplete="new-password"
+						minlength="8" bind:value={regPw} required />
 				</div>
+
 				<button type="submit" class="submit-btn" disabled={loading}>
 					{loading ? 'Wird geladen…' : 'Registrieren'}
 				</button>
-				<p class="auth-note">
+
+				<p class="switch-hint">
+					Haben Sie bereits ein Konto?
+					<button type="button" class="switch-link"
+						onclick={() => { mode = 'login'; reset(); }}>
+						Einloggen
+					</button>
+				</p>
+				<p class="legal-note">
 					Mit der Registrierung akzeptieren Sie unsere
 					<a href="/datenschutzerklaerung">Datenschutzerklärung</a>.
 				</p>
 			</form>
 
-		<!-- ── RECOVER ── -->
 		{:else}
+			<h2 class="card-heading">Passwort zurücksetzen</h2>
+
+			{#if errorMsg}<p class="msg msg-error">{errorMsg}</p>{/if}
+			{#if successMsg}<p class="msg msg-success">{successMsg}</p>{/if}
+
 			<form class="auth-form" onsubmit={handleRecover}>
-				<p class="recover-hint">Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.</p>
-				<div class="form-group">
-					<label for="p-rec-email">E-Mail-Adresse</label>
-					<input id="p-rec-email" type="email" autocomplete="email" bind:value={recoverEmail} required />
+				<p class="recover-hint">
+					Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.
+				</p>
+				<div class="form-row">
+					<label for="rec-email">E-Mail-Adresse</label>
+					<input id="rec-email" type="email" autocomplete="email"
+						bind:value={recoverEmail} required />
 				</div>
 				<button type="submit" class="submit-btn" disabled={loading}>
 					{loading ? 'Wird geladen…' : 'Link senden'}
 				</button>
-				<button type="button" class="link-btn back" onclick={() => { activeTab = 'login'; reset(); }}>
+				<button type="button" class="back-btn"
+					onclick={() => { mode = 'login'; reset(); }}>
 					← Zurück zum Anmelden
 				</button>
 			</form>
 		{/if}
+
 	</div>
 </div>
 
 <style>
+	/* ── Page shell ────────────────────────────────────────── */
 	.auth-page {
-		min-height: calc(100vh - 200px);
+		min-height: calc(100vh - 180px);
+		background: #f1f1f1;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		padding: 40px 20px;
-		background: var(--color-bg);
+		padding: 48px 20px 60px;
 	}
 
+	.page-title {
+		font-family: 'Roboto', sans-serif;
+		font-size: 28px;
+		font-weight: 700;
+		color: #111;
+		text-align: center;
+		margin: 0 0 32px;
+	}
+
+	/* ── White card ─────────────────────────────────────────── */
 	.auth-card {
 		width: 100%;
-		max-width: 420px;
+		max-width: 640px;
 		background: #fff;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: 32px 36px 36px;
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+		padding: 36px 40px 44px;
+		box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 	}
 
-	.auth-logo {
-		text-align: center;
-		margin-bottom: 24px;
-	}
-	.logo-img {
-		max-height: 60px;
-		width: auto;
-		margin: 0 auto;
-	}
-
-	/* Tabs */
-	.auth-tabs {
-		display: flex;
-		border-bottom: 2px solid var(--color-border);
-		margin-bottom: 24px;
-	}
-	.auth-tabs button {
-		flex: 1;
-		padding: 12px 0;
+	.card-heading {
 		font-family: 'Roboto', sans-serif;
-		font-size: 13px;
-		font-weight: 700;
-		color: var(--color-text-muted);
-		background: none;
-		border: none;
-		cursor: pointer;
-		border-bottom: 3px solid transparent;
-		margin-bottom: -2px;
-		transition: all 0.2s;
-	}
-	.auth-tabs button.active {
-		color: var(--color-primary);
-		border-bottom-color: var(--color-primary);
+		font-size: 20px;
+		font-weight: 400;
+		color: #111;
+		margin: 0 0 24px;
 	}
 
-	/* Feedback messages */
-	.msg {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 13px;
-		padding: 8px 12px;
-		border-radius: var(--radius-sm);
-		margin: 0 0 16px;
-	}
-	.msg-error   { background: #fff0f0; color: #cc2200; border: 1px solid #fcc; }
-	.msg-success { background: #f0fff4; color: #1a7a3a; border: 1px solid #b2f0c8; }
-
-	/* Form */
+	/* ── Form ───────────────────────────────────────────────── */
 	.auth-form {
 		display: flex;
 		flex-direction: column;
-		gap: 14px;
+		gap: 18px;
 	}
-	.form-group {
+
+	.form-row {
 		display: flex;
 		flex-direction: column;
 		gap: 5px;
 	}
-	.form-group label {
-		font-family: 'Roboto', sans-serif;
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-text-muted);
+
+	.form-row label {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: #333;
 	}
-	.form-group input {
+
+	.form-row input {
 		width: 100%;
-		padding: 10px 12px;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-sm);
+		height: 40px;
+		padding: 0 12px;
+		border: 1px solid #ccc;
+		border-radius: 0;
 		font-family: 'Open Sans', sans-serif;
 		font-size: 14px;
-		color: var(--color-text);
-		background: var(--color-surface);
+		color: #111;
+		background: #fff;
+		box-sizing: border-box;
 		transition: border-color 0.2s;
 	}
-	.form-group input:focus {
+	.form-row input:focus {
 		outline: none;
-		border-color: var(--color-primary);
+		border-color: #999;
 	}
 
-	.submit-btn {
-		width: 100%;
-		height: 44px;
-		background: var(--color-primary);
-		color: #fff;
-		font-family: 'Roboto', sans-serif;
-		font-size: 14px;
-		font-weight: 700;
-		border: none;
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-		transition: background 0.2s;
-		margin-top: 4px;
+	/* Password row: label left + "Passwort vergessen?" right */
+	.pw-label-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
 	}
-	.submit-btn:hover:not(:disabled) { background: var(--color-primary-hover); }
-	.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-	.link-btn {
+	.forgot-link {
 		background: none;
 		border: none;
 		cursor: pointer;
 		font-family: 'Open Sans', sans-serif;
 		font-size: 12px;
-		color: var(--color-primary);
+		color: #0073aa;
 		padding: 0;
-		text-align: right;
-		transition: opacity 0.15s;
+		text-decoration: none;
 	}
-	.link-btn:hover { opacity: 0.7; }
-	.link-btn.back  { text-align: center; color: var(--color-text-muted); }
+	.forgot-link:hover { text-decoration: underline; }
 
-	.auth-note {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 11px;
-		color: var(--color-text-faint);
-		text-align: center;
-		margin: 0;
-		line-height: 1.6;
+	/* ── Submit button (red) ────────────────────────────────── */
+	.submit-btn {
+		align-self: flex-start;
+		padding: 10px 22px;
+		background: #cc0000;
+		color: #fff;
+		font-family: 'Roboto', sans-serif;
+		font-size: 14px;
+		font-weight: 700;
+		border: none;
+		border-radius: 3px;
+		cursor: pointer;
+		transition: background 0.2s;
 	}
-	.auth-note a { color: var(--color-primary); text-decoration: underline; }
+	.submit-btn:hover:not(:disabled) { background: #aa0000; }
+	.submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-	.recover-hint {
+	/* ── Switch hint ────────────────────────────────────────── */
+	.switch-hint {
 		font-family: 'Open Sans', sans-serif;
 		font-size: 13px;
-		color: var(--color-text-muted);
+		color: #555;
+		margin: 0;
+		text-align: center;
+	}
+
+	.switch-link {
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: #0073aa;
+		padding: 0;
+		text-decoration: none;
+	}
+	.switch-link:hover { text-decoration: underline; }
+
+	/* ── Feedback ───────────────────────────────────────────── */
+	.msg {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		padding: 8px 12px;
+		margin: 0 0 4px;
+		border-radius: 2px;
+	}
+	.msg-error   { background: #fff0f0; color: #cc2200; border: 1px solid #fcc; }
+	.msg-success { background: #f0fff4; color: #1a7a3a; border: 1px solid #b2f0c8; }
+
+	/* ── Recover / legal ────────────────────────────────────── */
+	.recover-hint {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+		color: #555;
 		margin: 0;
 		line-height: 1.6;
+	}
+
+	.back-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: #555;
+		padding: 0;
+		align-self: flex-start;
+	}
+	.back-btn:hover { color: #111; }
+
+	.legal-note {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 11px;
+		color: #888;
+		margin: 0;
+		line-height: 1.6;
+		text-align: center;
+	}
+	.legal-note a { color: #0073aa; text-decoration: underline; }
+
+	/* ── Responsive ─────────────────────────────────────────── */
+	@media (max-width: 680px) {
+		.auth-card { padding: 24px 20px 32px; }
+		.page-title { font-size: 22px; }
 	}
 </style>

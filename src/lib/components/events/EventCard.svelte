@@ -121,7 +121,7 @@
 	}
 
 	.ev-title a:hover {
-		color: #5a9e3a;
+		color: #4F46E5;
 	}
 
 	.ev-loc {

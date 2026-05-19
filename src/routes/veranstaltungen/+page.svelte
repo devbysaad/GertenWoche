@@ -110,28 +110,28 @@
 <div class="events-page">
 	<div class="container">
 
-		<!-- Search bar -->
-		<EventSearch bind:value={searchQuery} onSearch={handleSearch} />
+		<!-- Top bar: search + view tabs on same row -->
+		<div class="ev-topbar">
+			<EventSearch bind:value={searchQuery} onSearch={handleSearch} />
+			<div class="view-switcher">
+				{#each [['list', 'list'], ['month', 'Month'], ['day', 'day']] as [v, label]}
+					<button
+						type="button"
+						class="vsw-btn"
+						class:active={activeView === v}
+						onclick={() => handleViewChange(v)}
+					>{label}</button>
+				{/each}
+			</div>
+		</div>
 
-		<!-- Month navigator + view tabs -->
+		<!-- Month navigator -->
 		<MonthNavigator
 			year={calYear}
 			month={calMonth}
 			view={activeView}
 			onNavigate={handleNavigate}
 		/>
-
-		<!-- View tab quick-switcher (also in MonthNavigator, but as buttons for JS nav) -->
-		<div class="view-switcher">
-			{#each [['list', 'Liste'], ['month', 'Monat'], ['day', 'Tag']] as [v, label]}
-				<button
-					type="button"
-					class="vsw-btn"
-					class:active={activeView === v}
-					onclick={() => handleViewChange(v)}
-				>{label}</button>
-			{/each}
-		</div>
 
 		<hr class="sep-line" />
 
@@ -233,30 +233,50 @@
 		background: #fff;
 	}
 
-	/* ── View switcher buttons (JS-driven, alongside MonthNavigator links) ── */
+	/* ── Top bar: search + tabs on same row ── */
+	.ev-topbar {
+		display: flex;
+		align-items: stretch;
+		gap: 0;
+		margin-bottom: 16px;
+		border: 1px solid #ccc;
+		overflow: hidden;
+	}
+	/* EventSearch sits inside topbar — remove its own border */
+	.ev-topbar :global(.ev-search) {
+		flex: 1;
+		border: none;
+		margin-bottom: 0;
+	}
+
+	/* ── View switcher (inside ev-topbar) ── */
 	.view-switcher {
 		display: flex;
-		border: 1px solid #D1D5DB;
-		border-radius: 3px;
-		overflow: hidden;
-		width: fit-content;
-		margin-bottom: 16px;
+		align-items: stretch;
+		border-left: 1px solid #ccc;
+		flex-shrink: 0;
 	}
 
 	.vsw-btn {
-		padding: 5px 16px;
+		padding: 0 18px;
 		font-family: 'Open Sans', sans-serif;
 		font-size: 13px;
 		color: #555;
 		background: #fff;
 		border: none;
-		border-right: 1px solid #D1D5DB;
+		border-left: 1px solid #e5e7eb;
 		cursor: pointer;
 		transition: background 0.15s, color 0.15s;
+		white-space: nowrap;
 	}
-	.vsw-btn:last-child { border-right: none; }
+	.vsw-btn:first-child { border-left: none; }
 	.vsw-btn:hover { background: #F3F4F6; color: #111; }
-	.vsw-btn.active { background: #4F46E5; color: #fff; }
+	.vsw-btn.active {
+		background: transparent;
+		color: #111;
+		border-bottom: 2px solid #111;
+		font-weight: 600;
+	}
 
 	/* ── Separator ── */
 	.sep-line {

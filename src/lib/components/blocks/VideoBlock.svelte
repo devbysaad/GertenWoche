@@ -5,7 +5,7 @@
 </script>
 
 <section class="video-block">
-	<h2 class="section-heading">Video der Woche</h2>
+	<h2 class="video-heading">Video der Woche</h2>
 	<div class="video-card">
 		<div class="video-embed">
 			<iframe
@@ -22,6 +22,19 @@
 <style>
 	.video-block {
 		margin-bottom: 32px;
+	}
+
+	.video-heading {
+		font-family: 'Roboto', sans-serif;
+		font-size: 18px;
+		font-weight: 700;
+		color: #222;
+		text-align: center;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		margin: 0 0 8px;
+		padding-bottom: 10px;
+		border-bottom: 3px solid #F7C900;
 	}
 
 	.video-card {

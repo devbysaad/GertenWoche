@@ -232,36 +232,47 @@
 				</button>
 
 				{#if searchOpen}
-				<div class="search-popup" role="dialog" aria-label="Suche">
-					<form class="search-row" onsubmit={(e) => { e.preventDefault(); submitSearch(); }}>
-				<input
-						bind:this={searchInput}
-						bind:value={searchQuery}
-						oninput={onSearchInput}
-						type="search"
-						class="search-input"
-						placeholder="Suche eingeben…"
-						autocomplete="off"
-					/>
-						<button type="submit" class="search-go">Suche →</button>
-					</form>
-					{#if searchResults.length > 0}
-						<ul class="search-results">
-							{#each searchResults as result}
-								<li>
-									<a
-										href={result.href}
-										class="search-result-link"
-										onclick={() => { searchOpen = false; searchQuery = ''; }}
-									>
-										<span class="result-title">{result.title}</span>
-									</a>
-								</li>
-							{/each}
-						</ul>
-					{:else if searchQuery.trim().length > 1}
-						<p class="search-empty">Keine Ergebnisse gefunden.</p>
-					{/if}
+				<!-- Full-screen search overlay (mobile) + dropdown (desktop) -->
+				<div
+					class="search-overlay"
+					onclick={(e) => { if (e.target === e.currentTarget) { searchOpen = false; searchQuery = ''; } }}
+					role="dialog"
+					aria-label="Suche"
+				>
+					<div class="search-popup">
+						<form class="search-row" onsubmit={(e) => { e.preventDefault(); submitSearch(); }}>
+							<input
+								bind:this={searchInput}
+								bind:value={searchQuery}
+								oninput={onSearchInput}
+								type="search"
+								class="search-input"
+								placeholder="Suche eingeben…"
+								autocomplete="off"
+							/>
+							<button type="submit" class="search-go">Suche →</button>
+							<button type="button" class="search-close" onclick={() => { searchOpen = false; searchQuery = ''; }} aria-label="Schließen">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+							</button>
+						</form>
+						{#if searchResults.length > 0}
+							<ul class="search-results">
+								{#each searchResults as result}
+									<li>
+										<a
+											href={result.href}
+											class="search-result-link"
+											onclick={() => { searchOpen = false; searchQuery = ''; }}
+										>
+											<span class="result-title">{result.title}</span>
+										</a>
+									</li>
+								{/each}
+							</ul>
+						{:else if searchQuery.trim().length > 1}
+							<p class="search-empty">Keine Ergebnisse gefunden.</p>
+						{/if}
+					</div>
 				</div>
 				{/if}
 			</div>
@@ -590,6 +601,108 @@
 		font-size: 12px;
 		color: #999;
 		margin: 0;
+	}
+
+	/* ── Mobile: sticky header + hide top bar ─────────────────────── */
+	@media (max-width: 1023px) {
+		.site-header {
+			position: sticky;
+			top: 0;
+			z-index: 399; /* Below the hamburger which is 400 */
+			border-bottom: 1px solid #E0E0E0;
+		}
+		.header-upper { display: none; }
+	}
+
+	/* ── Mobile: header-lower becomes slim flex row ─────── */
+	@media (max-width: 1023px) {
+		.header-lower {
+			display: flex;
+			align-items: center;
+			padding: 10px 16px;
+			gap: 0;
+		}
+		.spacer { display: none; }
+		.logo-container {
+			justify-content: flex-start;
+			flex: 1;
+		}
+		.logo-img { height: 44px; }
+		.search-container {
+			flex-shrink: 0;
+			margin-right: 48px;
+		}
+		.search-btn { padding: 8px; }
+	}
+
+	/* ── Search: fullscreen overlay on mobile ─────────────── */
+	.search-overlay {
+		/* default: invisible wrapper on desktop, acts like nothing */
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 300;
+	}
+	@media (max-width: 1023px) {
+		.search-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.65);
+			z-index: 500;
+			display: flex;
+			align-items: flex-start;
+			justify-content: center;
+			padding-top: 0;
+			animation: fadeInOv 0.2s ease;
+		}
+		@keyframes fadeInOv { from { opacity: 0; } to { opacity: 1; } }
+		/* popup becomes a full-width bar at the top */
+		.search-overlay .search-popup {
+			position: static;
+			width: 100%;
+			max-width: 100%;
+			border-radius: 0;
+			border: none;
+			box-shadow: none;
+		}
+		.search-close { display: flex !important; }
+	}
+
+	/* Close button – hidden on desktop */
+	.search-close {
+		display: none;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		border-left: 1px solid #f0f0f0;
+		padding: 10px 12px;
+		cursor: pointer;
+		color: #555;
+		flex-shrink: 0;
+	}
+	.search-close:hover { color: #111; }
+
+	/* Desktop popup stays absolute */
+	@media (min-width: 1024px) {
+		.search-overlay {
+			position: static;
+			background: none;
+			display: block;
+		}
+		.search-overlay .search-popup {
+			position: absolute;
+			top: calc(100% + 8px);
+			right: 0;
+			width: 320px;
+			max-width: calc(100vw - 40px);
+			background: #ffffff;
+			border: 1px solid #E0E0E0;
+			border-radius: 4px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		}
 	}
 
 	/* ── Mobile adjustments ─────────────────────────────────────── */

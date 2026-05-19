@@ -24,7 +24,7 @@
 {#if variant === "homepage"}
 	<section class="hero-section" aria-label="Hauptartikel">
 		<div class="homepage-grid">
-			<!-- LEFT: large hero image -->
+			<!-- LEFT: large hero image with article overlay at bottom -->
 			<a href={url} class="hero-img-link" tabindex="0">
 				{#if article.thumbnail && article.thumbnail.trim() !== ''}
 					<img
@@ -39,31 +39,41 @@
 						<span class="fallback-label">{article.category.name}</span>
 					</div>
 				{/if}
+				<!-- Dark gradient + article info overlaid at bottom -->
+				<div class="hero-overlay">
+					<span class="hero-overlay-badge">{article.category.name}</span>
+					<p class="hero-overlay-title">{article.title}</p>
+					{#if article.excerpt}
+						<p class="hero-overlay-excerpt">{article.excerpt}</p>
+					{/if}
+					<span class="hero-overlay-author">{article.author.name}</span>
+				</div>
 			</a>
 
 
-			<!-- RIGHT: 1 article — large top image + text below -->
-			{#if rightStack[0]}
-				{@const art = rightStack[0]}
-				{@const artUrl = `/${art.urlPath}`}
-				<a href={artUrl} class="hero-right-card">
-					<div class="hrc-img">
-						{#if art.thumbnail && art.thumbnail.trim() !== ''}
-							<img src={art.thumbnail} alt={art.title} loading="lazy" />
-						{:else}
-							<div class="hrc-ph"></div>
-						{/if}
-						<span class="hrc-badge">{art.category.name}</span>
-					</div>
-					<div class="hrc-body">
-						<p class="hrc-title">{art.title}</p>
-						{#if art.excerpt}
-							<p class="hrc-excerpt">{art.excerpt}</p>
-						{/if}
-						<span class="hrc-author">{art.author.name}</span>
-					</div>
-				</a>
-			{/if}
+			<!-- RIGHT: 2 smaller stacked cards -->
+			<div class="hrc-stack">
+				{#each rightStack.slice(0, 2) as art}
+					{@const artUrl = `/${art.urlPath}`}
+					<a href={artUrl} class="hrc-mini-card">
+						<div class="hrc-img">
+							{#if art.thumbnail && art.thumbnail.trim() !== ''}
+								<img src={art.thumbnail} alt={art.title} loading="lazy" />
+							{:else}
+								<div class="hrc-ph"></div>
+							{/if}
+							<span class="hrc-badge">{art.category.name}</span>
+						</div>
+						<div class="hrc-body">
+							<p class="hrc-title">{art.title}</p>
+							{#if art.excerpt}
+								<p class="hrc-excerpt">{art.excerpt}</p>
+							{/if}
+							<span class="hrc-author">{art.author.name}</span>
+						</div>
+					</a>
+				{/each}
+			</div>
 		</div>
 	</section>
 
@@ -204,15 +214,17 @@
 	.homepage-grid {
 		display: grid;
 		grid-template-columns: 65% 35%;
-		gap: 0;
-		height: 460px;
+		gap: 3px;
+		height: 500px;
 		margin-bottom: 28px;
+		background: #E0E0E0;
 		border: 1px solid #E0E0E0;
 		overflow: hidden;
 	}
 
-	/* LEFT: pure image link — no overlay, no gradient */
+	/* LEFT: relative container — image fills it, overlay is absolute */
 	.hero-img-link {
+		position: relative;
 		display: block;
 		overflow: hidden;
 		height: 100%;
@@ -228,6 +240,63 @@
 	}
 	.hero-img-link:hover .hero-img {
 		transform: scale(1.02);
+	}
+
+	/* Dark gradient overlay at bottom of left image */
+	.hero-overlay {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: linear-gradient(transparent 0%, rgba(0,0,0,0.72) 100%);
+		padding: 40px 20px 18px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		pointer-events: none;
+	}
+	.hero-overlay-badge {
+		display: inline-block;
+		align-self: flex-start;
+		background: rgba(0,0,0,0.55);
+		color: #fff;
+		font-family: 'Roboto', sans-serif;
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 2px 8px;
+		border-radius: 2px;
+	}
+	.hero-overlay-title {
+		font-family: 'Roboto', sans-serif;
+		font-size: 22px;
+		font-weight: 700;
+		color: #fff;
+		margin: 0;
+		line-height: 1.25;
+		text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.hero-overlay-excerpt {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 13px;
+		color: rgba(255,255,255,0.88);
+		margin: 0;
+		line-height: 1.5;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+	.hero-overlay-author {
+		font-family: 'Open Sans', sans-serif;
+		font-size: 11px;
+		color: rgba(255,255,255,0.7);
 	}
 	.hero-img-ph {
 		width: 100%;
@@ -313,23 +382,29 @@
 	}
 	.hero-read-more:hover { color: #222; }
 
-	/* ── RIGHT CARD: 1 article, large image + text ── */
-	.hero-right-card {
+	/* RIGHT STACK: 2 mini cards stacked with gap */
+	.hrc-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+		height: 100%;
+		background: #E0E0E0;
+	}
+	.hrc-mini-card {
 		display: flex;
 		flex-direction: column;
 		text-decoration: none;
 		overflow: hidden;
-		height: 100%;
-		border-left: 1px solid #E0E0E0;
+		flex: 1;
 		background: #fff;
 		transition: background 0.15s;
 	}
-	.hero-right-card:hover { background: #fafafa; }
+	.hrc-mini-card:hover { background: #fafafa; }
 
-	/* Image: top portion, fills width */
+	/* Image portion */
 	.hrc-img {
 		position: relative;
-		flex: 0 0 55%;
+		flex: 0 0 48%;
 		overflow: hidden;
 		background: #e0e0e0;
 	}
@@ -340,14 +415,14 @@
 		display: block;
 		transition: transform 0.3s ease;
 	}
-	.hero-right-card:hover .hrc-img img { transform: scale(1.04); }
+	.hrc-mini-card:hover .hrc-img img { transform: scale(1.04); }
 	.hrc-ph {
 		width: 100%;
 		height: 100%;
 		background: #e0e0e0;
 	}
 
-	/* Badge overlaid bottom-left of the image */
+	/* Badge: category label on image — dark neutral, no green */
 	.hrc-badge {
 		position: absolute;
 		bottom: 8px;
@@ -389,7 +464,7 @@
 	.hrc-excerpt {
 		font-family: "Open Sans", sans-serif;
 		font-size: 13px;
-		color: #555;
+		color: #555 !important;
 		margin: 0;
 		line-height: 1.5;
 		display: -webkit-box;
@@ -524,71 +599,24 @@
 		font-family: "Roboto", sans-serif;
 	}
 
-	/* ── MOBILE ── */
+	/* ── TABLET (≤900px): stack vertically, hide right cards ── */
 	@media (max-width: 900px) {
 		.homepage-grid {
 			grid-template-columns: 1fr;
-			grid-template-rows: 300px auto;
 			height: auto;
 		}
-		.hero-img-link {
-			height: 300px;
-		}
-		.hero-text-panel { padding: 20px 16px; }
-		.hero-right-card {
-			border-left: none;
-			border-top: 1px solid #E0E0E0;
-			height: auto;
-			min-height: 200px;
-		}
-		.hrc-img { flex: 0 0 140px; }
-		.mosaic-grid {
-			grid-template-columns: 1fr;
-			height: auto;
-		}
-		.mosaic-side {
-			grid-template-rows: auto;
-			grid-template-columns: 1fr 1fr;
-		}
-		.side-card {
-			height: 160px;
-		}
-		.mosaic-center {
-			height: 280px;
-			order: -1;
-		}
+		.hero-img-link { height: 360px; }
+		/* Hide right-side card stack on tablet/mobile — too cramped */
+		.hrc-stack { display: none; }
+
+		/* Mosaic */
+		.mosaic-grid { grid-template-columns: 1fr; height: auto; }
+		.mosaic-side { grid-template-columns: 1fr 1fr; }
+		.side-card { height: 160px; }
+		.mosaic-center { height: 280px; order: -1; }
 	}
-	@media (max-width: 700px) {
-		.homepage-grid {
-			grid-template-columns: 1fr;
-			grid-template-rows: 240px auto;
-			height: auto;
-		}
-		.hero-img-link { height: 240px; }
-		.hero-right-card {
-			border-left: none;
-			border-top: 1px solid #E0E0E0;
-			flex-direction: row;
-			height: 130px;
-		}
-		.hrc-img {
-			flex: 0 0 120px;
-		}
-		.hrc-body { padding: 10px 12px; }
-		.mosaic-side {
-			grid-template-columns: 1fr;
-		}
-		.side-card { height: 140px; }
-		.mosaic-center {
-			height: 220px;
-			order: -1;
-		}
-	}
-	@media (max-width: 480px) {
-		.homepage-grid {
-			grid-template-rows: 200px auto;
-		}
-		.hero-img-link { height: 200px; }
+	@media (max-width: 600px) {
+		.hero-img-link { height: 260px; }
 		.mosaic-side { grid-template-columns: 1fr; }
 		.side-card { height: 140px; }
 		.mosaic-center { height: 220px; }

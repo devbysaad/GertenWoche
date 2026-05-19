@@ -20,16 +20,16 @@
 	// Client-side filter state (pre-populated from server filter)
 	let keyword  = $state(data.filter.keyword);
 	let location = $state(data.filter.location);
-	let selectedType = $state(data.filter.type ?? '');
+	let selectedTypes = $state<string[]>([]);
 
 	// Live-filter the server-side results on the client
 	const filtered = $derived(
 		data.jobs.filter((job: JobListing) => {
-			const kw = keyword.toLowerCase();
+			const kw  = keyword.toLowerCase();
 			const loc = location.toLowerCase();
-			const matchKw  = !kw  || job.title.toLowerCase().includes(kw) || job.company.toLowerCase().includes(kw);
-			const matchLoc = !loc || job.location.toLowerCase().includes(loc);
-			const matchType = !selectedType || job.type === selectedType;
+			const matchKw   = !kw  || job.title.toLowerCase().includes(kw) || job.company.toLowerCase().includes(kw);
+			const matchLoc  = !loc || job.location.toLowerCase().includes(loc);
+			const matchType = selectedTypes.length === 0 || selectedTypes.includes(job.type);
 			return matchKw && matchLoc && matchType;
 		})
 	);
@@ -37,7 +37,7 @@
 	function reset() {
 		keyword = '';
 		location = '';
-		selectedType = '';
+		selectedTypes = [];
 	}
 
 	function formatDate(d: Date): string {
@@ -76,18 +76,15 @@
 			<button class="search-btn" type="button">Jobs suchen</button>
 		</div>
 
-		<!-- Employment type filters -->
+		<!-- Employment type filters (checkboxes) -->
 		<div class="type-filters" role="group" aria-label="Beschäftigungsart">
-			<label class="type-check">
-				<input type="radio" name="job-type" value="" bind:group={selectedType} />
-				Alle
-			</label>
 			{#each JOB_TYPES as type}
 				<label class="type-check">
-					<input type="radio" name="job-type" value={type} bind:group={selectedType} />
+					<input type="checkbox" value={type} bind:group={selectedTypes} />
 					{type}
 				</label>
 			{/each}
+			<a href="/feed/jobs" class="rss-link" target="_blank" rel="noopener">RSS</a>
 		</div>
 
 		<!-- Results bar -->
@@ -101,13 +98,10 @@
 		</div>
 
 		<!-- Job listings -->
+		<!-- No results -->
 		{#if filtered.length === 0}
 			<div class="empty-state">
-				{#if data.jobs.length === 0}
-					<p>Aktuell sind keine Stellenangebote eingetragen.</p>
-				{:else}
-					<p>Es gibt keine Einträge, die Ihrer Suche entsprechen.</p>
-				{/if}
+				<p style="color:#0073aa">There are no listings matching your search.</p>
 			</div>
 		{:else}
 			<div class="jobs-list">
@@ -242,10 +236,19 @@
 		cursor: pointer;
 		white-space: nowrap;
 	}
-	.type-check input[type="radio"] {
-		accent-color: #5a9e3a;
+	.type-check input[type="checkbox"] {
+		accent-color: #0073aa;
 		cursor: pointer;
 	}
+
+	.rss-link {
+		margin-left: auto;
+		font-family: 'Open Sans', sans-serif;
+		font-size: 12px;
+		color: #0073aa;
+		text-decoration: none;
+	}
+	.rss-link:hover { text-decoration: underline; }
 
 	/* ── Results bar ── */
 	.results-bar {
