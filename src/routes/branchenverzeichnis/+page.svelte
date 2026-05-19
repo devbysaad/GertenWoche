@@ -58,7 +58,7 @@
 						</svg>
 					</button>
 				</div>
-				<button class="search-submit-btn">
+				<button class="search-submit-btn" aria-label="Suchen">
 					<svg
 						width="20"
 						height="20"
@@ -107,6 +107,7 @@
 						<a
 							href="/branchenverzeichnis/eintrag/{entry.slug}"
 							class="card-link-overlay"
+							aria-label="{entry.name} ansehen"
 						></a>
 						<div class="card-logo">
 							{#if entry.logo && entry.logo.trim() !== ""}
@@ -298,23 +299,23 @@
 		cursor: pointer;
 	}
 
-	/* Grid & Cards */
+	/* Column Masonry Grid */
 	.dir-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, min-components(300px, 1fr));
-		gap: 24px;
+		column-count: 3;
+		column-gap: 24px;
 	}
 	.dir-card {
+		break-inside: avoid;
+		margin-bottom: 24px;
 		position: relative;
 		background: #fff;
 		border: 1px solid #e5e7eb;
-		border-radius: 8px;
+		border-radius: 4px;
 		overflow: hidden;
 		transition:
 			transform 0.2s,
 			box-shadow 0.2s;
-		display: flex;
-		flex-direction: column;
+		display: block; /* Important for masonry */
 	}
 	.dir-card:hover {
 		transform: translateY(-2px);
@@ -327,7 +328,9 @@
 	}
 	.card-logo {
 		width: 100%;
-		height: 160px;
+		height: auto;
+		min-height: 120px;
+		max-height: 200px;
 		background: #fff;
 		display: flex;
 		align-items: center;
@@ -338,7 +341,7 @@
 	}
 	.card-logo img {
 		max-width: 100%;
-		max-height: 100%;
+		height: auto;
 		object-fit: contain;
 	}
 	.card-logo-ph {
@@ -349,38 +352,50 @@
 	}
 	.card-content {
 		padding: 16px;
-		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 12px;
 	}
 	.card-name {
 		font-family: "Roboto", sans-serif;
-		font-size: 18px;
-		font-weight: 700;
+		font-size: 17px;
+		font-weight: 900;
 		color: #111;
 		margin: 0;
+		line-height: 1.3;
 	}
 	.contact-line {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		gap: 6px;
-		font-size: 13px;
+		font-size: 12px;
 		color: #666;
 		margin: 0;
+		line-height: 1.4;
+	}
+	.contact-line svg {
+		flex-shrink: 0;
+		margin-top: 2px;
+		color: #aaa;
 	}
 	.card-desc {
 		font-size: 13px;
-		color: #555;
-		line-height: 1.5;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		margin-top: auto;
+		color: #444;
+		line-height: 1.6;
+		margin: 0;
+		white-space: pre-wrap; /* Keeps some formatting if available */
+	}
+
+	@media (max-width: 992px) {
+		.dir-grid {
+			column-count: 2;
+		}
 	}
 
 	@media (max-width: 768px) {
+		.dir-grid {
+			column-count: 1;
+		}
 		.search-main-bar {
 			flex-direction: column;
 		}
@@ -395,6 +410,7 @@
 		.dir-header {
 			flex-direction: column;
 			align-items: flex-start;
+			gap: 12px;
 		}
 	}
 </style>

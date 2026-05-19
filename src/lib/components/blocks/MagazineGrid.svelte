@@ -135,7 +135,7 @@
 		left: 8px;
 		z-index: 2;
 		display: inline-block;
-		background: rgba(0, 0, 0, 0.65);
+		background: #111; /* Black background */
 		color: #ffffff;
 		font-family: "Roboto", sans-serif;
 		font-size: 11px;
@@ -251,7 +251,7 @@
 		left: 6px;
 		z-index: 1;
 		display: inline-block;
-		background: rgba(0, 0, 0, 0.65);
+		background: #111; /* Black background */
 		color: #ffffff;
 		font-family: "Roboto", sans-serif;
 		font-size: 10px;

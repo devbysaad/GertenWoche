@@ -179,7 +179,7 @@
 	/* ── Category badge (mosaic shared) ── */
 	.cat-badge {
 		display: inline-block;
-		background: rgba(0, 0, 0, 0.65);
+		background: #111; /* Changed to black as requested */
 		color: #fff;
 		font-family: "Roboto", sans-serif;
 		font-size: 10px;
@@ -298,7 +298,7 @@
 	.hero-overlay-badge {
 		display: inline-block;
 		align-self: flex-start;
-		background: #5a9e3a;
+		background: #111; /* Changed to black as requested */
 		color: #fff;
 		font-family: "Roboto", sans-serif;
 		font-size: 10px;

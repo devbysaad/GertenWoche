@@ -9,9 +9,17 @@
 	let { gartenpraxis, wissen, europa }: Props = $props();
 
 	const columns = $derived([
-		{ title: "Gartenpraxis", href: "/category/gartenpraxis/", articles: gartenpraxis },
-		{ title: "Wissen",       href: "/category/wissen/",       articles: wissen },
-		{ title: "Europa",       href: "/category/aktuelles/europa/", articles: europa },
+		{
+			title: "Gartenpraxis",
+			href: "/category/gartenpraxis/",
+			articles: gartenpraxis,
+		},
+		{ title: "Wissen", href: "/category/wissen/", articles: wissen },
+		{
+			title: "Europa",
+			href: "/category/aktuelles/europa/",
+			articles: europa,
+		},
 	]);
 
 	// Per-column current index
@@ -39,7 +47,12 @@
 					<!-- Featured image -->
 					<a href={url} class="mc-img-link">
 						{#if art.thumbnail}
-							<img src={art.thumbnail} alt={art.title} loading="lazy" class="mc-img" />
+							<img
+								src={art.thumbnail}
+								alt={art.title}
+								loading="lazy"
+								class="mc-img"
+							/>
 						{:else}
 							<div class="mc-img-ph"></div>
 						{/if}
@@ -60,19 +73,46 @@
 					<!-- Navigation arrows -->
 					{#if col.articles.length > 1}
 						<div class="mc-nav">
-							<button class="mc-arrow" onclick={() => prev(ci)} aria-label="Vorheriger Artikel">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-									<polyline points="15 18 9 12 15 6"/>
+							<button
+								class="mc-arrow"
+								onclick={() => prev(ci)}
+								aria-label="Vorheriger Artikel"
+							>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.5"
+									stroke-linecap="round"
+								>
+									<polyline points="15 18 9 12 15 6" />
 								</svg>
 							</button>
 							<div class="mc-dots">
 								{#each col.articles as _, di}
-									<span class="mc-dot" class:active={di === indices[ci]}></span>
+									<span
+										class="mc-dot"
+										class:active={di === indices[ci]}
+									></span>
 								{/each}
 							</div>
-							<button class="mc-arrow" onclick={() => next(ci)} aria-label="Nächster Artikel">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-									<polyline points="9 18 15 12 9 6"/>
+							<button
+								class="mc-arrow"
+								onclick={() => next(ci)}
+								aria-label="Nächster Artikel"
+							>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.5"
+									stroke-linecap="round"
+								>
+									<polyline points="9 18 15 12 9 6" />
 								</svg>
 							</button>
 						</div>
@@ -101,7 +141,7 @@
 		display: flex;
 		flex-direction: column;
 		background: #fff;
-		border: 1px solid #E0E0E0;
+		border: 1px solid #e0e0e0;
 		overflow: hidden;
 	}
 
@@ -120,7 +160,9 @@
 		display: block;
 		transition: transform 0.35s ease;
 	}
-	.mc-img-link:hover .mc-img { transform: scale(1.04); }
+	.mc-img-link:hover .mc-img {
+		transform: scale(1.04);
+	}
 	.mc-img-ph {
 		width: 100%;
 		height: 100%;
@@ -137,16 +179,21 @@
 	}
 
 	.mc-cat {
-		font-family: 'Roboto', sans-serif;
+		display: inline-block;
+		align-self: flex-start;
+		font-family: "Roboto", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
-		color: #5a9e3a;   /* green for category label — like reference */
+		background: #111;
+		color: #fff;
+		padding: 2px 6px;
+		border-radius: 2px;
 	}
 
 	.mc-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 15px;
 		font-weight: 700;
 		color: #222;
@@ -162,10 +209,12 @@
 		text-decoration: none;
 		transition: color 0.15s;
 	}
-	.mc-title a:hover { color: #444; }
+	.mc-title a:hover {
+		color: #444;
+	}
 
 	.mc-excerpt {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 13px;
 		color: #555;
 		line-height: 1.55;
@@ -177,7 +226,7 @@
 	}
 
 	.mc-author {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 11px;
 		color: #999;
 		margin-top: auto;
@@ -190,7 +239,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 8px 12px;
-		border-top: 1px solid #F0F0F0;
+		border-top: 1px solid #f0f0f0;
 	}
 
 	.mc-arrow {
@@ -204,7 +253,9 @@
 		justify-content: center;
 		cursor: pointer;
 		color: #666;
-		transition: border-color 0.15s, color 0.15s;
+		transition:
+			border-color 0.15s,
+			color 0.15s;
 		padding: 0;
 	}
 	.mc-arrow:hover {
@@ -221,10 +272,12 @@
 		width: 7px;
 		height: 7px;
 		border-radius: 50%;
-		background: #D0D0D0;
+		background: #d0d0d0;
 		transition: background 0.2s;
 	}
-	.mc-dot.active { background: #5a9e3a; }
+	.mc-dot.active {
+		background: #111;
+	}
 
 	.mc-empty {
 		padding: 24px;
@@ -235,10 +288,16 @@
 
 	/* ── Responsive ── */
 	@media (max-width: 900px) {
-		.mixed-grid { grid-template-columns: 1fr 1fr; }
+		.mixed-grid {
+			grid-template-columns: 1fr 1fr;
+		}
 	}
 	@media (max-width: 560px) {
-		.mixed-grid { grid-template-columns: 1fr; }
-		.mc-img-link { height: 200px; }
+		.mixed-grid {
+			grid-template-columns: 1fr;
+		}
+		.mc-img-link {
+			height: 200px;
+		}
 	}
 </style>
