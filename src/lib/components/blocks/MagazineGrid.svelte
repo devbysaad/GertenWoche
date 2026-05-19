@@ -1,13 +1,41 @@
 <script lang="ts">
+	/**
+	 * @component MagazineGrid
+	 * ─────────────────────────────────────────────────────────
+	 * Renders article collections in two sections:
+	 *
+	 * 1. FEATURED (first 5 articles) — magazine-style 3×2 photo grid
+	 *    Only shown when skipFeatured = false (used on homepage).
+	 *    Grid layout:
+	 *      [1] [  2  ] [3]    ← 2 spans 2 rows (tall center card)
+	 *      [4] [  2  ] [5]
+	 *
+	 * 2. REMAINING (articles 5+) — 2-column card list
+	 *    Always shown when articles are available.
+	 *    Each card has a 16:9 thumbnail, category badge, title, author.
+	 *
+	 * Props:
+	 *  articles      — array of ArticlePreview objects
+	 *  skipFeatured  — if true, skip the 5-card magazine grid (used on category pages
+	 *                  because the HeroSpotlight mosaic already shows the top 5)
+	 */
 	import type { ArticlePreview } from "$lib/types/index.js";
 	import { formatGermanDate } from "$lib/utils/date.js";
 
 	interface Props {
 		articles: ArticlePreview[];
+		/** Set to true on category pages to avoid duplicating the HeroSpotlight mosaic */
 		skipFeatured?: boolean;
+		/** Set to false to hide the 2-column remaining grid */
+		showRemaining?: boolean;
 	}
-	let { articles, skipFeatured = false }: Props = $props();
+	let {
+		articles,
+		skipFeatured = false,
+		showRemaining = true,
+	}: Props = $props();
 
+	// First 5 → magazine grid; rest → 2-col card list
 	const featured = $derived(articles.slice(0, 5));
 	const remaining = $derived(articles.slice(5));
 </script>
@@ -44,7 +72,7 @@
 	</div>
 {/if}
 
-{#if remaining.length > 0}
+{#if showRemaining && remaining.length > 0}
 	<div class="remaining-grid">
 		{#each remaining as article}
 			{@const url = `/${article.urlPath}`}

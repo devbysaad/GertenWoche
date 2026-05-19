@@ -1,4 +1,23 @@
 <script lang="ts">
+	/**
+	 * @component HeroSpotlight
+	 * ─────────────────────────────────────────────────────────
+	 * Dual-purpose hero/spotlight component used in two places:
+	 *
+	 * 1. HOMEPAGE  (variant="homepage")
+	 *    Layout: [ Large image (65%) | Stacked mini-cards (35%) ]
+	 *    The main article overlays a floating editorial box that
+	 *    "hangs" half out of the image bottom edge.
+	 *
+	 * 2. CATEGORY PAGES  (variant="mosaic")
+	 *    Layout: [ 2 cols left | Big center | 2 cols right ]
+	 *    Accepts 1 main article + up to 4 side articles.
+	 *
+	 * Props:
+	 *  article       — main/center article (always required)
+	 *  sideArticles  — supporting articles (2 for homepage, 4 for mosaic)
+	 *  variant       — "homepage" | "mosaic" (default: "mosaic")
+	 */
 	import type { ArticlePreview } from "$lib/types/index.js";
 
 	interface Props {
@@ -501,6 +520,7 @@
 		);
 		display: flex;
 		flex-direction: column;
+		align-items: flex-start;
 		gap: 4px;
 	}
 	.side-title {
@@ -553,6 +573,7 @@
 		);
 		display: flex;
 		flex-direction: column;
+		align-items: flex-start;
 		gap: 8px;
 	}
 	.center-title {

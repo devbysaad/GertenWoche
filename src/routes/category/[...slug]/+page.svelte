@@ -54,22 +54,6 @@
 							totalArticles={pagination.totalArticles}
 						/>
 					{/if}
-
-					{#if subCategories?.length > 0}
-						<div class="subcats">
-							{#each subCategories as sub}
-								<a
-									href="/category/{category.slug}/{sub.slug}"
-									class="subcat-pill"
-								>
-									{sub.name}
-									<span class="subcat-count"
-										>({sub.count})</span
-									>
-								</a>
-							{/each}
-						</div>
-					{/if}
 				{/if}
 			</div>
 
@@ -136,34 +120,6 @@
 		font-size: 14px;
 		color: #999;
 		margin: 0;
-	}
-
-	.subcats {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		margin-top: 20px;
-	}
-
-	.subcat-pill {
-		font-family: "Roboto", sans-serif;
-		font-size: 13px;
-		font-weight: 500;
-		color: #444;
-		background: #f0f0f0;
-		border: 1px solid #d0d0d0;
-		padding: 5px 14px;
-		border-radius: 20px;
-		text-decoration: none;
-		transition: all 0.15s;
-	}
-	.subcat-pill:hover {
-		background: #222;
-		color: #fff;
-	}
-	.subcat-count {
-		font-size: 11px;
-		color: #999;
 	}
 
 	/* ── Responsive ─────────────────────────────────────────── */

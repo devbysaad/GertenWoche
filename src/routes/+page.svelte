@@ -1,40 +1,51 @@
 <script lang="ts">
-	import HeroSpotlight from '$lib/components/blocks/HeroSpotlight.svelte';
-	import PflanzenStrip from '$lib/components/blocks/PflanzenStrip.svelte';
-	import RasenGartenBlock from '$lib/components/blocks/RasenGartenBlock.svelte';
-	import VideoBlock from '$lib/components/blocks/VideoBlock.svelte';
-	import MixedArticleBlock from '$lib/components/blocks/MixedArticleBlock.svelte';
-	import MagazineGrid from '$lib/components/blocks/MagazineGrid.svelte';
-	import ProductSidebar from '$lib/components/blocks/ProductSidebar.svelte';
-	import ThreeColBlock from '$lib/components/blocks/ThreeColBlock.svelte';
-	import DirectoryLogos from '$lib/components/blocks/DirectoryLogos.svelte';
-	import EventsWidget from '$lib/components/blocks/EventsWidget.svelte';
-	import ExclusiveBlock from '$lib/components/blocks/ExclusiveBlock.svelte';
-	import ArticleCard from '$lib/components/articles/ArticleCard.svelte';
+	import HeroSpotlight from "$lib/components/blocks/HeroSpotlight.svelte";
+	import PflanzenStrip from "$lib/components/blocks/PflanzenStrip.svelte";
+	import RasenGartenBlock from "$lib/components/blocks/RasenGartenBlock.svelte";
+	import VideoBlock from "$lib/components/blocks/VideoBlock.svelte";
+	import MixedArticleBlock from "$lib/components/blocks/MixedArticleBlock.svelte";
+	import MagazineGrid from "$lib/components/blocks/MagazineGrid.svelte";
+	import ProductSidebar from "$lib/components/blocks/ProductSidebar.svelte";
+	import ThreeColBlock from "$lib/components/blocks/ThreeColBlock.svelte";
+	import DirectoryLogos from "$lib/components/blocks/DirectoryLogos.svelte";
+	import EventsWidget from "$lib/components/blocks/EventsWidget.svelte";
+	import ExclusiveBlock from "$lib/components/blocks/ExclusiveBlock.svelte";
+	import ArticleCard from "$lib/components/articles/ArticleCard.svelte";
 
 	let { data } = $props();
 
 	// Discover more accordion
 	const discoverCategories = [
-		{ label: 'Ausstellungen und Messen', href: '/veranstaltungen' },
-		{ label: 'Gartenpraxis', href: '/category/gartenpraxis/' },
-		{ label: 'Hof, Terrasse und Vorgarten', href: '/category/gartenpraxis/' },
+		{ label: "Ausstellungen und Messen", href: "/veranstaltungen" },
+		{ label: "Gartenpraxis", href: "/category/gartenpraxis/" },
+		{
+			label: "Hof, Terrasse und Vorgarten",
+			href: "/category/gartenpraxis/",
+		},
 	];
 	let openDiscover = $state<number | null>(null);
 </script>
 
 <svelte:head>
 	<title>Gartenwoche – Das unabhängige Gartenmagazin</title>
-	<meta name="description" content="Gartenwoche ist das unabhängige Schweizer Gartenmagazin. Tipps zu Pflanzen, Gartenpraxis, Rasen, Pflanzenschutz und aktuelle Gartennachrichten aus der Schweiz." />
-	<meta property="og:title" content="Gartenwoche – Das unabhängige Gartenmagazin" />
-	<meta property="og:description" content="Schweizer Gartenmagazin: Pflanzen, Gartenpraxis, Rasen, Pflanzenschutz und aktuelle Gartennachrichten." />
+	<meta
+		name="description"
+		content="Gartenwoche ist das unabhängige Schweizer Gartenmagazin. Tipps zu Pflanzen, Gartenpraxis, Rasen, Pflanzenschutz und aktuelle Gartennachrichten aus der Schweiz."
+	/>
+	<meta
+		property="og:title"
+		content="Gartenwoche – Das unabhängige Gartenmagazin"
+	/>
+	<meta
+		property="og:description"
+		content="Schweizer Gartenmagazin: Pflanzen, Gartenpraxis, Rasen, Pflanzenschutz und aktuelle Gartennachrichten."
+	/>
 	<meta property="og:type" content="website" />
 	<link rel="canonical" href="https://gartenwoche.ch" />
 </svelte:head>
 
 <div class="homepage">
 	<div class="container">
-
 		<!-- ── HERO: large left image + 2 stacked right articles ── -->
 		{#if data.hero}
 			<HeroSpotlight
@@ -52,7 +63,11 @@
 				<a href={url} class="fo-inner">
 					<div class="fo-img">
 						{#if art.thumbnail}
-							<img src={art.thumbnail} alt={art.title} loading="lazy" />
+							<img
+								src={art.thumbnail}
+								alt={art.title}
+								loading="lazy"
+							/>
 						{:else}
 							<div class="fo-img-ph"></div>
 						{/if}
@@ -63,7 +78,9 @@
 						{#if art.excerpt}
 							<p class="fo-excerpt">{art.excerpt}</p>
 						{/if}
-						<span class="fo-author">Editorial Team {art.author.name}</span>
+						<span class="fo-author"
+							>Editorial Team {art.author.name}</span
+						>
 					</div>
 				</a>
 			</div>
@@ -77,8 +94,17 @@
 					<li class="dm-item">
 						<a href={cat.href} class="dm-link">
 							<span>{cat.label}</span>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-								<polyline points="9 18 15 12 9 6"/>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.5"
+								stroke-linecap="round"
+								aria-hidden="true"
+							>
+								<polyline points="9 18 15 12 9 6" />
 							</svg>
 						</a>
 					</li>
@@ -102,7 +128,10 @@
 
 		<!-- ── Rasen 60/40 ── -->
 		{#if data.rasenMain}
-			<RasenGartenBlock main={data.rasenMain} secondary={data.rasenSecondary ?? []} />
+			<RasenGartenBlock
+				main={data.rasenMain}
+				secondary={data.rasenSecondary ?? []}
+			/>
 		{/if}
 
 		<!-- ── Video der Woche (heading is inside VideoBlock) ── -->
@@ -139,7 +168,10 @@
 				</div>
 				<!-- Ad space -->
 				<div class="ad-spacer"></div>
-				<MagazineGrid articles={data.carouselArticles} />
+				<MagazineGrid
+					articles={data.carouselArticles}
+					showRemaining={false}
+				/>
 			</div>
 		{/if}
 
@@ -150,7 +182,6 @@
 
 		<!-- ── Bottom: large-img article LEFT + 2 text articles RIGHT ── -->
 		<div class="bottom-layout">
-
 			<!-- LEFT: 1 article with large image + title + excerpt -->
 			{#if data.pflanzenschutz?.[0]}
 				{@const art = data.pflanzenschutz[0]}
@@ -158,7 +189,11 @@
 				<a href={artUrl} class="bl-main">
 					<div class="bl-img">
 						{#if art.thumbnail}
-							<img src={art.thumbnail} alt={art.title} loading="lazy" />
+							<img
+								src={art.thumbnail}
+								alt={art.title}
+								loading="lazy"
+							/>
 						{:else}
 							<div class="bl-img-ph"></div>
 						{/if}
@@ -186,7 +221,6 @@
 					</a>
 				{/each}
 			</div>
-
 		</div>
 
 		<!-- ── Branchenverzeichnis + Events side by side ── -->
@@ -198,7 +232,6 @@
 				<EventsWidget events={data.events ?? []} />
 			</div>
 		</div>
-
 	</div>
 </div>
 
@@ -217,11 +250,13 @@
 		grid-template-columns: 280px 1fr;
 		gap: 0;
 		text-decoration: none;
-		border: 1px solid #E0E0E0;
+		border: 1px solid #e0e0e0;
 		overflow: hidden;
 		transition: box-shadow 0.2s ease;
 	}
-	.fo-inner:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+	.fo-inner:hover {
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+	}
 
 	.fo-img {
 		position: relative;
@@ -236,15 +271,17 @@
 		min-height: 180px;
 		transition: transform 0.3s ease;
 	}
-	.fo-inner:hover .fo-img img { transform: scale(1.04); }
+	.fo-inner:hover .fo-img img {
+		transform: scale(1.04);
+	}
 
 	.fo-badge {
 		position: absolute;
 		bottom: 8px;
 		left: 8px;
-		background: rgba(0,0,0,0.65);
+		background: rgba(0, 0, 0, 0.65);
 		color: #fff;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
@@ -263,7 +300,7 @@
 	}
 
 	.fo-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 20px;
 		font-weight: 700;
 		color: #222;
@@ -272,7 +309,7 @@
 	}
 
 	.fo-excerpt {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 14px;
 		line-height: 1.6;
 		color: #555;
@@ -284,7 +321,7 @@
 	}
 
 	.fo-author {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 11px;
 		color: #888;
 		font-style: italic;
@@ -293,13 +330,13 @@
 	/* ── Discover More ────────────────────────────────────── */
 	.discover-more {
 		background: #f5f5f5;
-		border: 1px solid #E0E0E0;
+		border: 1px solid #e0e0e0;
 		padding: 16px 20px;
 		margin: 20px 0;
 	}
 
 	.dm-heading {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 14px;
 		font-weight: 700;
 		color: #555;
@@ -315,7 +352,7 @@
 	}
 
 	.dm-item {
-		border-top: 1px solid #E0E0E0;
+		border-top: 1px solid #e0e0e0;
 	}
 
 	.dm-link {
@@ -324,13 +361,18 @@
 		justify-content: space-between;
 		padding: 12px 0;
 		text-decoration: none;
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 14px;
 		color: #333;
 		transition: color 0.15s;
 	}
-	.dm-link:hover { color: #222; }
-	.dm-link svg { color: #aaa; flex-shrink: 0; }
+	.dm-link:hover {
+		color: #222;
+	}
+	.dm-link svg {
+		color: #aaa;
+		flex-shrink: 0;
+	}
 
 	/* ── 3-col article grid ───────────────────────────────── */
 	.three-col-grid {
@@ -352,10 +394,10 @@
 		align-items: center;
 		padding: 12px 0 10px;
 		margin-bottom: 0;
-		border-bottom: 3px solid #F7C900;
+		border-bottom: 3px solid #f7c900;
 	}
 	.section-heading {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 18px;
 		font-weight: 700;
 		color: #222;
@@ -381,7 +423,7 @@
 		margin-bottom: 32px;
 		padding: 20px;
 		background: #f2f2f2;
-		border: 1px solid #E0E0E0;
+		border: 1px solid #e0e0e0;
 	}
 
 	/* LEFT: large image card */
@@ -403,7 +445,9 @@
 		object-fit: cover;
 		transition: transform 0.35s ease;
 	}
-	.bl-main:hover .bl-img img { transform: scale(1.03); }
+	.bl-main:hover .bl-img img {
+		transform: scale(1.03);
+	}
 
 	.bl-img-ph {
 		height: 280px;
@@ -421,7 +465,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 11px;
 		font-weight: 700;
 		color: #555;
@@ -430,13 +474,13 @@
 		text-transform: uppercase;
 	}
 	.bl-badge::before {
-		content: 'G+';
+		content: "G+";
 		font-size: 9px;
 		color: #888;
 	}
 
 	.bl-main-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 17px;
 		font-weight: 700;
 		color: #222;
@@ -444,10 +488,12 @@
 		line-height: 1.3;
 		transition: color 0.15s;
 	}
-	.bl-main:hover .bl-main-title { color: #2D1B69; }
+	.bl-main:hover .bl-main-title {
+		color: #2d1b69;
+	}
 
 	.bl-main-excerpt {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 14px;
 		color: #555;
 		margin: 0;
@@ -471,13 +517,18 @@
 		gap: 8px;
 		padding: 20px 0;
 		text-decoration: none;
-		border-bottom: 1px solid #E0E0E0;
+		border-bottom: 1px solid #e0e0e0;
 	}
-	.bl-text-card:first-child { padding-top: 0; }
-	.bl-text-card:last-child { border-bottom: none; padding-bottom: 0; }
+	.bl-text-card:first-child {
+		padding-top: 0;
+	}
+	.bl-text-card:last-child {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
 
 	.bl-text-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 17px;
 		font-weight: 700;
 		color: #222;
@@ -485,10 +536,12 @@
 		line-height: 1.3;
 		transition: color 0.15s;
 	}
-	.bl-text-card:hover .bl-text-title { color: #2D1B69; }
+	.bl-text-card:hover .bl-text-title {
+		color: #2d1b69;
+	}
 
 	.bl-text-excerpt {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 14px;
 		color: #555;
 		margin: 0;
@@ -505,7 +558,7 @@
 		grid-template-columns: repeat(3, 1fr);
 		gap: 0;
 		height: 415px;
-		border: 1px solid #E0E0E0;
+		border: 1px solid #e0e0e0;
 		margin-bottom: 28px;
 		background: #fff;
 		overflow: hidden;
@@ -516,13 +569,17 @@
 		gap: 8px;
 		padding: 20px 20px 22px;
 		text-decoration: none;
-		border-right: 1px solid #E0E0E0;
+		border-right: 1px solid #e0e0e0;
 		transition: background 0.15s;
 	}
-	.ak-card:last-child { border-right: none; }
-	.ak-card:hover { background: #fafafa; }
+	.ak-card:last-child {
+		border-right: none;
+	}
+	.ak-card:hover {
+		background: #fafafa;
+	}
 	.ak-cat {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
@@ -530,7 +587,7 @@
 		color: #777;
 	}
 	.ak-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 18px;
 		font-weight: 700;
 		color: #222;
@@ -538,9 +595,11 @@
 		line-height: 1.3;
 		transition: color 0.15s;
 	}
-	.ak-card:hover .ak-title { color: #2D1B69; }
+	.ak-card:hover .ak-title {
+		color: #2d1b69;
+	}
 	.ak-excerpt {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 15px;
 		color: #555;
 		margin: 0;
@@ -555,8 +614,12 @@
 		align-items: start;
 		margin-bottom: 32px;
 	}
-	.dir-col { min-width: 0; }
-	.events-col { min-width: 0; }
+	.dir-col {
+		min-width: 0;
+	}
+	.events-col {
+		min-width: 0;
+	}
 
 	/* ── Responsive ───────────────────────────────────────── */
 	@media (max-width: 860px) {
@@ -564,20 +627,48 @@
 			grid-template-columns: 1fr;
 			gap: 24px;
 		}
-		.three-col-grid { grid-template-columns: repeat(2, 1fr); }
-		.bl-stack { flex-direction: row; gap: 16px; }
-		.bl-text-card { border-bottom: none; border-right: 1px solid #E0E0E0; padding: 0 16px 0 0; }
-		.bl-text-card:last-child { border-right: none; padding-right: 0; }
-		.aktuelles-strip { grid-template-columns: 1fr; }
-		.ak-card { border-right: none; border-bottom: 1px solid #E0E0E0; }
-		.ak-card:last-child { border-bottom: none; }
-		.dir-events-row { grid-template-columns: 1fr; }
+		.three-col-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		.bl-stack {
+			flex-direction: row;
+			gap: 16px;
+		}
+		.bl-text-card {
+			border-bottom: none;
+			border-right: 1px solid #e0e0e0;
+			padding: 0 16px 0 0;
+		}
+		.bl-text-card:last-child {
+			border-right: none;
+			padding-right: 0;
+		}
+		.aktuelles-strip {
+			grid-template-columns: 1fr;
+		}
+		.ak-card {
+			border-right: none;
+			border-bottom: 1px solid #e0e0e0;
+		}
+		.ak-card:last-child {
+			border-bottom: none;
+		}
+		.dir-events-row {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	@media (max-width: 560px) {
-		.three-col-grid { grid-template-columns: 1fr; }
-		.bl-stack { flex-direction: column; }
-		.bl-text-card { border-right: none; border-bottom: 1px solid #E0E0E0; padding: 16px 0; }
+		.three-col-grid {
+			grid-template-columns: 1fr;
+		}
+		.bl-stack {
+			flex-direction: column;
+		}
+		.bl-text-card {
+			border-right: none;
+			border-bottom: 1px solid #e0e0e0;
+			padding: 16px 0;
+		}
 	}
-
 </style>

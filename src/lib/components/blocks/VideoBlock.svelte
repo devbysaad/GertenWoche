@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Real Vimeo video as confirmed from live site
-	const vimeoId = '106571242';
-	const videoTitle = 'Video der Woche';
+	const vimeoId = "106571242";
+	const videoTitle = "Video der Woche";
 </script>
 
 <section class="video-block">
@@ -12,7 +12,6 @@
 				src="https://player.vimeo.com/video/{vimeoId}?title=0&byline=0&portrait=0"
 				title={videoTitle}
 				allow="autoplay; fullscreen; picture-in-picture"
-				allowfullscreen
 				loading="lazy"
 			></iframe>
 		</div>
@@ -25,7 +24,7 @@
 	}
 
 	.video-heading {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 18px;
 		font-weight: 700;
 		color: #222;
@@ -34,7 +33,7 @@
 		letter-spacing: 0.05em;
 		margin: 0 0 8px;
 		padding-bottom: 10px;
-		border-bottom: 3px solid #F7C900;
+		border-bottom: 3px solid #f7c900;
 	}
 
 	.video-card {

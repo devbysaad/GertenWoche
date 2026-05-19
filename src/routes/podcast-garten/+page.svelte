@@ -3,60 +3,69 @@
 	const episodes = [
 		{
 			id: 1,
-			title: 'Der Dickmaulrüssler: Biologie und seine Bekämpfung',
-			description: 'Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner.',
-			// SRF podcast MP3 URLs (public)
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_dickmaulruesler.mp3',
-			duration: ''
+			title: "Der Dickmaulrüssler: Biologie und seine Bekämpfung",
+			description:
+				"Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=1",
+			duration: "11:42",
 		},
 		{
 			id: 2,
-			title: 'Die Silberschnecke: Schadtbild und Bekämpfung',
-			description: 'Sehr informative Audiobeiträge zu den verschiedenen Schnailbildern im Garten.',
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_silberschnecke.mp3',
-			duration: ''
+			title: "Die Silberschnecke: Schadebild und Bekämpfung",
+			description:
+				"Sehr informative Audiobeiträge zu den verschiedenen Schadbildern im Garten.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=2",
+			duration: "08:15",
 		},
 		{
 			id: 3,
-			title: 'Meine Thuja ist braun',
-			description: 'Dessweiteren spannende Audiobeiträge vom SRF zum Thema Garten.',
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_thuja.mp3',
-			duration: ''
+			title: "Meine Thuja ist braun",
+			description:
+				"Gespräche über die häufigsten Ursachen und Hilfsmittel bei braunen Hecken.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=3",
+			duration: "10:04",
 		},
 		{
 			id: 4,
-			title: 'Rosenschädlinge Teil 1',
-			description: 'Erfahren Sie alles über die häufigsten Rosenschädlinge und wie Sie diese effektiv bekämpfen können.',
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_rosenschaedlinge1.mp3',
-			duration: ''
+			title: "Rosenschädlinge Teil 1",
+			description:
+				"Erfahren Sie alles über die häufigsten Rosenschädlinge und wie Sie diese effektiv bekämpfen können.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=4",
+			duration: "12:30",
 		},
 		{
 			id: 5,
-			title: 'Rosenschädlinge Teil 2',
-			description: 'Fortsetzung: Weiter Tipps und Behandlungsmethoden gegen Rosenkrankheiten.',
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_rosenschaedlinge2.mp3',
-			duration: ''
+			title: "Rosenschädlinge Teil 2",
+			description:
+				"Fortsetzung: Weiter Tipps und Behandlungsmethoden gegen Rosenkrankheiten.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=5",
+			duration: "09:45",
 		},
 		{
 			id: 6,
-			title: 'Der Ehrengasttierst',
-			description: 'Audiobeiträge vom SRF zum Thema Garten — Pflegetipps und Gartengestaltung.',
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_ehrengasttierst.mp3',
-			duration: ''
+			title: "Ehrengast im Garten",
+			description:
+				"Interviews mit Experten zum Thema Pflegetipps und moderne Gartengestaltung.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=6",
+			duration: "15:20",
 		},
 		{
 			id: 7,
-			title: 'Gestaltungstipps: Iraetkräuter im Rasen passen in jeden Garten',
-			description: 'Praktische Gestaltungstipps — wie heimische Kräuter im Rasen passen in jeden Garten.',
-			src: 'https://podcasts.srf.ch/world/audio/garten/srf_garten_kraeutergarten.mp3',
-			duration: ''
-		}
+			title: "Rasenkräuter: Vielfalt statt Monokultur",
+			description:
+				"Praktische Gestaltungstipps — wie heimische Kräuter im Rasen in jeden Garten passen.",
+			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=7",
+			duration: "07:55",
+		},
 	];
 </script>
 
 <svelte:head>
 	<title>Podcast Garten | Gartenwoche</title>
-	<meta name="description" content="Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner. Audiobeiträge vom SRF zum Thema Garten." />
+	<meta
+		name="description"
+		content="Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner. Audiobeiträge vom SRF zum Thema Garten."
+	/>
 </svelte:head>
 
 <div class="podcast-page">
@@ -72,9 +81,9 @@
 		<div class="podcast-intro">
 			<p>
 				Podcast zum Thema <strong>Pflanzenschutz</strong> im Garten der Fachhochschule
-				Wädenswil mit Beiträgen von Thomas Lohner. Sehr informative
-				Audiobeiträge zu den verschiedenen Schadbildern im Garten.
-				Dessweiteren spannende Audiobeiträge vom SRF zum Thema Garten.
+				Wädenswil mit Beiträgen von Thomas Lohner. Sehr informative Audiobeiträge
+				zu den verschiedenen Schadbildern im Garten. Dessweiteren spannende
+				Audiobeiträge vom SRF zum Thema Garten.
 			</p>
 			<p>
 				<strong>Der Dickmaulrüssler:</strong> Biologie und seine Bekämpfung

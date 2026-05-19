@@ -1,20 +1,26 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { formatGermanFull } from '$lib/utils/date.js';
-	import { modalStore } from '$lib/stores/modal.store.js';
-	import Logo from './Logo.svelte';
-	import SocialIcons from './SocialIcons.svelte';
+	import { goto } from "$app/navigation";
+	import { formatGermanFull } from "$lib/utils/date.js";
+	import { modalStore } from "$lib/stores/modal.store.js";
+	import { mobileMenuOpen, searchOpen } from "$lib/stores/nav.store.js";
+	import Logo from "./Logo.svelte";
+	import SocialIcons from "./SocialIcons.svelte";
 
 	interface Props {
 		weather: { temp: number | null; city: string };
-		user?: { name: string; username: string; isPro: boolean; avatar?: string } | null;
+		user?: {
+			name: string;
+			username: string;
+			isPro: boolean;
+			avatar?: string;
+		} | null;
 	}
 	let { weather, user = null }: Props = $props();
 
 	const today = formatGermanFull(new Date());
 
 	const tempDisplay = $derived(
-		weather.temp !== null ? `${weather.temp.toFixed(1)}°C` : `—°C`
+		weather.temp !== null ? `${weather.temp.toFixed(1)}°C` : `—°C`,
 	);
 
 	// Mein Konto dropdown
@@ -26,94 +32,104 @@
 		menuOpen = true;
 	}
 	function scheduleClose() {
-		menuTimeout = setTimeout(() => { menuOpen = false; }, 150);
+		menuTimeout = setTimeout(() => {
+			menuOpen = false;
+		}, 150);
 	}
 
 	async function logout() {
-		await fetch('/api/auth/logout', { method: 'POST' });
+		await fetch("/api/auth/logout", { method: "POST" });
 		window.location.reload();
 	}
 
-	// ── Search popup state ──────────────────────────────────────
-	let searchOpen    = $state(false);
-	let searchQuery   = $state('');
-	let searchResults = $state<Array<{ title: string; href: string; category: string }>>([]);
-	let searchWrap: HTMLDivElement | undefined;
-	let searchInput: HTMLInputElement | undefined;
+	// ── Search dropdown state ───────────────────────────────────
+	let searchQuery = $state("");
+	let searchResults = $state<Array<{ title: string; href: string }>>([]);
+	let searchInput: HTMLInputElement | undefined = $state(undefined);
 
-	// Close on Escape
+	// Focus input when search opens
 	$effect(() => {
-		function onKey(e: KeyboardEvent) {
-			if (e.key === 'Escape') {
-				searchOpen = false;
-			}
-		}
-		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
-	});
-
-	// Click outside search → close
-	$effect(() => {
-		if (!searchOpen) return;
-		function onOutside(e: MouseEvent) {
-			if (searchWrap && !searchWrap.contains(e.target as Node)) {
-				searchOpen  = false;
-				searchQuery = '';
-			}
-		}
-		document.addEventListener('mousedown', onOutside);
-		return () => document.removeEventListener('mousedown', onOutside);
-	});
-
-	// Focus input when popup opens
-	$effect(() => {
-		if (searchOpen && searchInput) {
+		if ($searchOpen && searchInput) {
 			setTimeout(() => searchInput?.focus(), 50);
 		}
 	});
 
-	// Live search — debounced fetch from WP API
+	// Live search
 	let debounce: ReturnType<typeof setTimeout>;
 	function onSearchInput() {
 		clearTimeout(debounce);
-		if (!searchQuery.trim()) { searchResults = []; return; }
+		if (!searchQuery.trim()) {
+			searchResults = [];
+			return;
+		}
 		debounce = setTimeout(async () => {
 			try {
 				const res = await fetch(
-					`https://gartenwoche.ch/wp-json/wp/v2/posts?search=${encodeURIComponent(searchQuery)}&per_page=6&_embed`,
-					{ signal: AbortSignal.timeout(4000) }
+					`https://gartenwoche.ch/wp-json/wp/v2/posts?search=${encodeURIComponent(searchQuery)}&per_page=5&_embed`,
+					{ signal: AbortSignal.timeout(4000) },
 				);
-				if (!res.ok) { searchResults = []; return; }
+				if (!res.ok) {
+					searchResults = [];
+					return;
+				}
 				const posts = await res.json();
-				searchResults = posts.map((p: Record<string, unknown>) => ({
-					title:    (p.title as Record<string, string>)?.rendered?.replace(/<[^>]+>/g, '') ?? '',
-					href:     (p.link as string)?.replace('https://gartenwoche.ch', '') ?? '/',
-					category: ((p._embedded as Record<string, unknown>)?.['wp:term'] as unknown[])?.[0] as string ?? ''
+				searchResults = posts.map((p: any) => ({
+					title: p.title?.rendered?.replace(/<[^>]+>/g, "") ?? "",
+					href:
+						(p.link as string)?.replace(
+							"https://gartenwoche.ch",
+							"",
+						) ?? "/",
 				}));
-			} catch { searchResults = []; }
-		}, 280);
+			} catch {
+				searchResults = [];
+			}
+		}, 300);
 	}
 
 	function submitSearch() {
 		const q = searchQuery.trim();
 		if (q) goto(`/search?q=${encodeURIComponent(q)}`);
-		searchOpen  = false;
-		searchQuery = '';
+		$searchOpen = false;
+		searchQuery = "";
+		searchResults = [];
 	}
 
 	function toggleSearch() {
-		searchOpen  = !searchOpen;
-		if (!searchOpen) { searchQuery = ''; searchResults = []; }
+		$searchOpen = !$searchOpen;
+		if (!$searchOpen) {
+			searchQuery = "";
+			searchResults = [];
+		}
 	}
+
+	// Close on Escape or Outside
+	$effect(() => {
+		function onKey(e: KeyboardEvent) {
+			if (e.key === "Escape" && $searchOpen) toggleSearch();
+		}
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	});
 </script>
+
+<!-- Search is now rendered inline in NavPrimary -->
 
 <header class="site-header">
 	<div class="header-upper">
-
 		<!-- ── LEFT: Weather widget ──────────────────────────── -->
 		<div class="thermometer">
-			<svg class="thermo-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-				<path d="M15 13V5a3 3 0 0 0-6 0v8a5 5 0 1 0 6 0zm-3 7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+			<svg
+				class="thermo-icon"
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="currentColor"
+				aria-hidden="true"
+			>
+				<path
+					d="M15 13V5a3 3 0 0 0-6 0v8a5 5 0 1 0 6 0zm-3 7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"
+				/>
 			</svg>
 			<span class="weather-temp">{tempDisplay}</span>
 			<span class="weather-city">{weather.city}</span>
@@ -137,24 +153,47 @@
 			onmouseenter={openMenu}
 			onmouseleave={scheduleClose}
 		>
-			<button type="button" class="mein-konto-btn" aria-haspopup="true" aria-expanded={menuOpen}>
+			<button
+				type="button"
+				class="mein-konto-btn"
+				aria-haspopup="true"
+				aria-expanded={menuOpen}
+			>
 				{#if user}
 					<!-- Logged-in: grey avatar circle + text -->
 					<div class="user-avatar-mini">
 						{#if user.avatar}
 							<img src={user.avatar} alt={user.name} />
 						{:else}
-							<svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22" aria-hidden="true">
-								<path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+							<svg
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								width="22"
+								height="22"
+								aria-hidden="true"
+							>
+								<path
+									d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"
+								/>
 							</svg>
 						{/if}
 					</div>
 					<span class="konto-label">Mein Konto</span>
 				{:else}
 					<!-- Guest: person icon + text -->
-					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-						<circle cx="12" cy="7" r="4"/>
+					<svg
+						width="15"
+						height="15"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+						<circle cx="12" cy="7" r="4" />
 					</svg>
 					<span>Mein Konto</span>
 				{/if}
@@ -170,32 +209,58 @@
 				>
 					{#if user}
 						<!-- Logged-in dropdown -->
-						<span class="konto-greeting">Hallo, {user.username}</span>
+						<span class="konto-greeting"
+							>Hallo, {user.username}</span
+						>
 						<hr class="konto-divider" />
-						<a href="/mein-konto" class="konto-item konto-link" role="menuitem" onclick={() => (menuOpen = false)}>Mein Konto</a>
-						<a href="/mein-konto?tab=details" class="konto-item konto-link" role="menuitem" onclick={() => (menuOpen = false)}>Kontodetails</a>
-						<a href="/mein-konto?tab=subs" class="konto-item konto-link" role="menuitem" onclick={() => (menuOpen = false)}>Abonnements</a>
+						<a
+							href="/mein-konto"
+							class="konto-item konto-link"
+							role="menuitem"
+							onclick={() => (menuOpen = false)}>Mein Konto</a
+						>
+						<a
+							href="/mein-konto?tab=details"
+							class="konto-item konto-link"
+							role="menuitem"
+							onclick={() => (menuOpen = false)}>Kontodetails</a
+						>
+						<a
+							href="/mein-konto?tab=subs"
+							class="konto-item konto-link"
+							role="menuitem"
+							onclick={() => (menuOpen = false)}>Abonnements</a
+						>
 						<hr class="konto-divider" />
 						<button
 							type="button"
 							class="konto-item konto-logout"
 							role="menuitem"
-							onclick={() => { menuOpen = false; logout(); }}
-						>Ausloggen ⇥</button>
+							onclick={() => {
+								menuOpen = false;
+								logout();
+							}}>Ausloggen ⇥</button
+						>
 					{:else}
 						<!-- Guest dropdown -->
 						<button
 							type="button"
 							class="konto-item"
 							role="menuitem"
-							onclick={() => { menuOpen = false; modalStore.openLogin(); }}
-						>Anmeldung</button>
+							onclick={() => {
+								menuOpen = false;
+								modalStore.openLogin();
+							}}>Anmeldung</button
+						>
 						<button
 							type="button"
 							class="konto-item"
 							role="menuitem"
-							onclick={() => { menuOpen = false; modalStore.openRegister(); }}
-						>Registrieren</button>
+							onclick={() => {
+								menuOpen = false;
+								modalStore.openRegister();
+							}}>Registrieren</button
+						>
 					{/if}
 				</div>
 			{/if}
@@ -217,65 +282,86 @@
 		</div>
 
 		<div class="search-container">
-			<div class="search-wrap" bind:this={searchWrap}>
+			<div class="search-wrap">
 				<button
 					class="search-btn"
 					type="button"
 					onclick={toggleSearch}
-					aria-label={searchOpen ? 'Suche schließen' : 'Suche öffnen'}
-					aria-expanded={searchOpen}
+					aria-label={$searchOpen
+						? "Suche schließen"
+						: "Suche öffnen"}
+					aria-expanded={$searchOpen}
 				>
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-						<circle cx="11" cy="11" r="8"/>
-						<line x1="21" y1="21" x2="16.65" y2="16.65"/>
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.2"
+						stroke-linecap="round"
+						aria-hidden="true"
+					>
+						<circle cx="11" cy="11" r="8" />
+						<line x1="21" y1="21" x2="16.65" y2="16.65" />
 					</svg>
 				</button>
 
-				{#if searchOpen}
-				<!-- Full-screen search overlay (mobile) + dropdown (desktop) -->
-				<div
-					class="search-overlay"
-					onclick={(e) => { if (e.target === e.currentTarget) { searchOpen = false; searchQuery = ''; } }}
-					role="dialog"
-					aria-label="Suche"
-				>
-					<div class="search-popup">
-						<form class="search-row" onsubmit={(e) => { e.preventDefault(); submitSearch(); }}>
+				{#if $searchOpen}
+					<div class="search-dropdown-bubble">
+						<div class="search-bubble-arrow"></div>
+						<form
+							class="search-bubble-form"
+							onsubmit={(e) => {
+								e.preventDefault();
+								submitSearch();
+							}}
+						>
 							<input
 								bind:this={searchInput}
 								bind:value={searchQuery}
 								oninput={onSearchInput}
 								type="search"
-								class="search-input"
-								placeholder="Suche eingeben…"
+								class="search-bubble-input"
+								placeholder="type here…"
 								autocomplete="off"
 							/>
-							<button type="submit" class="search-go">Suche →</button>
-							<button type="button" class="search-close" onclick={() => { searchOpen = false; searchQuery = ''; }} aria-label="Schließen">
-								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-							</button>
+							<button type="submit" class="search-bubble-submit"
+								>Suche →</button
+							>
 						</form>
+
 						{#if searchResults.length > 0}
-							<ul class="search-results">
+							<div class="search-bubble-results">
+								<p class="results-label">Beiträge</p>
 								{#each searchResults as result}
-									<li>
-										<a
-											href={result.href}
-											class="search-result-link"
-											onclick={() => { searchOpen = false; searchQuery = ''; }}
-										>
-											<span class="result-title">{result.title}</span>
-										</a>
-									</li>
+									<a
+										href={result.href}
+										class="result-item"
+										onclick={() => {
+											$searchOpen = false;
+											searchQuery = "";
+										}}
+									>
+										{result.title}
+									</a>
 								{/each}
-							</ul>
-						{:else if searchQuery.trim().length > 1}
-							<p class="search-empty">Keine Ergebnisse gefunden.</p>
+							</div>
 						{/if}
 					</div>
-				</div>
 				{/if}
 			</div>
+
+			<!-- Mobile Hamburger in same line -->
+			<button
+				class="hamburger-mobile"
+				class:open={$mobileMenuOpen}
+				type="button"
+				onclick={() => ($mobileMenuOpen = !$mobileMenuOpen)}
+				aria-label={$mobileMenuOpen ? "Menü schließen" : "Menü öffnen"}
+			>
+				<span></span><span></span><span></span>
+			</button>
 		</div>
 	</div>
 </header>
@@ -304,7 +390,7 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 13px;
 		color: #555555;
 		flex-shrink: 0;
@@ -331,7 +417,10 @@
 		text-decoration: none;
 	}
 
-	.logo-link:hover { opacity: 0.85; transition: opacity 0.15s; }
+	.logo-link:hover {
+		opacity: 0.85;
+		transition: opacity 0.15s;
+	}
 
 	.logo-img {
 		display: block;
@@ -341,7 +430,7 @@
 	}
 
 	.header-date {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 13px;
 		color: #555555;
 		margin: 0;
@@ -365,7 +454,7 @@
 		display: flex;
 		align-items: center;
 		gap: 5px;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 13px;
 		color: #333333;
 		background: none;
@@ -377,7 +466,7 @@
 	}
 
 	.mein-konto-btn:hover {
-		color: #2D1B69;
+		color: #2d1b69;
 	}
 
 	/* Dropdown */
@@ -386,9 +475,9 @@
 		top: calc(100% + 6px);
 		right: 0;
 		background: #ffffff;
-		border: 1px solid #E0E0E0;
+		border: 1px solid #e0e0e0;
 		border-radius: 0 0 4px 4px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 		min-width: 140px;
 		z-index: 200;
 		padding: 8px 0;
@@ -399,7 +488,7 @@
 		width: 100%;
 		text-align: left;
 		padding: 8px 20px;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 13px;
 		color: #222222;
 		background: none;
@@ -410,15 +499,15 @@
 	}
 
 	.konto-item:hover {
-		background: #F7F7F7;
-		color: #2D1B69;
+		background: #f7f7f7;
+		color: #2d1b69;
 	}
 
 	/* Logged-in dropdown extras */
 	.konto-greeting {
 		display: block;
 		padding: 8px 16px 6px;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 12px;
 		color: #999;
 		white-space: nowrap;
@@ -427,7 +516,7 @@
 	}
 	.konto-divider {
 		border: none;
-		border-top: 1px solid #E0E0E0;
+		border-top: 1px solid #e0e0e0;
 		margin: 4px 0;
 	}
 	.konto-link {
@@ -438,14 +527,16 @@
 		color: #888;
 		width: 100%;
 	}
-	.konto-logout:hover { color: #c00; }
+	.konto-logout:hover {
+		color: #c00;
+	}
 
 	/* Avatar mini in header button */
 	.user-avatar-mini {
 		width: 28px;
 		height: 28px;
 		border-radius: 50%;
-		background: #C0C0C0;
+		background: #c0c0c0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -466,7 +557,7 @@
 	/* ── Header Lower Layout ────────────────────────────────────── */
 	.header-lower {
 		display: grid;
-		grid-template-columns: 1fr auto 1fr; 
+		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
 		max-width: 1200px;
 		margin: 0 auto;
@@ -519,88 +610,134 @@
 		border-radius: 4px;
 		transition: color 0.15s ease;
 	}
-	.search-btn:hover { color: #2D1B69; }
-
-	.search-popup {
-		position: absolute;
-		top: calc(100% + 8px);
-		right: 0;
-		width: 320px;
-		max-width: calc(100vw - 40px);
-		background: #ffffff;
-		border: 1px solid #E0E0E0;
-		border-radius: 4px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		z-index: 300;
-		overflow: hidden;
+	.search-btn:hover {
+		color: #2d1b69;
 	}
 
-	.search-row {
+	/* ── Search Dropdown Bubble (Desktop) ────────────────── */
+	.search-wrap {
+		position: relative;
+	}
+
+	.search-dropdown-bubble {
+		position: absolute;
+		top: 100%;
+		right: 0;
+		margin-top: 20px;
+		width: 480px;
+		background: #fdfdfd;
+		box-shadow: 0 40px 100px rgba(0, 0, 0, 0.15);
+		border: 1px solid #eee;
+		padding: 25px;
+		z-index: 1000;
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+	}
+
+	.search-bubble-arrow {
+		position: absolute;
+		bottom: 100%;
+		right: 15px;
+		width: 0;
+		height: 0;
+		border-left: 10px solid transparent;
+		border-right: 10px solid transparent;
+		border-bottom: 12px solid #fdfdfd;
+	}
+
+	.search-bubble-form {
 		display: flex;
 		align-items: center;
-		border-bottom: 1px solid #f0f0f0;
+		gap: 0;
+		border: 1px solid #eee;
+		background: #f9f9f9;
 	}
 
-	.search-input {
+	.search-bubble-input {
 		flex: 1;
-		padding: 10px 12px;
-		border: none;
-		outline: none;
-		font-family: 'Open Sans', sans-serif;
-		font-size: 14px;
-		color: #222;
-		background: transparent;
-		min-width: 0;
-	}
-	.search-input::placeholder { color: #aaa; }
-
-	.search-go {
-		flex-shrink: 0;
-		padding: 10px 12px;
 		background: none;
 		border: none;
-		border-left: 1px solid #f0f0f0;
-		font-family: 'Roboto', sans-serif;
+		padding: 12px 15px;
+		font-family: var(--font-body);
+		font-size: 15px;
+		color: #111;
+		outline: none;
+	}
+	.search-bubble-input::placeholder {
+		color: #aaa;
+	}
+
+	.search-bubble-submit {
+		background: #000;
+		color: #fff;
+		border: none;
+		padding: 12px 25px;
+		font-family: var(--font-heading);
 		font-size: 13px;
-		font-weight: 700;
-		color: #2D1B69;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
 		cursor: pointer;
 		white-space: nowrap;
-		transition: background 0.15s;
+		transition: background 0.2s;
 	}
-	.search-go:hover { background: #f7f7f7; }
-
-	.search-results {
-		list-style: none;
-		margin: 0;
-		padding: 4px 0;
+	.search-bubble-submit:hover {
+		background: #333;
 	}
 
-	.search-result-link {
-		display: block;
-		padding: 8px 14px;
-		text-decoration: none;
-		transition: background 0.12s;
+	.search-bubble-results {
+		display: flex;
+		flex-direction: column;
+		padding-top: 10px;
+		border-top: 1px solid #eee;
 	}
-	.search-result-link:hover { background: #f7f7f7; }
 
-	.result-title {
-		font-family: 'Roboto', sans-serif;
-		font-size: 13px;
+	.results-label {
+		font-size: 10px;
+		text-transform: uppercase;
+		font-weight: 800;
+		color: #bbb;
+		margin-bottom: 10px;
+		letter-spacing: 1px;
+	}
+
+	.result-item {
+		padding: 10px 0;
+		font-family: var(--font-heading);
+		font-size: 14px;
 		font-weight: 600;
-		color: #222;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
+		color: #111;
+		text-decoration: none;
+		border-bottom: 1px solid #f5f5f5;
+		transition: color 0.15s;
+	}
+	.result-item:hover {
+		color: #2e8b22;
+	}
+	.result-item:last-child {
+		border-bottom: none;
 	}
 
-	.search-empty {
-		padding: 10px 14px;
-		font-family: 'Open Sans', sans-serif;
-		font-size: 12px;
-		color: #999;
-		margin: 0;
+	@media (max-width: 1023px) {
+		.search-dropdown-bubble {
+			position: fixed;
+			top: 64px;
+			left: 0;
+			right: 0;
+			width: 100vw;
+			margin-top: 0;
+			border-radius: 0;
+			padding: 20px;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+		}
+		.search-bubble-arrow {
+			display: none;
+		}
+	}
+
+	.hamburger-mobile {
+		display: none;
 	}
 
 	/* ── Mobile: sticky header + hide top bar ─────────────────────── */
@@ -608,125 +745,80 @@
 		.site-header {
 			position: sticky;
 			top: 0;
-			z-index: 399; /* Below the hamburger which is 400 */
-			border-bottom: 1px solid #E0E0E0;
+			z-index: 399;
+			background: #fff;
+			border-bottom: 1px solid #e0e0e0;
 		}
-		.header-upper { display: none; }
-	}
-
-	/* ── Mobile: header-lower becomes slim flex row ─────── */
-	@media (max-width: 1023px) {
+		.header-upper {
+			display: none;
+		}
 		.header-lower {
 			display: flex;
 			align-items: center;
+			justify-content: space-between;
 			padding: 10px 16px;
-			gap: 0;
-		}
-		.spacer { display: none; }
-		.logo-container {
-			justify-content: flex-start;
-			flex: 1;
-		}
-		.logo-img { height: 44px; }
-		.search-container {
-			flex-shrink: 0;
-			margin-right: 48px;
-		}
-		.search-btn { padding: 8px; }
-	}
-
-	/* ── Search: fullscreen overlay on mobile ─────────────── */
-	.search-overlay {
-		/* default: invisible wrapper on desktop, acts like nothing */
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		z-index: 300;
-	}
-	@media (max-width: 1023px) {
-		.search-overlay {
-			position: fixed;
-			inset: 0;
-			background: rgba(0, 0, 0, 0.65);
-			z-index: 500;
-			display: flex;
-			align-items: flex-start;
-			justify-content: center;
-			padding-top: 0;
-			animation: fadeInOv 0.2s ease;
-		}
-		@keyframes fadeInOv { from { opacity: 0; } to { opacity: 1; } }
-		/* popup becomes a full-width bar at the top */
-		.search-overlay .search-popup {
-			position: static;
-			width: 100%;
-			max-width: 100%;
-			border-radius: 0;
-			border: none;
-			box-shadow: none;
-		}
-		.search-close { display: flex !important; }
-	}
-
-	/* Close button – hidden on desktop */
-	.search-close {
-		display: none;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: none;
-		border-left: 1px solid #f0f0f0;
-		padding: 10px 12px;
-		cursor: pointer;
-		color: #555;
-		flex-shrink: 0;
-	}
-	.search-close:hover { color: #111; }
-
-	/* Desktop popup stays absolute */
-	@media (min-width: 1024px) {
-		.search-overlay {
-			position: static;
-			background: none;
-			display: block;
-		}
-		.search-overlay .search-popup {
-			position: absolute;
-			top: calc(100% + 8px);
-			right: 0;
-			width: 320px;
-			max-width: calc(100vw - 40px);
-			background: #ffffff;
-			border: 1px solid #E0E0E0;
-			border-radius: 4px;
-			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		}
-	}
-
-	/* ── Mobile adjustments ─────────────────────────────────────── */
-	@media (max-width: 767px) {
-		.header-lower {
-			grid-template-columns: auto 1fr;
-			gap: 16px;
-			padding: 16px;
+			gap: 12px;
 		}
 		.spacer {
 			display: none;
 		}
 		.logo-container {
-			justify-content: flex-start;
+			flex: 0 0 auto;
+		}
+		.logo-img {
+			height: 44px;
+		}
+
+		.search-container {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex: 1;
+			justify-content: flex-end;
+		}
+		.search-btn {
+			padding: 8px;
+		}
+
+		.hamburger-mobile {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			gap: 5px;
+			width: 36px;
+			height: 36px;
+			background: none;
+			border: none;
+			cursor: pointer;
+			padding: 7px;
+			flex-shrink: 0;
+		}
+		.hamburger-mobile span {
+			display: block;
+			width: 100%;
+			height: 2px;
+			background: #333;
+			border-radius: 2px;
+			transition: all 0.25s ease;
+		}
+		.hamburger-mobile.open span:nth-child(1) {
+			transform: translateY(7px) rotate(45deg);
+		}
+		.hamburger-mobile.open span:nth-child(2) {
+			opacity: 0;
+			transform: scaleX(0);
+		}
+		.hamburger-mobile.open span:nth-child(3) {
+			transform: translateY(-7px) rotate(-45deg);
 		}
 	}
 
 	@media (max-width: 767px) {
-		.header-upper {
-			flex-wrap: wrap;
-			min-height: auto;
-			padding: 12px 16px;
-			gap: 8px;
+		.header-lower {
+			gap: 10px;
 		}
-		.social-icons { display: none; }
+		.logo-img {
+			height: 32px;
+		}
 	}
 </style>
