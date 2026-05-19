@@ -157,9 +157,9 @@ button {
 	font-weight: 900;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	background: #111;
+	background: none;
 	color: #fff;
-	padding: 6px 14px;
+	padding: 0;
 	margin-bottom: 20px;
 	display: inline-block;
 }

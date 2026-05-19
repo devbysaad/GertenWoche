@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Article } from '$lib/types/index.js';
-	import ArticleCard from '$lib/components/articles/ArticleCard.svelte';
-	import ArticleCardLarge from '$lib/components/articles/ArticleCardLarge.svelte';
+	import type { Article } from "$lib/types/index.js";
+	import ArticleCard from "$lib/components/articles/ArticleCard.svelte";
+	import ArticleCardLarge from "$lib/components/articles/ArticleCardLarge.svelte";
 
 	interface Props {
 		articles: Article[];
@@ -27,7 +27,7 @@
 			<div class="main-col">
 				<ArticleCardLarge article={mainArticle} />
 			</div>
-			
+
 			<div class="secondary-col">
 				{#each secondaryArticles as article}
 					<ArticleCard {article} showExcerpt={false} titleSize="sm" />
@@ -51,15 +51,14 @@
 	}
 
 	.section-heading {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 14px;
 		font-weight: 700;
 		text-transform: uppercase;
-		color: #2D1B69;
+		color: #fff;
 		position: relative;
 		z-index: 2;
 		margin: 0;
-		background: #fff;
 		display: inline-block;
 		padding: 0 10px;
 	}
@@ -69,7 +68,7 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 80px;
 		font-weight: 900;
 		text-transform: uppercase;
@@ -90,7 +89,7 @@
 		height: 100%;
 		min-height: 400px;
 	}
-	
+
 	/* Force the ArticleCard to fill the height */
 	.main-col :global(.article-card) {
 		height: 100%;

@@ -69,54 +69,6 @@
 						{/if}
 						<span class="mc-author">{art.author.name}</span>
 					</div>
-
-					<!-- Navigation arrows -->
-					{#if col.articles.length > 1}
-						<div class="mc-nav">
-							<button
-								class="mc-arrow"
-								onclick={() => prev(ci)}
-								aria-label="Vorheriger Artikel"
-							>
-								<svg
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2.5"
-									stroke-linecap="round"
-								>
-									<polyline points="15 18 9 12 15 6" />
-								</svg>
-							</button>
-							<div class="mc-dots">
-								{#each col.articles as _, di}
-									<span
-										class="mc-dot"
-										class:active={di === indices[ci]}
-									></span>
-								{/each}
-							</div>
-							<button
-								class="mc-arrow"
-								onclick={() => next(ci)}
-								aria-label="Nächster Artikel"
-							>
-								<svg
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2.5"
-									stroke-linecap="round"
-								>
-									<polyline points="9 18 15 12 9 6" />
-								</svg>
-							</button>
-						</div>
-					{/if}
 				{:else}
 					<div class="mc-empty">Keine Artikel</div>
 				{/if}
@@ -231,52 +183,6 @@
 		color: #999;
 		margin-top: auto;
 		padding-top: 4px;
-	}
-
-	/* ── Navigation ── */
-	.mc-nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 8px 12px;
-		border-top: 1px solid #f0f0f0;
-	}
-
-	.mc-arrow {
-		background: none;
-		border: 1px solid #ddd;
-		border-radius: 2px;
-		width: 28px;
-		height: 28px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		color: #666;
-		transition:
-			border-color 0.15s,
-			color 0.15s;
-		padding: 0;
-	}
-	.mc-arrow:hover {
-		border-color: #999;
-		color: #222;
-	}
-
-	.mc-dots {
-		display: flex;
-		gap: 5px;
-		align-items: center;
-	}
-	.mc-dot {
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: #d0d0d0;
-		transition: background 0.2s;
-	}
-	.mc-dot.active {
-		background: #111;
 	}
 
 	.mc-empty {
