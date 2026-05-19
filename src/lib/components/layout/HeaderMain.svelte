@@ -115,7 +115,7 @@
 
 <!-- Search is now rendered inline in NavPrimary -->
 
-<header class="site-header">
+<header class="site-header" class:search-active={$searchOpen}>
 	<div class="header-upper">
 		<!-- ── LEFT: Weather widget ──────────────────────────── -->
 		<div class="thermometer">
@@ -267,8 +267,8 @@
 		</div>
 	</div>
 
-	<!--Lower header:  Logo + search ---->
-	<div class="header-lower">
+	<!-- Lower header: Logo + search ---->
+	<div class="header-lower" class:search-active={$searchOpen}>
 		<div class="spacer"></div>
 
 		<div class="logo-container">
@@ -310,6 +310,27 @@
 				{#if $searchOpen}
 					<div class="search-dropdown-bubble">
 						<div class="search-bubble-arrow"></div>
+						<button
+							type="button"
+							class="search-mobile-close"
+							onclick={toggleSearch}
+							aria-label="Close search"
+						>
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.5"
+								><line x1="18" y1="6" x2="6" y2="18" /><line
+									x1="6"
+									y1="6"
+									x2="18"
+									y2="18"
+								/></svg
+							>
+						</button>
 						<form
 							class="search-bubble-form"
 							onsubmit={(e) => {
@@ -371,6 +392,18 @@
 	.site-header {
 		background: #ffffff;
 		width: 100%;
+		transition: background 0.3s ease;
+	}
+
+	.site-header.search-active {
+		background: transparent !important;
+		box-shadow: none !important;
+		border-bottom-color: transparent !important;
+	}
+
+	.header-lower.search-active {
+		background: transparent !important;
+		border-bottom: none !important;
 	}
 
 	/* 3-zone flex row, min-height 90px */
@@ -719,20 +752,82 @@
 		border-bottom: none;
 	}
 
+	.search-mobile-close {
+		display: none;
+	}
+
 	@media (max-width: 1023px) {
 		.search-dropdown-bubble {
 			position: fixed;
-			top: 64px;
-			left: 0;
-			right: 0;
+			inset: 0;
 			width: 100vw;
+			height: 100dvh;
 			margin-top: 0;
+			background: rgba(0, 0, 0, 0.85);
+			backdrop-filter: blur(12px) saturate(180%);
+			padding: 120px 24px 40px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			z-index: 10001;
+			border: none;
 			border-radius: 0;
-			padding: 20px;
-			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 		}
 		.search-bubble-arrow {
 			display: none;
+		}
+
+		.search-mobile-close {
+			display: flex;
+			position: absolute;
+			top: 30px;
+			right: 30px;
+			background: none;
+			border: none;
+			color: #fff;
+			padding: 10px;
+			cursor: pointer;
+		}
+
+		.search-bubble-form {
+			background: transparent !important;
+			border: none;
+			border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+			width: 100%;
+			max-width: 440px;
+			display: flex;
+			align-items: center;
+		}
+		.search-bubble-input {
+			color: #fff;
+			font-size: 26px;
+			padding: 12px 0;
+			text-align: center;
+		}
+		.search-bubble-input::placeholder {
+			color: rgba(255, 255, 255, 0.35);
+		}
+		.search-bubble-submit {
+			background: transparent;
+			color: #fff;
+			padding: 10px;
+		}
+
+		.search-bubble-results {
+			width: 100%;
+			max-width: 440px;
+			margin-top: 50px;
+			border-top: 1px solid rgba(255, 255, 255, 0.15);
+		}
+		.results-label {
+			color: rgba(255, 255, 255, 0.4);
+		}
+		.result-item {
+			color: #fff;
+			border-bottom-color: rgba(255, 255, 255, 0.08);
+			font-size: 18px;
+			padding: 20px 0;
 		}
 	}
 

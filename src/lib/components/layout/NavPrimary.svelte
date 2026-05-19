@@ -377,7 +377,6 @@
 	.site-nav {
 		border-bottom: 6px;
 		background: #ffffff;
-		z-index: 100;
 		width: 100%;
 		position: relative;
 	}
@@ -635,7 +634,6 @@
 			top: 0;
 			width: 100%;
 			height: 64px;
-			z-index: 500;
 			background: #fff;
 			border-bottom: 1px solid #eee;
 		}
