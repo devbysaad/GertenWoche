@@ -1,56 +1,74 @@
 <script lang="ts">
-	import type { ArticlePreview } from '$lib/types/index.js';
-	import { formatGermanDate } from '$lib/utils/date.js';
+	import type { ArticlePreview } from "$lib/types/index.js";
+	import { formatGermanDate } from "$lib/utils/date.js";
 
 	interface Props {
 		articles: ArticlePreview[];
+		skipFeatured?: boolean;
 	}
-	let { articles }: Props = $props();
+	let { articles, skipFeatured = false }: Props = $props();
 
-	const featured  = $derived(articles.slice(0, 5));
+	const featured = $derived(articles.slice(0, 5));
 	const remaining = $derived(articles.slice(5));
 </script>
 
-<!--
-	MAGAZINE GRID — 5 cards
-	[1] [  2  ] [3]
-	[4] [  2  ] [5]   ← center card spans both rows (tall)
--->
-{#if featured.length > 0}
-<div class="magazine-grid">
-	{#each featured as article, i}
-		{@const url = `/${article.urlPath}`}
-		{@const col  = [1, 2, 3, 1, 3][i]}
-		{@const row  = i === 1 ? '1 / span 2' : i < 3 ? '1' : '2'}
-		<a
-			href={url}
-			class="mag-card"
-			style="grid-column:{col};grid-row:{row}"
-		>
-			<!-- Full-bleed image — NO border-radius -->
-			{#if article.thumbnail}
-				<img src={article.thumbnail} alt={article.title} loading={i === 0 ? 'eager' : 'lazy'} class="mag-img" />
-			{:else}
-				<div class="mag-img mag-img-ph"></div>
-			{/if}
-
-			<!-- Gradient covers bottom 50% -->
-			<div class="mag-gradient"></div>
-
-			<!-- Badge: absolute, bottom 8px left 8px -->
-			<span class="mag-badge">{article.category.name}</span>
-
-			<!-- Title: sits above badge -->
-			<p class="mag-title" class:mag-title-lg={i === 1}>{article.title}</p>
-
-			<!-- Author: below badge -->
-			<p class="mag-author">{article.author.name}</p>
-		</a>
-	{/each}
-</div>
+{#if !skipFeatured && featured.length > 0}
+	<div class="magazine-grid">
+		{#each featured as article, i}
+			{@const url = `/${article.urlPath}`}
+			{@const col = [1, 2, 3, 1, 3][i]}
+			{@const row = i === 1 ? "1 / span 2" : i < 3 ? "1" : "2"}
+			<a
+				href={url}
+				class="mag-card"
+				style="grid-column:{col};grid-row:{row}"
+			>
+				{#if article.thumbnail}
+					<img
+						src={article.thumbnail}
+						alt={article.title}
+						loading={i === 0 ? "eager" : "lazy"}
+						class="mag-img"
+					/>
+				{:else}
+					<div class="mag-img mag-img-ph"></div>
+				{/if}
+				<div class="mag-gradient"></div>
+				<span class="mag-badge">{article.category.name}</span>
+				<p class="mag-title" class:mag-title-lg={i === 1}>
+					{article.title}
+				</p>
+				<p class="mag-author">{article.author.name}</p>
+			</a>
+		{/each}
+	</div>
 {/if}
 
-
+{#if remaining.length > 0}
+	<div class="remaining-grid">
+		{#each remaining as article}
+			{@const url = `/${article.urlPath}`}
+			<a href={url} class="rem-card">
+				<div class="rem-img">
+					{#if article.thumbnail}
+						<img
+							src={article.thumbnail}
+							alt={article.title}
+							loading="lazy"
+						/>
+					{:else}
+						<div class="rem-img-ph"></div>
+					{/if}
+					<span class="rem-badge">{article.category.name}</span>
+				</div>
+				<div class="rem-body">
+					<p class="rem-title">{article.title}</p>
+					<p class="rem-meta">Von {article.author.name}</p>
+				</div>
+			</a>
+		{/each}
+	</div>
+{/if}
 
 <style>
 	/* ═══════════════════════════════════════════════════════
@@ -85,12 +103,19 @@
 		border-radius: 0;
 		transition: transform 0.4s ease;
 	}
-	.mag-card:hover .mag-img { transform: scale(1.04); }
+	.mag-card:hover .mag-img {
+		transform: scale(1.04);
+	}
 
 	.mag-img-ph {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(90deg, #2a2a2a 25%, #3d3d3d 50%, #2a2a2a 75%);
+		background: linear-gradient(
+			90deg,
+			#2a2a2a 25%,
+			#3d3d3d 50%,
+			#2a2a2a 75%
+		);
 		background-size: 200% 100%;
 		animation: shimmer 1.6s infinite;
 	}
@@ -110,9 +135,9 @@
 		left: 8px;
 		z-index: 2;
 		display: inline-block;
-		background: rgba(0,0,0,0.65);
+		background: rgba(0, 0, 0, 0.65);
 		color: #ffffff;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 11px;
 		font-weight: 700;
 		text-transform: uppercase;
@@ -129,7 +154,7 @@
 		left: 8px;
 		right: 8px;
 		z-index: 2;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 13px;
 		font-weight: 700;
 		color: #ffffff;
@@ -151,13 +176,13 @@
 		bottom: 26px;
 		left: 8px;
 		z-index: 3;
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
 		color: rgba(255, 255, 255, 0.85);
 		margin: 0;
 		white-space: nowrap;
-		text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 		display: none;
 	}
 	/* Show author only on the center (tall) card */
@@ -183,13 +208,13 @@
 		transition: box-shadow 0.2s ease;
 	}
 	.rem-card:hover {
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 	}
 
 	/* Image: 16:9 ratio */
 	.rem-img {
 		position: relative;
-		padding-bottom: 56.25%;   /* 16:9 */
+		padding-bottom: 56.25%; /* 16:9 */
 		overflow: hidden;
 		background: #e0e0e0;
 	}
@@ -202,12 +227,19 @@
 		display: block;
 		transition: transform 0.35s ease;
 	}
-	.rem-card:hover .rem-img img { transform: scale(1.04); }
+	.rem-card:hover .rem-img img {
+		transform: scale(1.04);
+	}
 
 	.rem-img-ph {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(90deg, #e0e0e0 25%, #ececec 50%, #e0e0e0 75%);
+		background: linear-gradient(
+			90deg,
+			#e0e0e0 25%,
+			#ececec 50%,
+			#e0e0e0 75%
+		);
 		background-size: 200% 100%;
 		animation: shimmer 1.6s infinite;
 	}
@@ -219,9 +251,9 @@
 		left: 6px;
 		z-index: 1;
 		display: inline-block;
-		background: rgba(0,0,0,0.65);
+		background: rgba(0, 0, 0, 0.65);
 		color: #ffffff;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
@@ -237,7 +269,7 @@
 
 	/* Title: Roboto 15px 700 */
 	.rem-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 15px;
 		font-weight: 700;
 		color: #222;
@@ -249,11 +281,13 @@
 		overflow: hidden;
 		transition: color 0.15s;
 	}
-	.rem-card:hover .rem-title { color: #222; }
+	.rem-card:hover .rem-title {
+		color: #222;
+	}
 
 	/* "Von Author · Date": Open Sans 12px #555 */
 	.rem-meta {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 12px;
 		color: #555;
 		margin: 0;
@@ -261,8 +295,12 @@
 
 	/* ── Skeleton shimmer ───────────────────────────────────── */
 	@keyframes shimmer {
-		0%   { background-position: 200% 0; }
-		100% { background-position: -200% 0; }
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
 	}
 
 	/* ── Responsive ─────────────────────────────────────────── */
@@ -276,12 +314,20 @@
 			grid-row: auto !important;
 			height: 200px;
 		}
-		.remaining-grid { gap: 12px; }
+		.remaining-grid {
+			gap: 12px;
+		}
 	}
 
 	@media (max-width: 600px) {
-		.magazine-grid { grid-template-columns: 1fr; }
-		.mag-card { height: 180px; }
-		.remaining-grid { grid-template-columns: 1fr; }
+		.magazine-grid {
+			grid-template-columns: 1fr;
+		}
+		.mag-card {
+			height: 180px;
+		}
+		.remaining-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

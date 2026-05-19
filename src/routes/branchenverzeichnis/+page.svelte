@@ -1,90 +1,99 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-
 	let { data } = $props();
 
-	let q = $state(data.search ?? '');
-	let cat = $state(data.catFilter ?? '');
-	let alpha = $state(data.alphaFilter ?? '');
-	let debounce: ReturnType<typeof setTimeout>;
+	let q = $state("");
+	let loc = $state("");
+	let sort = $state("newest");
+	let showFilters = $state(false);
 
-	const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
-	function navigate() {
-		clearTimeout(debounce);
-		debounce = setTimeout(() => {
-			const params = new URLSearchParams();
-			if (q) params.set('q', q);
-			if (cat) params.set('cat', cat);
-			if (alpha) params.set('alpha', alpha);
-			goto(`?${params.toString()}`, { replaceState: true, keepFocus: true });
-		}, 300);
-	}
-
-	function setAlpha(letter: string) {
-		alpha = alpha === letter ? '' : letter;
-		navigate();
-	}
+	const sortOptions = [
+		{ id: "newest", label: "Newest First" },
+		{ id: "oldest", label: "Oldest First" },
+		{ id: "title", label: "Title" },
+		{ id: "random", label: "Random" },
+		{ id: "reviews", label: "Most Reviews" },
+		{ id: "rated", label: "Highest Rated" },
+		{ id: "claimed", label: "Claimed" },
+		{ id: "unclaimed", label: "Unclaimed" },
+	];
 </script>
 
 <svelte:head>
 	<title>Branchenverzeichnis | Gartenwoche</title>
-	<meta name="description" content="Das Branchenverzeichnis von Gartenwoche – Schweizer Gartenbau-Unternehmen, Baumschulen, Gärtnereien und Garten-Dienstleister." />
-	<link rel="canonical" href="https://gartenwoche.ch/branchenverzeichnis" />
 </svelte:head>
 
 <div class="dir-page">
 	<div class="container">
-
 		<!-- Header -->
 		<div class="dir-header">
 			<h1 class="dir-title">Branchenverzeichnis</h1>
-			<a href="/schreiben-sie-uns" class="btn-add">+ Eintrag hinzufügen</a>
+			<a href="/schreiben-sie-uns" class="btn-add">+ Eintrag hinzufügen</a
+			>
 		</div>
 
-		<!-- Search + Category filter -->
-		<div class="dir-filters">
-			<div class="search-wrap">
-				<svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-				</svg>
-				<input
-					bind:value={q}
-					oninput={navigate}
-					type="search"
-					placeholder="Firma, Stadt, Stichwort..."
-					class="dir-search"
-					aria-label="Verzeichnis durchsuchen"
-				/>
+		<!-- New Complex Search Bar -->
+		<div class="dir-search-container">
+			<div class="search-main-bar">
+				<div class="input-group search-q">
+					<input type="text" placeholder="Search..." bind:value={q} />
+				</div>
+				<div class="input-group search-loc">
+					<input
+						type="text"
+						placeholder="Enter a location"
+						bind:value={loc}
+					/>
+					<button class="radius-btn" title="Search radius">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="3" /><path
+								d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+							/>
+						</svg>
+					</button>
+				</div>
+				<button class="search-submit-btn">
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+					>
+						<circle cx="11" cy="11" r="8" /><line
+							x1="21"
+							y1="21"
+							x2="16.65"
+							y2="16.65"
+						/>
+					</svg>
+				</button>
 			</div>
-			<select bind:value={cat} onchange={navigate} class="cat-select" aria-label="Kategorie filtern">
-				<option value="">Alle Kategorien</option>
-				{#each data.categories as category}
-					<option value={category}>{category}</option>
-				{/each}
-			</select>
-		</div>
 
-		<!-- Alphabet filter -->
-		<div class="alpha-strip" aria-label="Alphabetische Filterung">
-			<button
-				class="alpha-btn"
-				class:active={!alpha}
-				onclick={() => setAlpha('')}
-			>Alle</button>
-			{#each ALPHABET as letter}
+			<div class="search-sub-bar">
 				<button
-					class="alpha-btn"
-					class:active={alpha === letter}
-					onclick={() => setAlpha(letter)}
-				>{letter}</button>
-			{/each}
+					class="filter-btn"
+					onclick={() => (showFilters = !showFilters)}
+				>
+					Filter
+				</button>
+				<div class="sort-dropdown">
+					<span class="sort-label">Sort by:</span>
+					<select bind:value={sort}>
+						{#each sortOptions as opt}
+							<option value={opt.id}>{opt.label}</option>
+						{/each}
+					</select>
+				</div>
+			</div>
 		</div>
-
-		<!-- Results count -->
-		<p class="dir-count">
-			{data.entries.length} von {data.allEntries.length} Einträgen
-		</p>
 
 		<!-- Directory list -->
 		{#if data.entries.length === 0}
@@ -95,212 +104,237 @@
 			<div class="dir-grid">
 				{#each data.entries as entry}
 					<div class="dir-card">
-						<a href="/branchenverzeichnis/eintrag/{entry.slug}" class="card-link-overlay" aria-label="Eintrag ansehen"></a>
-						
-						<!-- Logo -->
+						<a
+							href="/branchenverzeichnis/eintrag/{entry.slug}"
+							class="card-link-overlay"
+						></a>
 						<div class="card-logo">
-							{#if entry.logo && entry.logo.trim() !== ''}
-								<img src={entry.logo} alt={entry.name} loading="lazy" />
+							{#if entry.logo && entry.logo.trim() !== ""}
+								<img
+									src={entry.logo}
+									alt={entry.name}
+									loading="lazy"
+								/>
 							{:else}
 								<div class="card-logo-ph">
 									<span>No Image</span>
 								</div>
 							{/if}
 						</div>
-
-						<!-- Content -->
 						<div class="card-content">
 							<h2 class="card-name">{entry.name}</h2>
-
 							<div class="card-contact">
 								{#if entry.address || entry.city}
 									<p class="contact-line">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-										{[entry.address, entry.zip, entry.city, entry.country].filter(Boolean).join(', ')}
-									</p>
-								{/if}
-								{#if entry.phone && entry.phone.length > 0}
-									<p class="contact-line">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-										{entry.phone[0]}
-									</p>
-								{/if}
-								{#if entry.email}
-									<p class="contact-line">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-										{entry.email}
-									</p>
-								{/if}
-								{#if entry.website}
-									<p class="contact-line website-line">
-										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-										{entry.website}
+										<svg
+											width="14"
+											height="14"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											><path
+												d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
+											/><circle
+												cx="12"
+												cy="10"
+												r="3"
+											/></svg
+										>
+										{[
+											entry.address,
+											entry.zip,
+											entry.city,
+											entry.country,
+										]
+											.filter(Boolean)
+											.join(", ")}
 									</p>
 								{/if}
 							</div>
-
 							{#if entry.description}
-								<div class="card-desc">
-									{entry.description}
-								</div>
+								<div class="card-desc">{entry.description}</div>
 							{/if}
 						</div>
 					</div>
 				{/each}
 			</div>
 		{/if}
-
 	</div>
 </div>
 
 <style>
-	.dir-page { padding: 24px 0 48px; background: #f7f7f7; }
-
-	/* Header */
+	.dir-page {
+		padding: 24px 0 48px;
+		background: #fdfdfd;
+	}
 	.dir-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 20px;
-		flex-wrap: wrap;
-		gap: 12px;
+		margin-bottom: 24px;
 	}
 	.dir-title {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 28px;
 		font-weight: 900;
 		text-transform: uppercase;
 		color: #222;
-		margin: 0;
-		letter-spacing: 0.02em;
 	}
 	.btn-add {
-		display: inline-block;
 		background: #5a9e3a;
-		color: white;
-		padding: 8px 16px;
-		border-radius: 3px;
-		font-family: 'Roboto', sans-serif;
-		font-size: 13px;
-		font-weight: 700;
+		color: #fff;
+		padding: 10px 16px;
+		border-radius: 4px;
 		text-decoration: none;
-	}
-	.btn-add:hover { background: #4a8c2e; }
-
-	/* Filters */
-	.dir-filters {
-		display: flex;
-		gap: 10px;
-		margin-bottom: 16px;
-		flex-wrap: wrap;
-	}
-	.search-wrap {
-		position: relative;
-		flex: 1;
-		min-width: 240px;
-	}
-	.search-icon {
-		position: absolute;
-		left: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		color: #999;
-		pointer-events: none;
-	}
-	.dir-search {
-		width: 100%;
-		padding: 8px 10px 8px 34px;
-		border: 1px solid #D0D0D0;
-		border-radius: 3px;
-		font-family: 'Open Sans', sans-serif;
+		font-weight: 700;
 		font-size: 14px;
-		background: #fff;
-		color: #222;
-	}
-	.dir-search:focus { outline: none; border-color: #2D1B69; }
-	.cat-select {
-		padding: 8px 12px;
-		border: 1px solid #D0D0D0;
-		border-radius: 3px;
-		font-family: 'Open Sans', sans-serif;
-		font-size: 14px;
-		background: #fff;
-		color: #222;
-		cursor: pointer;
-		min-width: 180px;
-	}
-	.cat-select:focus { outline: none; border-color: #2D1B69; }
-
-	/* Alphabet strip */
-	.alpha-strip {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 2px;
-		margin-bottom: 16px;
-	}
-	.alpha-btn {
-		padding: 4px 8px;
-		border: 1px solid #D0D0D0;
-		background: #fff;
-		color: #555;
-		font-family: 'Roboto', sans-serif;
-		font-size: 12px;
-		font-weight: 600;
-		cursor: pointer;
-		border-radius: 2px;
-		transition: all 0.15s;
-		min-width: 28px;
-		text-align: center;
-	}
-	.alpha-btn:hover { border-color: #2D1B69; color: #2D1B69; }
-	.alpha-btn.active { background: #2D1B69; color: #fff; border-color: #2D1B69; }
-
-	/* Count */
-	.dir-count {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 12px;
-		color: #888;
-		margin: 0 0 12px;
 	}
 
-	/* Grid Layout */
-	.dir-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 20px;
-	}
-
-	/* Card styling */
-	.dir-card {
-		background: #fff;
-		border: 1px solid #E0E0E0;
-		position: relative;
+	/* Search Bar UI */
+	.dir-search-container {
+		margin-bottom: 32px;
 		display: flex;
 		flex-direction: column;
-		transition: box-shadow 0.2s, border-color 0.2s;
+		gap: 12px;
+	}
+	.search-main-bar {
+		display: flex;
+		align-items: stretch;
+		border: 1px solid #d1d1d1;
+		border-radius: 4px;
+		background: #fff;
+		overflow: hidden;
+	}
+	.input-group {
+		display: flex;
+		align-items: center;
+		padding: 0 16px;
+		flex: 1;
+	}
+	.search-q {
+		border-right: 1px solid #eee;
+	}
+	.search-loc {
+		position: relative;
+	}
+	.input-group input {
+		width: 100%;
+		border: none;
+		outline: none;
+		padding: 12px 0;
+		font-family: "Open Sans", sans-serif;
+		font-size: 14px;
+		color: #333;
+	}
+	.radius-btn {
+		background: none;
+		border: none;
+		color: #666;
+		cursor: pointer;
+		padding: 4px;
+		display: flex;
+		align-items: center;
+		transition: color 0.15s;
+	}
+	.radius-btn:hover {
+		color: #000;
+	}
+	.search-submit-btn {
+		background: #4088cc;
+		color: #fff;
+		border: none;
+		padding: 0 24px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		transition: background 0.15s;
+	}
+	.search-submit-btn:hover {
+		background: #3573ab;
 	}
 
+	.search-sub-bar {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.filter-btn {
+		padding: 8px 16px;
+		border: 1px solid #d1d1d1;
+		background: #fff;
+		border-radius: 3px;
+		font-size: 13px;
+		color: #444;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	.filter-btn:hover {
+		background: #f5f5f5;
+	}
+	.sort-dropdown {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		border: 1px solid #d1d1d1;
+		background: #fff;
+		border-radius: 3px;
+		padding: 0 8px;
+	}
+	.sort-label {
+		font-size: 13px;
+		color: #666;
+		font-weight: 600;
+	}
+	.sort-dropdown select {
+		border: none;
+		outline: none;
+		background: none;
+		padding: 8px 0;
+		font-size: 13px;
+		font-weight: 700;
+		color: #000;
+		cursor: pointer;
+	}
+
+	/* Grid & Cards */
+	.dir-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, min-components(300px, 1fr));
+		gap: 24px;
+	}
+	.dir-card {
+		position: relative;
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		overflow: hidden;
+		transition:
+			transform 0.2s,
+			box-shadow 0.2s;
+		display: flex;
+		flex-direction: column;
+	}
 	.dir-card:hover {
-		box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-		border-color: #5a9e3a;
+		transform: translateY(-2px);
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 	}
-
 	.card-link-overlay {
 		position: absolute;
 		inset: 0;
-		z-index: 10;
+		z-index: 2;
 	}
-
-	/* Logo block */
 	.card-logo {
 		width: 100%;
-		height: 140px;
+		height: 160px;
+		background: #fff;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #fff;
-		padding: 10px;
-		border-bottom: 1px solid #F0F0F0;
+		border-bottom: 1px solid #eee;
+		padding: 20px;
+		overflow: hidden;
 	}
 	.card-logo img {
 		max-width: 100%;
@@ -308,99 +342,59 @@
 		object-fit: contain;
 	}
 	.card-logo-ph {
-		width: 100%;
-		height: 100%;
-		background: #EBEBEB;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		color: #ccc;
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
 	}
-	.card-logo-ph span {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 24px;
-		font-weight: 600;
-		color: #FFF;
-	}
-
-	/* Content block */
 	.card-content {
 		padding: 16px;
-		display: flex;
-		flex-direction: column;
 		flex: 1;
-	}
-
-	.card-name {
-		font-family: 'Roboto', sans-serif;
-		font-size: 16px;
-		font-weight: 700;
-		color: #5a9e3a; /* Green title as seen in screenshot */
-		margin: 0 0 12px;
-		line-height: 1.3;
-	}
-
-	.card-contact {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
-		margin-bottom: 16px;
-	}
-
-	.contact-line {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 11px;
-		color: #333;
-		margin: 0;
-		display: flex;
-		align-items: flex-start;
 		gap: 8px;
-		line-height: 1.4;
 	}
-
-	.contact-line svg {
-		flex-shrink: 0;
-		color: #555;
-		margin-top: 1px;
+	.card-name {
+		font-family: "Roboto", sans-serif;
+		font-size: 18px;
+		font-weight: 700;
+		color: #111;
+		margin: 0;
 	}
-
-	.website-line {
-		color: #5a9e3a;
-	}
-
-	/* Description */
-	.card-desc {
-		font-family: 'Open Sans', sans-serif;
+	.contact-line {
+		display: flex;
+		align-items: center;
+		gap: 6px;
 		font-size: 13px;
+		color: #666;
+		margin: 0;
+	}
+	.card-desc {
+		font-size: 13px;
+		color: #555;
 		line-height: 1.5;
-		color: #444;
-		margin-top: auto; /* Push to bottom if content is short, or let it flow naturally */
 		display: -webkit-box;
-		-webkit-line-clamp: 10;
-		line-clamp: 10;
+		-webkit-line-clamp: 3;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-		text-overflow: ellipsis;
+		margin-top: auto;
 	}
 
-	.empty-state {
-		background: #fff;
-		border: 1px solid #E0E0E0;
-		border-radius: 4px;
-		padding: 48px;
-		text-align: center;
-		font-family: 'Open Sans', sans-serif;
-		color: #888;
-	}
-
-	/* Responsive */
-	@media (max-width: 991px) {
-		.dir-grid { grid-template-columns: repeat(2, 1fr); }
-	}
-	@media (max-width: 599px) {
-		.dir-header { flex-direction: column; align-items: flex-start; }
-		.alpha-strip { gap: 1px; }
-		.alpha-btn { padding: 3px 6px; font-size: 11px; min-width: 24px; }
-		
-		.dir-grid { grid-template-columns: 1fr; }
+	@media (max-width: 768px) {
+		.search-main-bar {
+			flex-direction: column;
+		}
+		.search-q {
+			border-right: none;
+			border-bottom: 1px solid #eee;
+		}
+		.search-submit-btn {
+			padding: 14px;
+			justify-content: center;
+		}
+		.dir-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
 	}
 </style>

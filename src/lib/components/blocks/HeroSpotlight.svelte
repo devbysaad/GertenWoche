@@ -22,11 +22,11 @@
 	 HOMEPAGE VARIANT: large left (O) + 2 small stacked right (o / o)
 	 ════════════════════════════════════════════════════════ -->
 {#if variant === "homepage"}
-	<section class="hero-section" aria-label="Hauptartikel">
+	<section class="hero-section hero-home" aria-label="Hauptartikel">
 		<div class="homepage-grid">
 			<!-- LEFT: large hero image with article overlay at bottom -->
 			<a href={url} class="hero-img-link" tabindex="0">
-				{#if article.thumbnail && article.thumbnail.trim() !== ''}
+				{#if article.thumbnail && article.thumbnail.trim() !== ""}
 					<img
 						src={article.thumbnail}
 						alt={article.title}
@@ -36,29 +36,38 @@
 					/>
 				{:else}
 					<div class="hero-img hero-fallback">
-						<span class="fallback-label">{article.category.name}</span>
+						<span class="fallback-label"
+							>{article.category.name}</span
+						>
 					</div>
 				{/if}
 				<!-- Dark gradient + article info overlaid at bottom -->
 				<div class="hero-overlay">
-					<span class="hero-overlay-badge">{article.category.name}</span>
+					<span class="hero-overlay-badge"
+						>{article.category.name}</span
+					>
 					<p class="hero-overlay-title">{article.title}</p>
 					{#if article.excerpt}
 						<p class="hero-overlay-excerpt">{article.excerpt}</p>
 					{/if}
-					<span class="hero-overlay-author">{article.author.name}</span>
+					<span class="hero-overlay-author"
+						>{article.author.name}</span
+					>
 				</div>
 			</a>
 
-
 			<!-- RIGHT: 2 smaller stacked cards -->
 			<div class="hrc-stack">
-				{#each rightStack.slice(0, 2) as art}
+				{#each rightStack.slice(0, 1) as art}
 					{@const artUrl = `/${art.urlPath}`}
 					<a href={artUrl} class="hrc-mini-card">
 						<div class="hrc-img">
-							{#if art.thumbnail && art.thumbnail.trim() !== ''}
-								<img src={art.thumbnail} alt={art.title} loading="lazy" />
+							{#if art.thumbnail && art.thumbnail.trim() !== ""}
+								<img
+									src={art.thumbnail}
+									alt={art.title}
+									loading="lazy"
+								/>
 							{:else}
 								<div class="hrc-ph"></div>
 							{/if}
@@ -89,7 +98,7 @@
 					{@const artUrl = `/${art.urlPath}`}
 					<a href={artUrl} class="side-card">
 						<div class="side-img">
-							{#if art.thumbnail && art.thumbnail.trim() !== ''}
+							{#if art.thumbnail && art.thumbnail.trim() !== ""}
 								<img
 									src={art.thumbnail}
 									alt={art.title}
@@ -112,7 +121,7 @@
 			<!-- CENTER: large hero -->
 			<a href={url} class="mosaic-center">
 				<div class="center-img">
-					{#if article.thumbnail && article.thumbnail.trim() !== ''}
+					{#if article.thumbnail && article.thumbnail.trim() !== ""}
 						<img
 							src={article.thumbnail}
 							alt={article.title}
@@ -136,7 +145,7 @@
 					{@const artUrl = `/${art.urlPath}`}
 					<a href={artUrl} class="side-card">
 						<div class="side-img">
-							{#if art.thumbnail && art.thumbnail.trim() !== ''}
+							{#if art.thumbnail && art.thumbnail.trim() !== ""}
 								<img
 									src={art.thumbnail}
 									alt={art.title}
@@ -161,13 +170,16 @@
 
 <style>
 	.hero-section {
-		margin-bottom: 28px;
+		margin-bottom: 32px;
+	}
+	.hero-home {
+		margin-bottom: 130px; /* Space for hanging overlay */
 	}
 
 	/* ── Category badge (mosaic shared) ── */
 	.cat-badge {
 		display: inline-block;
-		background: rgba(0,0,0,0.65);
+		background: rgba(0, 0, 0, 0.65);
 		color: #fff;
 		font-family: "Roboto", sans-serif;
 		font-size: 10px;
@@ -200,7 +212,7 @@
 		justify-content: center;
 	}
 	.fallback-label {
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 24px;
 		font-weight: 900;
 		color: rgba(255, 255, 255, 0.25);
@@ -216,17 +228,17 @@
 		grid-template-columns: 65% 35%;
 		gap: 3px;
 		height: 500px;
-		margin-bottom: 28px;
-		background: #E0E0E0;
-		border: 1px solid #E0E0E0;
-		overflow: hidden;
+		max-height: 500px;
+		background: #e0e0e0;
+		border: 1px solid #e0e0e0;
+		overflow: visible; /* Allowing the overlay to hang out */
 	}
 
 	/* LEFT: relative container — image fills it, overlay is absolute */
 	.hero-img-link {
 		position: relative;
 		display: block;
-		overflow: hidden;
+		overflow: visible;
 		height: 100%;
 		text-decoration: none;
 	}
@@ -234,6 +246,7 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+		object-position: center;
 		display: block;
 		border-radius: 0;
 		transition: transform 0.4s ease;
@@ -242,25 +255,52 @@
 		transform: scale(1.02);
 	}
 
-	/* Dark gradient overlay at bottom of left image */
+	/* Hanging box centered at mid-bottom of image — visible on desktop */
 	.hero-overlay {
 		position: absolute;
 		bottom: 0;
-		left: 0;
-		right: 0;
-		background: linear-gradient(transparent 0%, rgba(0,0,0,0.72) 100%);
-		padding: 40px 20px 18px;
+		left: 50% !important;
+		transform: translate(-50%, 50%) !important;
+		width: 88%;
+		max-width: 620px;
+		background: #f4f4f4 !important;
+		padding: 24px 24px 36px; /* Optimized bottom padding */
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
-		pointer-events: none;
+		gap: 8px;
+		border-radius: 4px;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+		z-index: 10 !important;
+		pointer-events: auto;
+	}
+
+	@media (max-width: 600px) {
+		.hero-overlay {
+			width: 90%;
+			padding: 14px 16px;
+			gap: 0;
+			bottom: -20px; /* Hanging 20px out */
+			transform: translateX(-50%) !important;
+		}
+		.hero-overlay-title {
+			font-size: 18px !important;
+			line-height: 1.2 !important;
+			-webkit-line-clamp: 3 !important;
+			line-clamp: 3 !important;
+		}
+		/* Hide description and author on small mobile per request */
+		.hero-overlay-excerpt,
+		.hero-overlay-author,
+		.hero-overlay-badge {
+			display: none !important;
+		}
 	}
 	.hero-overlay-badge {
 		display: inline-block;
 		align-self: flex-start;
-		background: rgba(0,0,0,0.55);
+		background: #5a9e3a;
 		color: #fff;
-		font-family: 'Roboto', sans-serif;
+		font-family: "Roboto", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
@@ -269,142 +309,65 @@
 		border-radius: 2px;
 	}
 	.hero-overlay-title {
-		font-family: 'Roboto', sans-serif;
-		font-size: 22px;
+		font-family: "Roboto", sans-serif;
+		font-size: 24px;
 		font-weight: 700;
-		color: #fff;
+		color: #111;
 		margin: 0;
-		line-height: 1.25;
-		text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+		line-height: 1.2;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
+		line-clamp: 2;
 		overflow: hidden;
 	}
 	.hero-overlay-excerpt {
-		font-family: 'Open Sans', sans-serif;
+		font-family: "Open Sans", sans-serif;
 		font-size: 13px;
-		color: rgba(255,255,255,0.88);
+		color: #444;
 		margin: 0;
-		line-height: 1.5;
+		line-height: 1.4;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
+		line-clamp: 2;
 		overflow: hidden;
-		text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 	}
 	.hero-overlay-author {
-		font-family: 'Open Sans', sans-serif;
-		font-size: 11px;
-		color: rgba(255,255,255,0.7);
-	}
-	.hero-img-ph {
-		width: 100%;
-		height: 100%;
-		background: #ccc;
-	}
-
-	/* RIGHT: mint-tinted text panel */
-	.hero-text-panel {
-		background: rgba(200, 230, 210, 0.18);
-		border-left: 1px solid rgba(0, 0, 0, 0.06);
-		padding: 28px 20px 24px;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		overflow: hidden;
-	}
-
-	/* Badge in hero — neutral dark */
-	.hero-cat-badge {
-		display: inline-block;
-		background: #333;
-		color: #fff;
-		font-family: "Roboto", sans-serif;
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 2px 8px;
-		border-radius: 2px;
-		align-self: flex-start;
-	}
-
-	/* Title */
-	.hero-title-link {
-		text-decoration: none;
-	}
-	.hero-title {
-		font-family: "Roboto", sans-serif;
-		font-size: 22px;
-		font-weight: 700;
-		color: #222;
-		margin: 0;
-		line-height: 1.3;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-		transition: color 0.15s;
-	}
-	.hero-title-link:hover .hero-title { color: #444; }
-
-	/* Author */
-	.hero-author {
 		font-family: "Open Sans", sans-serif;
-		font-size: 12px;
+		font-size: 11px;
+		color: #666;
+		margin-top: 4px;
 		font-weight: 700;
-		color: #555;
-		margin: 0;
 	}
-
-	/* Excerpt */
-	.hero-excerpt {
-		font-family: "Open Sans", sans-serif;
-		font-size: 14px;
-		color: #444;
-		margin: 0;
-		line-height: 1.5;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	/* Read more */
-	.hero-read-more {
-		font-family: "Roboto", sans-serif;
-		font-size: 13px;
-		color: #555;
-		text-decoration: none;
-		margin-top: auto;
-		transition: color 0.15s;
-	}
-	.hero-read-more:hover { color: #222; }
-
 	/* RIGHT STACK: 2 mini cards stacked with gap */
 	.hrc-stack {
 		display: flex;
 		flex-direction: column;
-		gap: 3px;
 		height: 100%;
-		background: #E0E0E0;
+		background: #fff;
 	}
 	.hrc-mini-card {
 		display: flex;
 		flex-direction: column;
 		text-decoration: none;
 		overflow: hidden;
-		flex: 1;
+		flex: 0 0 auto; /* Don't stretch if only one */
 		background: #fff;
 		transition: background 0.15s;
+		border-bottom: 1px solid #eee;
 	}
-	.hrc-mini-card:hover { background: #fafafa; }
+	.hrc-mini-card:last-child {
+		border-bottom: none;
+	}
+	.hrc-mini-card:hover {
+		background: #fafafa;
+	}
 
-	/* Image portion */
+	/* Image portion - shrunk to 40% to ensure 2 items fit */
 	.hrc-img {
 		position: relative;
-		flex: 0 0 48%;
+		flex: 0 0 38%;
 		overflow: hidden;
 		background: #e0e0e0;
 	}
@@ -415,7 +378,9 @@
 		display: block;
 		transition: transform 0.3s ease;
 	}
-	.hrc-mini-card:hover .hrc-img img { transform: scale(1.04); }
+	.hrc-mini-card:hover .hrc-img img {
+		transform: scale(1.04);
+	}
 	.hrc-ph {
 		width: 100%;
 		height: 100%;
@@ -433,7 +398,7 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		color: #fff;
-		background: rgba(0,0,0,0.55);
+		background: rgba(0, 0, 0, 0.55);
 		padding: 2px 7px;
 		border-radius: 2px;
 	}
@@ -457,10 +422,13 @@
 		display: -webkit-box;
 		-webkit-line-clamp: 4;
 		-webkit-box-orient: vertical;
+		line-clamp: 4;
 		overflow: hidden;
 		transition: color 0.15s;
 	}
-	.hero-right-card:hover .hrc-title { color: #444; }
+	.hrc-mini-card:hover .hrc-title {
+		color: #444;
+	}
 	.hrc-excerpt {
 		font-family: "Open Sans", sans-serif;
 		font-size: 13px;
@@ -468,8 +436,9 @@
 		margin: 0;
 		line-height: 1.5;
 		display: -webkit-box;
-		-webkit-line-clamp: 3;
+		-webkit-line-clamp: 6; /* More lines since there is more room now */
 		-webkit-box-orient: vertical;
+		line-clamp: 6;
 		overflow: hidden;
 	}
 	.hrc-author {
@@ -544,6 +513,7 @@
 		display: -webkit-box;
 		-webkit-line-clamp: 3;
 		-webkit-box-orient: vertical;
+		line-clamp: 2;
 		overflow: hidden;
 	}
 
@@ -604,21 +574,44 @@
 		.homepage-grid {
 			grid-template-columns: 1fr;
 			height: auto;
+			margin-bottom: 40px;
 		}
-		.hero-img-link { height: 360px; }
+		.hero-img-link {
+			height: 360px;
+		}
 		/* Hide right-side card stack on tablet/mobile — too cramped */
-		.hrc-stack { display: none; }
+		.hrc-stack {
+			display: none;
+		}
 
 		/* Mosaic */
-		.mosaic-grid { grid-template-columns: 1fr; height: auto; }
-		.mosaic-side { grid-template-columns: 1fr 1fr; }
-		.side-card { height: 160px; }
-		.mosaic-center { height: 280px; order: -1; }
+		.mosaic-grid {
+			grid-template-columns: 1fr;
+			height: auto;
+		}
+		.mosaic-side {
+			grid-template-columns: 1fr 1fr;
+		}
+		.side-card {
+			height: 160px;
+		}
+		.mosaic-center {
+			height: 280px;
+			order: -1;
+		}
 	}
 	@media (max-width: 600px) {
-		.hero-img-link { height: 260px; }
-		.mosaic-side { grid-template-columns: 1fr; }
-		.side-card { height: 140px; }
-		.mosaic-center { height: 220px; }
+		.hero-img-link {
+			height: 260px;
+		}
+		.mosaic-side {
+			grid-template-columns: 1fr;
+		}
+		.side-card {
+			height: 140px;
+		}
+		.mosaic-center {
+			height: 220px;
+		}
 	}
 </style>
