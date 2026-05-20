@@ -243,23 +243,17 @@
 						>
 					{:else}
 						<!-- Guest dropdown -->
-						<button
-							type="button"
-							class="konto-item"
+						<a
+							href="/anmelden-registrieren"
+							class="konto-item konto-link"
 							role="menuitem"
-							onclick={() => {
-								menuOpen = false;
-								modalStore.openLogin();
-							}}>Anmeldung</button
+							onclick={() => (menuOpen = false)}>Anmeldung</a
 						>
-						<button
-							type="button"
-							class="konto-item"
+						<a
+							href="/anmelden-registrieren"
+							class="konto-item konto-link"
 							role="menuitem"
-							onclick={() => {
-								menuOpen = false;
-								modalStore.openRegister();
-							}}>Registrieren</button
+							onclick={() => (menuOpen = false)}>Registrieren</a
 						>
 					{/if}
 				</div>
