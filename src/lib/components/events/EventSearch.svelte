@@ -72,14 +72,16 @@
 	.ev-search-combo {
 		display: flex;
 		align-items: stretch;
+		justify-content: space-around;
 		margin-bottom: 16px;
 		border: 1px solid #ccc;
 		background: #fff;
 		overflow: hidden;
+		width: 100%;
 	}
 
 	.ev-search-form {
-		flex: 1;
+		flex: 2;
 		display: flex;
 		align-items: stretch;
 	}
@@ -139,9 +141,10 @@
 		display: flex;
 		align-items: stretch;
 		border-left: 1px solid #ccc;
-		flex-shrink: 0;
+		flex: 1;
 	}
 	.vsw-btn {
+		flex: 1;
 		padding: 0 18px;
 		font-family: "Open Sans", sans-serif;
 		font-size: 13px;
