@@ -1,6 +1,6 @@
 # 🌿 GartenWoche – Swiss Garden Magazine Clone
 
-A SvelteKit web application cloning the editorial style of [gartenwoche.ch](https://gartenwoche.ch).
+A SvelteKit web application cloning the editorial style of [gartenwoche.ch](https://gartenwoche.ch)
 
 ---
 
