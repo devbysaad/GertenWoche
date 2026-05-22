@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+
 	let loading = $state(false);
 	let errorMsg = $state("");
 	let successMsg = $state("");
@@ -12,6 +14,7 @@
 	let regEmail = $state("");
 	let regName = $state("");
 	let regPw = $state("");
+	let regPwRepeat = $state("");
 
 	// Recover
 	let recoverEmail = $state("");
@@ -30,17 +33,19 @@
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					username: loginUser,
+					username: loginUser.trim(),
 					password: loginPw,
 				}),
 				credentials: "include",
 			});
 			if (!res.ok) {
 				const d = await res.json().catch(() => ({}));
-				errorMsg =
-					d?.error ?? d?.message ?? "Anmeldung fehlgeschlagen.";
+				// Strip HTML tags from WP error messages e.g. <strong>Fehler:</strong>
+				const raw = d?.error ?? d?.message ?? "Anmeldung fehlgeschlagen.";
+				errorMsg = raw.replace(/<[^>]*>/g, "").trim();
 			} else {
-				window.location.href = "/mein-konto";
+				successMsg = "Anmeldung erfolgreich…";
+				await goto("/mein-konto", { invalidateAll: true });
 			}
 		} catch {
 			errorMsg = "Netzwerkfehler.";
@@ -52,26 +57,34 @@
 	async function handleRegister(e: SubmitEvent) {
 		e.preventDefault();
 		reset();
+
+		// ✅ Validate passwords match before sending
+		if (regPw !== regPwRepeat) {
+			errorMsg = "Passwörter stimmen nicht überein.";
+			return;
+		}
+
 		loading = true;
 		try {
 			const res = await fetch("/api/auth/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					email: regEmail,
-					name: regName,
+					email: regEmail.trim(),
+					name: regName.trim(),
 					password: regPw,
 				}),
 				credentials: "include",
 			});
 			if (!res.ok) {
 				const d = await res.json().catch(() => ({}));
-				errorMsg = d?.message ?? "Registrierung fehlgeschlagen.";
+				errorMsg = d?.message ?? d?.error ?? "Registrierung fehlgeschlagen.";
 			} else {
+				// ✅ Try to go to mein-konto (works if backend auto-logged in)
+				// If backend sets wp_token cookie, invalidateAll picks it up
+				// If not, mein-konto will redirect back to login with success msg
 				successMsg = "Konto erstellt! Sie werden weitergeleitet…";
-				setTimeout(() => {
-					window.location.href = "/mein-konto";
-				}, 1200);
+				await goto("/mein-konto", { invalidateAll: true });
 			}
 		} catch {
 			errorMsg = "Netzwerkfehler.";
@@ -99,10 +112,8 @@
 </svelte:head>
 
 <div class="auth-page">
-	<!-- Page heading -->
 	<h1 class="page-title">Log in - Register</h1>
 
-	<!-- Card -->
 	<div class="auth-card" class:register-mode={mode === "register"}>
 		{#if mode === "login"}
 			<h2 class="card-heading">Log in</h2>
@@ -124,14 +135,11 @@
 
 				<div class="form-row">
 					<div class="pw-label-row">
-						<label for="login-pw">password</label>
+						<label for="login-pw">Password</label>
 						<button
 							type="button"
 							class="forgot-link"
-							onclick={() => {
-								mode = "recover";
-								reset();
-							}}
+							onclick={() => { mode = "recover"; reset(); }}
 						>
 							Forgot your password?
 						</button>
@@ -154,15 +162,13 @@
 					<button
 						type="button"
 						class="switch-link"
-						onclick={() => {
-							mode = "register";
-							reset();
-						}}
+						onclick={() => { mode = "register"; reset(); }}
 					>
 						Register
 					</button>
 				</p>
 			</form>
+
 		{:else if mode === "register"}
 			<h2 class="card-heading">Register</h2>
 
@@ -171,7 +177,7 @@
 
 			<form class="auth-form" onsubmit={handleRegister}>
 				<div class="form-row">
-					<label for="reg-email">email address</label>
+					<label for="reg-email">Email address</label>
 					<input
 						id="reg-email"
 						type="email"
@@ -191,7 +197,7 @@
 					/>
 				</div>
 				<div class="form-row">
-					<label for="reg-pw">password</label>
+					<label for="reg-pw">Password</label>
 					<input
 						id="reg-pw"
 						type="password"
@@ -202,33 +208,36 @@
 					/>
 				</div>
 				<div class="form-row">
-					<label for="reg-pw-repeat">Repeat the password</label>
+					<label for="reg-pw-repeat">Repeat password</label>
 					<input
 						id="reg-pw-repeat"
 						type="password"
 						autocomplete="new-password"
+						minlength="8"
+						bind:value={regPwRepeat}
 						required
 					/>
+					{#if regPwRepeat && regPw !== regPwRepeat}
+						<span class="field-error">Passwords do not match</span>
+					{/if}
 				</div>
 
-				<button type="submit" class="submit-btn" disabled={loading}>
+				<button type="submit" class="submit-btn" disabled={loading || (!!regPwRepeat && regPw !== regPwRepeat)}>
 					{loading ? "loading…" : "Register"}
 				</button>
 
 				<p class="switch-hint">
-					Do you already have an account?
+					Already have an account?
 					<button
 						type="button"
 						class="switch-link"
-						onclick={() => {
-							mode = "login";
-							reset();
-						}}
+						onclick={() => { mode = "login"; reset(); }}
 					>
 						Log in
 					</button>
 				</p>
 			</form>
+
 		{:else}
 			<h2 class="card-heading">Reset Password</h2>
 
@@ -237,8 +246,7 @@
 
 			<form class="auth-form" onsubmit={handleRecover}>
 				<p class="recover-hint">
-					Enter your email address. We'll send you a link to reset
-					your password.
+					Enter your email address. We'll send you a link to reset your password.
 				</p>
 				<div class="form-row">
 					<label for="rec-email">Email Address</label>
@@ -256,10 +264,7 @@
 				<button
 					type="button"
 					class="back-btn"
-					onclick={() => {
-						mode = "login";
-						reset();
-					}}
+					onclick={() => { mode = "login"; reset(); }}
 				>
 					← Back to Login
 				</button>
@@ -269,7 +274,6 @@
 </div>
 
 <style>
-	/* ── Page shell ────────────────────────────────────────── */
 	.auth-page {
 		min-height: calc(100vh - 180px);
 		background: linear-gradient(to bottom, #f1f1f1 50%, #ffffff 50%);
@@ -289,7 +293,6 @@
 		letter-spacing: -0.02em;
 	}
 
-	/* ── White card ─────────────────────────────────────────── */
 	.auth-card {
 		width: 100%;
 		max-width: 720px;
@@ -309,7 +312,6 @@
 		margin: 0 0 32px;
 	}
 
-	/* ── Form ───────────────────────────────────────────────── */
 	.auth-form {
 		display: flex;
 		flex-direction: column;
@@ -348,7 +350,6 @@
 		box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 	}
 
-	/* Password row: label left + "Passwort vergessen?" right */
 	.pw-label-row {
 		display: flex;
 		justify-content: space-between;
@@ -364,13 +365,15 @@
 		font-weight: 600;
 		color: #3b82f6;
 		padding: 0;
-		text-decoration: none;
 	}
-	.forgot-link:hover {
-		text-decoration: underline;
+	.forgot-link:hover { text-decoration: underline; }
+
+	.field-error {
+		font-size: 12px;
+		color: #dc2626;
+		margin-top: 2px;
 	}
 
-	/* ── Submit button (red) ────────────────────────────────── */
 	.submit-btn {
 		align-self: center;
 		width: 100%;
@@ -394,20 +397,11 @@
 		transform: translateY(-1px);
 		box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
 	}
-	.submit-btn:active:not(:disabled) {
-		transform: translateY(0);
-	}
-	.submit-btn:disabled {
-		opacity: 0.55;
-		cursor: not-allowed;
-	}
+	.submit-btn:active:not(:disabled) { transform: translateY(0); }
+	.submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-	/* Register mode button needs to be wider to match image */
-	.register-mode .submit-btn {
-		max-width: 100%;
-	}
+	.register-mode .submit-btn { max-width: 100%; }
 
-	/* ── Switch hint ────────────────────────────────────────── */
 	.switch-hint {
 		font-family: var(--font-body);
 		font-size: 13px;
@@ -425,13 +419,9 @@
 		font-weight: 700;
 		color: #3b82f6;
 		padding: 0;
-		text-decoration: none;
 	}
-	.switch-link:hover {
-		text-decoration: underline;
-	}
+	.switch-link:hover { text-decoration: underline; }
 
-	/* ── Feedback ───────────────────────────────────────────── */
 	.msg {
 		font-family: var(--font-body);
 		font-size: 14px;
@@ -451,7 +441,6 @@
 		border: 1px solid #86efac;
 	}
 
-	/* ── Recover / legal ────────────────────────────────────── */
 	.recover-hint {
 		font-family: var(--font-body);
 		font-size: 14px;
@@ -472,9 +461,7 @@
 		align-self: center;
 		transition: color 0.2s;
 	}
-	.back-btn:hover {
-		color: #111;
-	}
+	.back-btn:hover { color: #111; }
 
 	.legal-note {
 		font-family: var(--font-body);
@@ -484,22 +471,11 @@
 		line-height: 1.6;
 		text-align: center;
 	}
-	.legal-note a {
-		color: #3b82f6;
-		text-decoration: underline;
-	}
+	.legal-note a { color: #3b82f6; text-decoration: underline; }
 
-	/* ── Responsive ─────────────────────────────────────────── */
 	@media (max-width: 768px) {
-		.auth-card {
-			padding: 40px 30px 50px;
-		}
-		.page-title {
-			font-size: 28px;
-			margin-bottom: 30px;
-		}
-		.auth-page {
-			padding-top: 40px;
-		}
+		.auth-card { padding: 40px 30px 50px; }
+		.page-title { font-size: 28px; margin-bottom: 30px; }
+		.auth-page { padding-top: 40px; }
 	}
 </style>

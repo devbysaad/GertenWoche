@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { goto, invalidateAll } from '$app/navigation';
 import type { User } from '$lib/types/index.js';
 
 interface AuthState {
@@ -33,7 +34,7 @@ function createAuthStore() {
 				const res = await fetch('/api/auth/login', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ username, password }), // WP JWT needs `username`
+					body: JSON.stringify({ username, password }),
 					credentials: 'include'
 				});
 				const data = await res.json();
@@ -74,10 +75,12 @@ function createAuthStore() {
 			}
 		},
 
+		// ✅ Fixed: invalidateAll + goto instead of window.location.href
 		async logout(): Promise<void> {
 			await fetch('/api/auth/logout', { method: 'POST' });
 			update((s) => ({ ...s, user: null }));
-			window.location.href = '/';
+			await invalidateAll();
+			await goto('/anmelden-registrieren');
 		}
 	};
 }
