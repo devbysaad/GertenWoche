@@ -29,7 +29,6 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		throw error(400, `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen haben`);
 	}
 
-	// ✅ await findByEmail
 	if (await findByEmail(email)) {
 		throw error(409, 'Diese E-Mail-Adresse ist bereits registriert');
 	}
@@ -49,9 +48,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		throw error(500, 'Registrierung fehlgeschlagen');
 	}
 
-	// ✅ Auto-login using WordPress JWT — sets wp_token cookie
+	// Auto-login using WordPress JWT — sets wp_token cookie
 	try {
-		console.log('[REGISTER] Auto-login after registration for:', user.username);
 		const wpUser = await loginWithWordPress(user.username, password);
 
 		cookies.set('wp_token', wpUser.token, {
@@ -61,7 +59,6 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			maxAge:   60 * 60 * 24 * 7,
 			path:     '/'
 		});
-		console.log('[REGISTER] ✅ Auto-login successful, wp_token cookie set for:', user.username);
 
 		return json(
 			{
@@ -76,8 +73,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			},
 			{ status: 201 }
 		);
-	} catch (err) {
-		console.warn('[REGISTER] ⚠️ Auto-login failed, user must login manually:', err);
+	} catch {
+		// Registration succeeded but auto-login failed — user can login manually
 		return json(
 			{
 				user: {

@@ -7,12 +7,10 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
 	// Remove from server-side cache so next user gets fresh data
 	if (token) {
-		console.log('[LOGOUT] Clearing token from server cache...');
 		clearUserCache(token);
 	}
 
 	cookies.delete('wp_token', { path: '/' });
-	console.log('[LOGOUT] ✅ Cookie deleted, user logged out');
 
 	return json({ success: true });
 };
