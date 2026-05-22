@@ -14,7 +14,7 @@
 <div class="abo-page">
 	<div class="container">
 		<iframe
-  src="https://gartenwoche.ch/abonnement/"
+  src="https://gartenwoche.ch/abonnement/?nocache=1"
   title="Abonnement"
   style="width:100%; height:900px; border:none;"
 />
