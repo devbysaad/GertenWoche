@@ -1,7 +1,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { createUser, findByEmail } from '$lib/auth/users.js';
-import { createSession } from '$lib/auth/session.js';
+import { loginWithWordPress } from '$lib/server/auth.js';
+import { dev } from '$app/environment';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -15,7 +16,6 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		throw error(400, 'Invalid JSON body');
 	}
 
-	// Accept either `name` (new form) or `username` (legacy form)
 	const name = body.name?.trim() || body.username?.trim() || '';
 	const { email, password } = body;
 
@@ -29,15 +29,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		throw error(400, `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen haben`);
 	}
 
-	// Check duplicate before hashing (saves CPU)
-	if (findByEmail(email)) {
+	if (await findByEmail(email)) {
 		throw error(409, 'Diese E-Mail-Adresse ist bereits registriert');
 	}
 
 	let user;
 	try {
 		user = await createUser({
-			email: email.toLowerCase().trim(),
+			email:    email.toLowerCase().trim(),
 			username: name,
 			name,
 			password
@@ -49,19 +48,42 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		throw error(500, 'Registrierung fehlgeschlagen');
 	}
 
-	// Auto-login after registration
-	await createSession(cookies, user.id, user.tier);
+	// Auto-login using WordPress JWT — sets wp_token cookie
+	try {
+		const wpUser = await loginWithWordPress(user.username, password);
 
-	return json(
-		{
-			user: {
-				id:        user.id,
-				name:      user.name,
-				email:     user.email,
-				tier:      user.tier,
-				createdAt: new Date(user.createdAt)
-			}
-		},
-		{ status: 201 }
-	);
+		cookies.set('wp_token', wpUser.token, {
+			httpOnly: true,
+			secure:   !dev,
+			sameSite: 'lax',
+			maxAge:   60 * 60 * 24 * 7,
+			path:     '/'
+		});
+
+		return json(
+			{
+				user: {
+					id:       wpUser.id,
+					name:     wpUser.name,
+					username: wpUser.username,
+					email:    wpUser.email,
+					isPro:    wpUser.isPro,
+					roles:    wpUser.roles
+				}
+			},
+			{ status: 201 }
+		);
+	} catch {
+		// Registration succeeded but auto-login failed — user can login manually
+		return json(
+			{
+				user: {
+					id:    user.id,
+					name:  user.name,
+					email: user.email
+				}
+			},
+			{ status: 201 }
+		);
+	}
 };

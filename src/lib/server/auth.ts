@@ -1,10 +1,10 @@
 import { env } from '$env/dynamic/private';
 
-const WP_URL          = 'https://gartenwoche.ch/wp-json';
-const JWT_ENDPOINT    = env.WP_JWT_AUTH_URL ?? `${WP_URL}/jwt-auth/v1/token`;
+const WP_URL            = 'https://gartenwoche.ch/wp-json';
+const JWT_ENDPOINT      = env.WP_JWT_AUTH_URL ?? `${WP_URL}/jwt-auth/v1/token`;
 const VALIDATE_ENDPOINT = `${WP_URL}/jwt-auth/v1/token/validate`;
-const ME_ENDPOINT     = `${WP_URL}/wp/v2/users/me`;
-const AUTH_TIMEOUT_MS = 8_000; // 8s max — prevents hanging page loads in production
+const ME_ENDPOINT       = `${WP_URL}/wp/v2/users/me`;
+const AUTH_TIMEOUT_MS   = 8_000;
 
 const PRO_ROLES = ['contributor', 'author', 'editor', 'administrator', 'subscriber_pro'];
 
@@ -24,18 +24,18 @@ const CACHE_TTL  = 10 * 60_000;
 
 function mapProfileToUser(profile: any, token: string) {
 	return {
-		id:       profile.id           as number,
-		username: profile.slug         as string,
-		name:     profile.name         as string,
-		email:    (profile.email ?? '')          as string,
+		id:       profile.id                          as number,
+		username: profile.slug                        as string,
+		name:     profile.name                        as string,
+		email:    (profile.email ?? '')               as string,
 		avatar:   (profile.avatar_urls?.['96'] ?? '') as string,
-		roles:    (profile.roles ?? [])          as string[],
+		roles:    (profile.roles ?? [])               as string[],
 		isPro:    (profile.roles ?? []).some((r: string) => PRO_ROLES.includes(r)),
 		token
 	};
 }
 
-/** Fetch with hard timeout. Returns the Response regardless of status (for login). */
+/** Fetch with hard timeout. Returns the Response regardless of status. */
 async function timedFetch(url: string, init?: RequestInit): Promise<Response> {
 	const ctrl  = new AbortController();
 	const timer = setTimeout(() => ctrl.abort(), AUTH_TIMEOUT_MS);
@@ -45,7 +45,7 @@ async function timedFetch(url: string, init?: RequestInit): Promise<Response> {
 		return res;
 	} catch (err) {
 		clearTimeout(timer);
-		throw err; // rethrow — caller handles
+		throw err;
 	}
 }
 
@@ -77,7 +77,6 @@ export async function loginWithWordPress(username: string, password: string) {
 	const token = data.token as string;
 	if (!token) throw new Error('Kein Token empfangen');
 
-	// Fetch user profile with the fresh token
 	let profileRes: Response;
 	try {
 		profileRes = await timedFetch(ME_ENDPOINT, {
@@ -91,9 +90,8 @@ export async function loginWithWordPress(username: string, password: string) {
 
 	const profile = await profileRes.json();
 	const user    = mapProfileToUser(profile, token);
-
-	// Warm the cache so the first page load after login is instant
 	tokenCache.set(token, { user, expiresAt: Date.now() + CACHE_TTL });
+
 	return user;
 }
 
@@ -104,13 +102,13 @@ export async function loginWithWordPress(username: string, password: string) {
  */
 export async function validateToken(token: string) {
 	try {
-		// ── 1. Cache hit — zero WP API calls ──────────────────────────
+		// ── 1. Cache hit ───────────────────────────────────────────────
 		const cached = tokenCache.get(token);
 		if (cached && Date.now() < cached.expiresAt) {
 			return cached.user;
 		}
 
-		// ── 2. Validate JWT signature with WordPress ───────────────────
+		// ── 2. Validate JWT with WordPress ─────────────────────────────
 		let valRes: Response;
 		try {
 			valRes = await timedFetch(VALIDATE_ENDPOINT, {
@@ -118,17 +116,16 @@ export async function validateToken(token: string) {
 				headers: { Authorization: `Bearer ${token}` }
 			});
 		} catch {
-			// WP unreachable — fail gracefully, don't crash the page
 			tokenCache.delete(token);
 			return null;
 		}
 
 		if (!valRes.ok) {
-			tokenCache.delete(token); // token is expired/invalid
+			tokenCache.delete(token);
 			return null;
 		}
 
-		// ── 3. Fetch fresh user profile ────────────────────────────────
+		// ── 3. Fetch fresh profile ─────────────────────────────────────
 		let profileRes: Response;
 		try {
 			profileRes = await timedFetch(ME_ENDPOINT, {
@@ -142,12 +139,20 @@ export async function validateToken(token: string) {
 
 		const profile = await profileRes.json();
 		const user    = mapProfileToUser(profile, token);
-
 		tokenCache.set(token, { user, expiresAt: Date.now() + CACHE_TTL });
+
 		return user;
 	} catch {
-		return null; // never crash the hooks handler
+		return null;
 	}
+}
+
+/**
+ * Remove a specific token from the server cache.
+ * Called on logout so the next user gets fresh data immediately.
+ */
+export function clearUserCache(token: string): void {
+	tokenCache.delete(token);
 }
 
 // Prune expired cache entries every 15 minutes

@@ -1,63 +1,57 @@
 <script lang="ts">
-	// 7 confirmed podcast episodes from the live gartenwoche.ch/podcast-garten page
-	const episodes = [
-		{
-			id: 1,
-			title: "Der Dickmaulrüssler: Biologie und seine Bekämpfung",
-			description:
-				"Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=1",
-			duration: "11:42",
-		},
-		{
-			id: 2,
-			title: "Die Silberschnecke: Schadebild und Bekämpfung",
-			description:
-				"Sehr informative Audiobeiträge zu den verschiedenen Schadbildern im Garten.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=2",
-			duration: "08:15",
-		},
-		{
-			id: 3,
-			title: "Meine Thuja ist braun",
-			description:
-				"Gespräche über die häufigsten Ursachen und Hilfsmittel bei braunen Hecken.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=3",
-			duration: "10:04",
-		},
-		{
-			id: 4,
-			title: "Rosenschädlinge Teil 1",
-			description:
-				"Erfahren Sie alles über die häufigsten Rosenschädlinge und wie Sie diese effektiv bekämpfen können.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=4",
-			duration: "12:30",
-		},
-		{
-			id: 5,
-			title: "Rosenschädlinge Teil 2",
-			description:
-				"Fortsetzung: Weiter Tipps und Behandlungsmethoden gegen Rosenkrankheiten.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=5",
-			duration: "09:45",
-		},
-		{
-			id: 6,
-			title: "Ehrengast im Garten",
-			description:
-				"Interviews mit Experten zum Thema Pflegetipps und moderne Gartengestaltung.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=6",
-			duration: "15:20",
-		},
-		{
-			id: 7,
-			title: "Rasenkräuter: Vielfalt statt Monokultur",
-			description:
-				"Praktische Gestaltungstipps — wie heimische Kräuter im Rasen in jeden Garten passen.",
-			src: "http://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3?_=7",
-			duration: "07:55",
-		},
-	];
+    const BASE = "https://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3";
+
+    const episodes = [
+        {
+            id: 1,
+            title: "Der Dickmaulrüssler: Biologie und seine Bekämpfung",
+            description: "Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "11:42",
+        },
+        {
+            id: 2,
+            title: "Die Silberschnecke: Schadebild und Bekämpfung",
+            description: "Sehr informative Audiobeiträge zu den verschiedenen Schadbildern im Garten.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "08:15",
+        },
+        {
+            id: 3,
+            title: "Meine Thuja ist braun",
+            description: "Gespräche über die häufigsten Ursachen und Hilfsmittel bei braunen Hecken.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "10:04",
+        },
+        {
+            id: 4,
+            title: "Rosenschädlinge Teil 1",
+            description: "Erfahren Sie alles über die häufigsten Rosenschädlinge und wie Sie diese effektiv bekämpfen können.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "12:30",
+        },
+        {
+            id: 5,
+            title: "Rosenschädlinge Teil 2",
+            description: "Fortsetzung: Weiter Tipps und Behandlungsmethoden gegen Rosenkrankheiten.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "09:45",
+        },
+        {
+            id: 6,
+            title: "Ehrengast im Garten",
+            description: "Interviews mit Experten zum Thema Pflegetipps und moderne Gartengestaltung.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "15:20",
+        },
+        {
+            id: 7,
+            title: "Rasenkräuter: Vielfalt statt Monokultur",
+            description: "Praktische Gestaltungstipps — wie heimische Kräuter im Rasen in jeden Garten passen.",
+            src: `/proxy?url=${encodeURIComponent(BASE)}`,
+            duration: "07:55",
+        },
+    ];
 </script>
 
 <svelte:head>

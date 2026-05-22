@@ -522,3 +522,87 @@ export async function getArticleCount(categorySlug?: string): Promise<number> {
 	const articles = await getArticles(categorySlug ? { category: categorySlug } : undefined);
 	return articles.length;
 }
+
+// ============================================================
+// USER MANAGEMENT  (WordPress REST API — admin credentials)
+// ============================================================
+// Requires in .env:
+//   WP_ADMIN_USER      — WordPress admin username
+//   WP_ADMIN_APP_PASS  — Application Password (WP Admin → Users → Profile)
+
+const WP_ADMIN_AUTH = (() => {
+	const user = process.env.WP_ADMIN_USER    ?? '';
+	const pass = (process.env.WP_ADMIN_APP_PASS ?? '').replace(/\s/g, '');
+	return 'Basic ' + btoa(`${user}:${pass}`);
+})();
+
+interface WpUserCreateResponse {
+	id: number;
+	username: string;
+	name: string;
+	email: string;
+	registered_date?: string;
+	meta?: Record<string, unknown>;
+}
+
+/**
+ * Create a new subscriber account in WordPress.
+ * Also stores a bcrypt hash in user meta (`gw_password_hash`) so the
+ * SvelteKit auth layer can verify passwords without touching WP sessions.
+ */
+export async function wpCreateUser(data: {
+	username: string;
+	email: string;
+	name: string;
+	password: string;
+	passwordHash: string;  // pre-computed bcrypt hash from users.ts
+}): Promise<WpUserCreateResponse> {
+	const res = await fetch(`${BASE_URL.replace('/wp/v2', '')}/wp/v2/users`, {
+		method: 'POST',
+		headers: {
+			'Authorization': WP_ADMIN_AUTH,
+			'Content-Type':  'application/json',
+			'Accept':        'application/json'
+		},
+		body: JSON.stringify({
+			username: data.username,
+			email:    data.email,
+			name:     data.name,
+			password: data.password,
+			roles:    ['subscriber'],
+			meta: {
+				gw_password_hash: data.passwordHash,
+				gw_tier:          'free'
+			}
+		})
+	});
+
+	if (!res.ok) {
+		const err = await res.json().catch(() => ({})) as { code?: string; message?: string };
+		if (err.code === 'existing_user_email' || err.code === 'existing_user_login') {
+			throw new Error('EMAIL_EXISTS');
+		}
+		throw new Error(err.message ?? `WP user creation failed: ${res.status}`);
+	}
+
+	return res.json() as Promise<WpUserCreateResponse>;
+}
+
+/**
+ * Look up a WP user by email (admin-only endpoint).
+ * Returns null if not found.
+ */
+export async function wpFindUserByEmail(email: string): Promise<WpUserCreateResponse | null> {
+	const res = await fetch(
+		`${BASE_URL.replace('/wp/v2', '')}/wp/v2/users?search=${encodeURIComponent(email)}&context=edit`,
+		{
+			headers: {
+				'Authorization': WP_ADMIN_AUTH,
+				'Accept':        'application/json'
+			}
+		}
+	);
+	if (!res.ok) return null;
+	const users = await res.json() as WpUserCreateResponse[];
+	return users.find((u) => u.email?.toLowerCase() === email.toLowerCase()) ?? null;
+}
