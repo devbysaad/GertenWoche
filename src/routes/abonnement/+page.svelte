@@ -13,56 +13,11 @@
 
 <div class="abo-page">
 	<div class="container">
-		<Breadcrumb crumbs={crumbs} />
-
-		<div class="abo-hero">
-			<h1 class="abo-title">Zugang zu allen Artikeln</h1>
-			<p class="abo-sub">Wählen Sie zwischen jährlich oder monatlich</p>
-		</div>
-
-		<!-- Pricing Toggle -->
-		<div class="toggle-wrap">
-			<div class="toggle-bg">
-				<button 
-					class="toggle-btn" 
-					class:active={isYearly} 
-					onclick={() => isYearly = true}
-				>
-					Jährlich
-				</button>
-				<button 
-					class="toggle-btn" 
-					class:active={!isYearly} 
-					onclick={() => isYearly = false}
-				>
-					Monatlich
-				</button>
-			</div>
-		</div>
-
-		<!-- Pricing Card -->
-		<div class="abo-card">
-			<div class="card-header">
-				<div class="price-display">
-					<span class="price-val">{isYearly ? '15.99' : '1.50'}</span>
-					<span class="price-curr">CHF</span>
-				</div>
-				<span class="price-period">{isYearly ? '/ Jahr' : '/ Monat'}</span>
-			</div>
-
-			<ul class="tier-features">
-				<li class="feat-yes">Aktuelle Nachrichten</li>
-				<li class="feat-yes">Artikel zu vielen Gartenthemen</li>
-				<li class="feat-yes">Veranstaltungskalender</li>
-				<li class="feat-yes">Aktuelle Stellenangebote</li>
-				<li class="feat-yes">Branchenverzeichnis</li>
-			</ul>
-
-			<button class="tier-btn pro" onclick={() => modalStore.openRegister()}>
-				Abo wählen
-			</button>
-		</div>
-
+		<iframe
+  src="https://gartenwoche.ch/abonnement/"
+  title="Abonnement"
+  style="width:100%; height:900px; border:none;"
+/>
 	</div>
 </div>
 
