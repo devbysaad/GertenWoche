@@ -1,57 +1,21 @@
 <script lang="ts">
-    const BASE = "https://gartenwoche.ch/wp-content/uploads/2018/01/20090309_dickmaulruessler.mp3";
+	import { PODCAST_EPISODES, proxiedAudioUrl } from '$lib/api/video';
 
-    const episodes = [
-        {
-            id: 1,
-            title: "Der Dickmaulrüssler: Biologie und seine Bekämpfung",
-            description: "Podcast zum Thema Pflanzenschutz im Garten der Fachhochschule Wädenswil mit Beiträgen von Thomas Lohner.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "11:42",
-        },
-        {
-            id: 2,
-            title: "Die Silberschnecke: Schadebild und Bekämpfung",
-            description: "Sehr informative Audiobeiträge zu den verschiedenen Schadbildern im Garten.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "08:15",
-        },
-        {
-            id: 3,
-            title: "Meine Thuja ist braun",
-            description: "Gespräche über die häufigsten Ursachen und Hilfsmittel bei braunen Hecken.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "10:04",
-        },
-        {
-            id: 4,
-            title: "Rosenschädlinge Teil 1",
-            description: "Erfahren Sie alles über die häufigsten Rosenschädlinge und wie Sie diese effektiv bekämpfen können.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "12:30",
-        },
-        {
-            id: 5,
-            title: "Rosenschädlinge Teil 2",
-            description: "Fortsetzung: Weiter Tipps und Behandlungsmethoden gegen Rosenkrankheiten.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "09:45",
-        },
-        {
-            id: 6,
-            title: "Ehrengast im Garten",
-            description: "Interviews mit Experten zum Thema Pflegetipps und moderne Gartengestaltung.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "15:20",
-        },
-        {
-            id: 7,
-            title: "Rasenkräuter: Vielfalt statt Monokultur",
-            description: "Praktische Gestaltungstipps — wie heimische Kräuter im Rasen in jeden Garten passen.",
-            src: `/proxy?url=${encodeURIComponent(BASE)}`,
-            duration: "07:55",
-        },
-    ];
+	let audioRefs: HTMLAudioElement[] = $state([]);
+
+	// Pause every other episode when one starts playing, so only one plays at a time.
+	function handlePlay(event: Event) {
+		const playing = event.currentTarget as HTMLAudioElement;
+		for (const el of audioRefs) {
+			if (el && el !== playing && !el.paused) {
+				el.pause();
+			}
+		}
+	}
+
+	function setRef(el: HTMLAudioElement | null, idx: number) {
+		if (el) audioRefs[idx] = el;
+	}
 </script>
 
 <svelte:head>
@@ -79,27 +43,38 @@
 				zu den verschiedenen Schadbildern im Garten. Dessweiteren spannende
 				Audiobeiträge vom SRF zum Thema Garten.
 			</p>
-			<p>
-				<strong>Der Dickmaulrüssler:</strong> Biologie und seine Bekämpfung
-			</p>
 		</div>
 
 		<div class="episode-list">
-			{#each episodes as ep}
+			{#each PODCAST_EPISODES as ep, idx (ep.id)}
 				<div class="episode" id="episode-{ep.id}">
 					<div class="episode-header">
+						<span class="episode-number" aria-hidden="true">{ep.id}</span>
 						<h2 class="episode-title">{ep.title}</h2>
 					</div>
-					<!-- Native HTML5 audio player -->
+
 					<audio
+						bind:this={audioRefs[idx]}
 						controls
 						preload="none"
 						class="audio-player"
 						aria-label={ep.title}
+						onplay={handlePlay}
 					>
-						<source src={ep.src} type="audio/mpeg" />
+						<source src={proxiedAudioUrl(ep.url)} type="audio/mpeg" />
 						Ihr Browser unterstützt das Audio-Element nicht.
 					</audio>
+
+					<div class="episode-meta">
+						<a
+							class="download-link"
+							href={proxiedAudioUrl(ep.url)}
+							download="{ep.title}.mp3"
+							rel="noopener"
+						>
+							MP3 herunterladen
+						</a>
+					</div>
 				</div>
 			{/each}
 		</div>
@@ -142,6 +117,8 @@
 		color: var(--color-text);
 		margin: 0 0 20px;
 		letter-spacing: 0.02em;
+		border-bottom: 2px solid var(--color-border);
+		padding-bottom: 12px;
 	}
 
 	.podcast-intro {
@@ -157,11 +134,7 @@
 		font-size: 14px;
 		line-height: 1.7;
 		color: var(--color-text);
-		margin: 0 0 10px;
-	}
-
-	.podcast-intro p:last-child {
-		margin-bottom: 0;
+		margin: 0;
 	}
 
 	.episode-list {
@@ -175,7 +148,7 @@
 	}
 
 	.episode {
-		padding: 16px 20px;
+		padding: 18px 20px;
 		border-bottom: 1px solid var(--color-border);
 	}
 
@@ -184,7 +157,25 @@
 	}
 
 	.episode-header {
-		margin-bottom: 10px;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 12px;
+	}
+
+	.episode-number {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		background: var(--color-primary);
+		color: #fff;
+		font-family: var(--font-heading);
+		font-size: 14px;
+		font-weight: 700;
+		border-radius: 50%;
 	}
 
 	.episode-title {
@@ -196,16 +187,30 @@
 		line-height: 1.35;
 	}
 
-	/* Style the native audio player to be full-width */
 	.audio-player {
 		width: 100%;
 		height: 40px;
 		display: block;
-		/* Browser default controls styling */
 		accent-color: var(--color-primary);
 	}
 
-	/* Chromium-based customization */
+	.episode-meta {
+		margin-top: 8px;
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.download-link {
+		font-family: var(--font-body);
+		font-size: 12px;
+		color: var(--color-primary);
+		text-decoration: none;
+	}
+
+	.download-link:hover {
+		text-decoration: underline;
+	}
+
 	audio::-webkit-media-controls-panel {
 		background-color: var(--color-bg);
 	}
@@ -217,6 +222,12 @@
 
 		.episode {
 			padding: 14px 16px;
+		}
+
+		.episode-number {
+			width: 28px;
+			height: 28px;
+			font-size: 13px;
 		}
 	}
 </style>

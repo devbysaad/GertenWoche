@@ -1,49 +1,64 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { loadUserData, saveBilling, type BillingData } from '$lib/server/userStore';
 
-// Billing details are stored as WordPress user meta via the WP REST API
-const WP_URL = 'https://gartenwoche.ch/wp-json/wp/v2';
+/**
+ * Account billing / invoice endpoint.
+ *
+ * Same story as profile: WP's `/wp/v2/users/me` is blocked by the
+ * misconfigured JWT plugin on gartenwoche.ch, so billing data is stored
+ * server-side in `data/user-profiles.json`. See `src/lib/server/userStore.ts`.
+ *
+ * The previous version of this file silently returned `{ success: true }`
+ * even on WP failures, which is what made "saved!" toasts appear while the
+ * data was thrown away. That fake-success path is gone.
+ */
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
-	const token = cookies.get('wp_token');
-	if (!token) return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-	const body = await request.json().catch(() => ({}));
+export const GET: RequestHandler = async ({ locals }) => {
+	if (!locals.user) {
+		return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+	}
+	const { billing } = loadUserData(locals.user.id);
 
-	// Map billing fields to WooCommerce-compatible meta keys
-	const metaUpdate = {
-		billing_first_name: body.first_name ?? '',
-		billing_last_name:  body.last_name  ?? '',
-		billing_company:    body.company    ?? '',
-		billing_address_1:  body.address    ?? '',
-		billing_city:       body.city       ?? '',
-		billing_state:      body.district   ?? '',
-		billing_postcode:   body.postal     ?? '',
-		billing_country:    body.country    ?? '',
-		billing_phone:      body.phone      ?? '',
-		billing_email:      body.email      ?? '',
-		vat_number:         body.vat        ?? '',
+	// Fall back to the logged-in email so the billing form has a starting point.
+	const billingWithDefaults: BillingData = {
+		...billing,
+		email: billing.email || locals.user.email || ''
 	};
 
-	try {
-		const res = await fetch(`${WP_URL}/users/me`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${token}`,
-			},
-			body: JSON.stringify({ meta: metaUpdate }),
-		});
+	return json({ billing: billingWithDefaults });
+};
 
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) {
-			// WP REST API may restrict meta updates — save locally as fallback
-			console.warn('[billing] WP meta update failed:', data.message);
-			// Still return success so users see confirmation
-			return json({ success: true, note: 'local_save' });
-		}
-		return json({ success: true });
-	} catch {
-		return json({ error: 'Netzwerkfehler.' }, { status: 500 });
+export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!locals.user) {
+		return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+	}
+
+	const body = (await request.json().catch(() => ({}))) as Partial<BillingData>;
+
+	if (body.email !== undefined && body.email !== '' && !EMAIL_REGEX.test(body.email)) {
+		return json({ error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.' }, { status: 400 });
+	}
+
+	try {
+		const saved = saveBilling(locals.user.id, {
+			first_name: body.first_name,
+			last_name:  body.last_name,
+			company:    body.company,
+			vat:        body.vat,
+			address:    body.address,
+			country:    body.country,
+			city:       body.city,
+			district:   body.district,
+			postal:     body.postal,
+			phone:      body.phone,
+			email:      body.email
+		});
+		return json({ success: true, billing: saved });
+	} catch (err) {
+		console.error('[billing] save failed:', err);
+		return json({ error: 'Speichern fehlgeschlagen.' }, { status: 500 });
 	}
 };

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
+	import { invalidateAll } from "$app/navigation";
 	import { modalStore } from "$lib/stores/modal.store.js";
 
 	let { data } = $props();
@@ -8,46 +9,36 @@
 	// Read tab from URL query param
 	let activeTab = $state($page.url.searchParams.get("tab") ?? "dashboard");
 
-	// Profile form fields
-	let firstName = $state("");
-	let lastName = $state("");
-	let displayName = $state("");
-	let profileEmail = $state("");
+	// Profile form fields — pre-filled from server-side load
+	let firstName = $state(data.profile?.first_name ?? "");
+	let lastName = $state(data.profile?.last_name ?? "");
+	let displayName = $state(data.profile?.display_name ?? "");
+	let profileEmail = $state(data.profile?.email ?? "");
 	let currentPw = $state("");
 	let newPw = $state("");
 	let confirmPw = $state("");
-	let avatarPreview = $state("");
+	let avatarPreview = $state(data.user?.avatar ?? "");
 
-	// Billing form fields
-	let billFirstName = $state("");
-	let billLastName = $state("");
-	let billCompany = $state("");
-	let billVat = $state("");
-	let billAddress = $state("");
-	let billCountry = $state("");
-	let billCity = $state("");
-	let billDistrict = $state("");
-	let billPostal = $state("");
-	let billPhone = $state("");
-	let billEmail = $state("");
+	// Billing form fields — pre-filled from server-side load
+	let billFirstName = $state(data.billing?.first_name ?? "");
+	let billLastName = $state(data.billing?.last_name ?? "");
+	let billCompany = $state(data.billing?.company ?? "");
+	let billVat = $state(data.billing?.vat ?? "");
+	let billAddress = $state(data.billing?.address ?? "");
+	let billCountry = $state(data.billing?.country ?? "");
+	let billCity = $state(data.billing?.city ?? "");
+	let billDistrict = $state(data.billing?.district ?? "");
+	let billPostal = $state(data.billing?.postal ?? "");
+	let billPhone = $state(data.billing?.phone ?? "");
+	let billEmail = $state(data.billing?.email ?? "");
 
 	// Status messages
 	let profileSaving = $state(false);
 	let profileMsg = $state("");
+	let profileErr = $state("");
 	let billSaving = $state(false);
 	let billMsg = $state("");
-
-	// Pre-fill fields
-	$effect(() => {
-		if (user) {
-			const parts = (user.name ?? "").split(" ");
-			firstName = parts[0] ?? "";
-			lastName = parts.slice(1).join(" ");
-			displayName = user.username ?? "";
-			profileEmail = user.email ?? "";
-			avatarPreview = user.avatar ?? "";
-		}
-	});
+	let billErr = $state("");
 
 	function handleAvatarChange(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
@@ -66,20 +57,69 @@
 	async function saveProfile(e: SubmitEvent) {
 		e.preventDefault();
 		profileMsg = "";
+		profileErr = "";
 		profileSaving = true;
-		// Mock delay
-		await new Promise((r) => setTimeout(r, 800));
-		profileMsg = "Changes saved successfully.";
-		profileSaving = false;
+		try {
+			const res = await fetch("/api/account/profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					first_name: firstName,
+					last_name: lastName,
+					display_name: displayName,
+					email: profileEmail,
+				}),
+			});
+			const json = await res.json().catch(() => ({}));
+			if (!res.ok || !json.success) {
+				profileErr = json.error ?? "Speichern fehlgeschlagen.";
+			} else {
+				profileMsg = "Änderungen gespeichert.";
+				// Re-run the page load so server-side `data` reflects the new values.
+				await invalidateAll();
+			}
+		} catch {
+			profileErr = "Netzwerkfehler. Bitte erneut versuchen.";
+		} finally {
+			profileSaving = false;
+		}
 	}
 
 	async function saveBilling(e: SubmitEvent) {
 		e.preventDefault();
 		billMsg = "";
+		billErr = "";
 		billSaving = true;
-		await new Promise((r) => setTimeout(r, 800));
-		billMsg = "Billing details updated.";
-		billSaving = false;
+		try {
+			const res = await fetch("/api/account/billing", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					first_name: billFirstName,
+					last_name: billLastName,
+					company: billCompany,
+					vat: billVat,
+					address: billAddress,
+					country: billCountry,
+					city: billCity,
+					district: billDistrict,
+					postal: billPostal,
+					phone: billPhone,
+					email: billEmail,
+				}),
+			});
+			const json = await res.json().catch(() => ({}));
+			if (!res.ok || !json.success) {
+				billErr = json.error ?? "Speichern fehlgeschlagen.";
+			} else {
+				billMsg = "Rechnungsdaten gespeichert.";
+				await invalidateAll();
+			}
+		} catch {
+			billErr = "Netzwerkfehler. Bitte erneut versuchen.";
+		} finally {
+			billSaving = false;
+		}
 	}
 
 	async function logout() {
@@ -339,6 +379,9 @@
 								{#if profileMsg}<p class="success">
 										{profileMsg}
 									</p>{/if}
+								{#if profileErr}<p class="failure">
+										{profileErr}
+									</p>{/if}
 							</form>
 						</section>
 
@@ -460,6 +503,9 @@
 								</button>
 								{#if billMsg}<p class="success">
 										{billMsg}
+									</p>{/if}
+								{#if billErr}<p class="failure">
+										{billErr}
 									</p>{/if}
 							</form>
 						</section>
@@ -724,6 +770,12 @@
 	.success {
 		font-size: 12px;
 		color: #2e8b22;
+		margin-top: 10px;
+	}
+
+	.failure {
+		font-size: 12px;
+		color: #cc2200;
 		margin-top: 10px;
 	}
 

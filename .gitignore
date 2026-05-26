@@ -16,3 +16,5 @@ instructions/*
 data/*.db
 data/*.db-shm
 data/*.db-wal
+# Local user profile / billing store (runtime data, not source)
+data/user-profiles.json

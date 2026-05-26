@@ -1,39 +1,65 @@
 import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
+import { loadUserData, saveProfile, type ProfileData } from '$lib/server/userStore';
 
-const WP_URL = 'https://gartenwoche.ch/wp-json/wp/v2';
+/**
+ * Account profile endpoint.
+ *
+ * The WordPress route `POST /wp/v2/users/me` is currently unreachable because
+ * the legacy JWT-Auth plugin on gartenwoche.ch is misconfigured and rejects
+ * every Bearer token with `jwt_auth_bad_config`. Until that's fixed on the WP
+ * server, the source of truth for profile fields lives in the local JSON
+ * store under `data/user-profiles.json`. See `src/lib/server/userStore.ts`.
+ */
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
-	const token = cookies.get('wp_token');
-	if (!token) return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-	const body = await request.json().catch(() => ({}));
+export const GET: RequestHandler = async ({ locals }) => {
+	if (!locals.user) {
+		return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+	}
+	const { profile } = loadUserData(locals.user.id);
 
-	// Build WP user update payload (only send non-empty fields)
-	const update: Record<string, string> = {};
-	if (body.first_name)   update.first_name   = body.first_name;
-	if (body.last_name)    update.last_name     = body.last_name;
-	if (body.display_name) update.name          = body.display_name;
-	if (body.email)        update.email         = body.email;
-	if (body.password)     update.password      = body.password;
+	// Sensible defaults if the user has never saved before: pre-fill from
+	// the WP-side display name / email so the form isn't empty.
+	const displayName = profile.display_name || locals.user.name || locals.user.username || '';
+	const email       = profile.email        || locals.user.email || '';
+	const [wpFirst = '', ...wpRest] = (locals.user.name ?? '').split(' ');
+	const firstName   = profile.first_name   || wpFirst;
+	const lastName    = profile.last_name    || wpRest.join(' ');
+
+	return json({
+		profile: {
+			first_name:   firstName,
+			last_name:    lastName,
+			display_name: displayName,
+			email
+		} satisfies ProfileData
+	});
+};
+
+export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!locals.user) {
+		return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+	}
+
+	const body = (await request.json().catch(() => ({}))) as Partial<ProfileData>;
+
+	// Validation — keep messages in German to match the rest of the UI.
+	if (body.email !== undefined && body.email !== '' && !EMAIL_REGEX.test(body.email)) {
+		return json({ error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.' }, { status: 400 });
+	}
 
 	try {
-		const res = await fetch(`${WP_URL}/users/me`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${token}`,
-			},
-			body: JSON.stringify(update),
+		const saved = saveProfile(locals.user.id, {
+			first_name:   body.first_name,
+			last_name:    body.last_name,
+			display_name: body.display_name,
+			email:        body.email
 		});
-
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) {
-			return json({ error: data.message ?? 'Aktualisierung fehlgeschlagen.' }, { status: res.status });
-		}
-		return json({ success: true, user: data });
-	} catch {
-		return json({ error: 'Netzwerkfehler beim Aktualisieren.' }, { status: 500 });
+		return json({ success: true, profile: saved });
+	} catch (err) {
+		console.error('[profile] save failed:', err);
+		return json({ error: 'Speichern fehlgeschlagen.' }, { status: 500 });
 	}
 };
