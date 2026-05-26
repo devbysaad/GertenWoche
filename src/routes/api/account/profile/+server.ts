@@ -1,39 +1,75 @@
 import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
+import { loadUserData, saveProfile, type UserProfile } from '$lib/server/userStore';
 
-const WP_URL = 'https://gartenwoche.ch/wp-json/wp/v2';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
-	const token = cookies.get('wp_token');
-	if (!token) return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+const FIELDS: Array<keyof UserProfile> = [
+	'firstName',
+	'lastName',
+	'displayName',
+	'email',
+	'bio'
+];
 
-	const body = await request.json().catch(() => ({}));
+export const GET: RequestHandler = async ({ locals }) => {
+	if (!locals.user) return json({ error: 'Nicht angemeldet.' }, { status: 401 });
+	const record = loadUserData(locals.user.id);
+	return json({ profile: record.profile, updatedAt: record.updatedAt });
+};
 
-	// Build WP user update payload (only send non-empty fields)
-	const update: Record<string, string> = {};
-	if (body.first_name)   update.first_name   = body.first_name;
-	if (body.last_name)    update.last_name     = body.last_name;
-	if (body.display_name) update.name          = body.display_name;
-	if (body.email)        update.email         = body.email;
-	if (body.password)     update.password      = body.password;
+export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!locals.user) return json({ error: 'Nicht angemeldet.' }, { status: 401 });
 
+	let body: Record<string, unknown>;
 	try {
-		const res = await fetch(`${WP_URL}/users/me`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${token}`,
-			},
-			body: JSON.stringify(update),
-		});
-
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) {
-			return json({ error: data.message ?? 'Aktualisierung fehlgeschlagen.' }, { status: res.status });
-		}
-		return json({ success: true, user: data });
+		body = await request.json();
 	} catch {
-		return json({ error: 'Netzwerkfehler beim Aktualisieren.' }, { status: 500 });
+		return json({ error: 'Ungültiger Anfragetext.' }, { status: 400 });
 	}
+
+	const patch: UserProfile = {};
+	const errors: Record<string, string> = {};
+
+	for (const key of FIELDS) {
+		// Accept both camelCase and snake_case from older callers.
+		const raw =
+			body[key] ??
+			body[key.replace(/[A-Z]/g, (m) => '_' + m.toLowerCase())];
+		if (raw === undefined || raw === null) continue;
+		if (typeof raw !== 'string') {
+			errors[key] = 'Muss eine Zeichenkette sein.';
+			continue;
+		}
+		const trimmed = raw.trim();
+		if (key === 'email' && trimmed !== '' && !EMAIL_REGEX.test(trimmed)) {
+			errors[key] = 'Ungültige E-Mail-Adresse.';
+			continue;
+		}
+		if (key === 'firstName' || key === 'lastName') {
+			if (trimmed.length > 60) {
+				errors[key] = 'Maximal 60 Zeichen.';
+				continue;
+			}
+		}
+		if (key === 'displayName' && trimmed.length > 120) {
+			errors[key] = 'Maximal 120 Zeichen.';
+			continue;
+		}
+		if (key === 'bio' && trimmed.length > 1000) {
+			errors[key] = 'Maximal 1000 Zeichen.';
+			continue;
+		}
+		patch[key] = trimmed;
+	}
+
+	if (Object.keys(errors).length > 0) {
+		return json({ error: 'Bitte überprüfen Sie die markierten Felder.', errors }, { status: 400 });
+	}
+	if (Object.keys(patch).length === 0) {
+		return json({ error: 'Es wurden keine Änderungen übermittelt.' }, { status: 400 });
+	}
+
+	const record = saveProfile(locals.user.id, patch);
+	return json({ success: true, profile: record.profile, updatedAt: record.updatedAt });
 };

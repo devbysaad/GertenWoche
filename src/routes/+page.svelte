@@ -1,6 +1,5 @@
 <script lang="ts">
 	import HeroSpotlight from "$lib/components/blocks/HeroSpotlight.svelte";
-	import PflanzenStrip from "$lib/components/blocks/PflanzenStrip.svelte";
 	import RasenGartenBlock from "$lib/components/blocks/RasenGartenBlock.svelte";
 	import VideoBlock from "$lib/components/blocks/VideoBlock.svelte";
 	import MixedArticleBlock from "$lib/components/blocks/MixedArticleBlock.svelte";
@@ -14,16 +13,19 @@
 
 	let { data } = $props();
 
-	// Discover more accordion
-	const discoverCategories = [
-		{ label: "Ausstellungen und Messen", href: "/veranstaltungen" },
-		{ label: "Gartenpraxis", href: "/category/gartenpraxis/" },
-		{
-			label: "Hof, Terrasse und Vorgarten",
-			href: "/category/gartenpraxis/",
-		},
-	];
-	let openDiscover = $state<number | null>(null);
+	// Rearrange the first 3 gridArticles so the one with the least content is automatically in the center column (Column 2)
+	const threeColArticles = $derived.by(() => {
+		const articles = data.gridArticles || [];
+		if (articles.length < 3) return articles;
+		const firstThree = articles.slice(0, 3);
+		const getInfoLength = (art: any) => {
+			return (art.title?.length || 0) + (art.excerpt?.length || 0);
+		};
+		// Sort by combined info length ascending
+		const sorted = [...firstThree].sort((a, b) => getInfoLength(a) - getInfoLength(b));
+		// Place the one with less info (sorted[0]) in the center
+		return [sorted[1], sorted[0], sorted[2]];
+	});
 </script>
 
 <svelte:head>
@@ -55,83 +57,18 @@
 			/>
 		{/if}
 
-		<!-- ── FEATURED ONE: single article with image below hero ── -->
-		{#if data.featuredOne}
-			{@const art = data.featuredOne}
-			{@const url = `/${art.urlPath}`}
-			<div class="featured-one">
-				<a href={url} class="fo-inner">
-					<div class="fo-img">
-						{#if art.thumbnail}
-							<img
-								src={art.thumbnail}
-								alt={art.title}
-								loading="lazy"
-							/>
-						{:else}
-							<div class="fo-img-ph"></div>
-						{/if}
-						<span class="fo-badge">{art.category.name}</span>
-					</div>
-					<div class="fo-body">
-						<h2 class="fo-title">{art.title}</h2>
-						{#if art.excerpt}
-							<p class="fo-excerpt">{art.excerpt}</p>
-						{/if}
-						<span class="fo-author"
-							>Editorial Team {art.author.name}</span
-						>
-					</div>
-				</a>
-			</div>
-		{/if}
-
-		<!-- ── DISCOVER MORE accordion ── -->
-		<div class="discover-more">
-			<h2 class="dm-heading">Entdecken Sie mehr</h2>
-			<ul class="dm-list">
-				{#each discoverCategories as cat, i}
-					<li class="dm-item">
-						<a href={cat.href} class="dm-link">
-							<span>{cat.label}</span>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2.5"
-								stroke-linecap="round"
-								aria-hidden="true"
-							>
-								<polyline points="9 18 15 12 9 6" />
-							</svg>
-						</a>
-					</li>
-				{/each}
-			</ul>
-		</div>
-
 		<!-- ── 3-COL ARTICLE GRID ── -->
-		{#if data.gridArticles?.length}
+		{#if threeColArticles && threeColArticles.length}
 			<div class="three-col-grid">
-				{#each data.gridArticles.slice(0, 3) as article}
-					<ArticleCard {article} showExcerpt={true} titleSize="md" />
+				{#each threeColArticles as article}
+					<ArticleCard {article} showExcerpt={true} titleSize="md" variant="three-col" />
 				{/each}
 			</div>
 		{/if}
 
-		<!-- ── Pflanzenempfehlungen carousel ── -->
-		{#if data.pflanzen?.length}
-			<PflanzenStrip articles={data.pflanzen} />
-		{/if}
-
-		<!-- ── Rasen 60/40 ── -->
-		{#if data.rasenMain}
-			<RasenGartenBlock
-				main={data.rasenMain}
-				secondary={data.rasenSecondary ?? []}
-			/>
+		<!-- ── Rasen 3-Col Block ── -->
+		{#if data.rasenGartenBlock}
+			<RasenGartenBlock blockData={data.rasenGartenBlock} />
 		{/if}
 
 		<!-- ── Video der Woche (heading is inside VideoBlock) ── -->
@@ -229,7 +166,7 @@
 				<DirectoryLogos entries={data.directory ?? []} />
 			</div>
 			<div class="events-col">
-				<EventsWidget events={data.events ?? []} />
+				<EventsWidget events={data.events ?? []} isPast={data.eventsArePast ?? false} />
 			</div>
 		</div>
 	</div>
@@ -240,146 +177,12 @@
 		padding: 24px 0 40px;
 	}
 
-	/* ── Featured One ─────────────────────────────────────── */
-	.featured-one {
-		margin-bottom: 8px;
-	}
-
-	.fo-inner {
-		display: grid;
-		grid-template-columns: 280px 1fr;
-		gap: 0;
-		text-decoration: none;
-		border: 1px solid #e0e0e0;
-		overflow: hidden;
-		transition: box-shadow 0.2s ease;
-	}
-	.fo-inner:hover {
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-	}
-
-	.fo-img {
-		position: relative;
-		overflow: hidden;
-		background: #e0e0e0;
-	}
-	.fo-img img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		display: block;
-		min-height: 180px;
-		transition: transform 0.3s ease;
-	}
-	.fo-inner:hover .fo-img img {
-		transform: scale(1.04);
-	}
-
-	.fo-badge {
-		position: absolute;
-		bottom: 8px;
-		left: 8px;
-		background: rgba(0, 0, 0, 0.65);
-		color: #fff;
-		font-family: "Roboto", sans-serif;
-		font-size: 10px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 2px 8px;
-		border-radius: 2px;
-	}
-
-	.fo-body {
-		padding: 20px 24px;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		justify-content: center;
-		background: #fff;
-	}
-
-	.fo-title {
-		font-family: "Roboto", sans-serif;
-		font-size: 20px;
-		font-weight: 700;
-		color: #222;
-		margin: 0;
-		line-height: 1.3;
-	}
-
-	.fo-excerpt {
-		font-family: "Open Sans", sans-serif;
-		font-size: 14px;
-		line-height: 1.6;
-		color: #555;
-		margin: 0;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.fo-author {
-		font-family: "Open Sans", sans-serif;
-		font-size: 11px;
-		color: #888;
-		font-style: italic;
-	}
-
-	/* ── Discover More ────────────────────────────────────── */
-	.discover-more {
-		background: #f5f5f5;
-		border: 1px solid #e0e0e0;
-		padding: 16px 20px;
-		margin: 20px 0;
-	}
-
-	.dm-heading {
-		font-family: "Roboto", sans-serif;
-		font-size: 14px;
-		font-weight: 700;
-		color: #555;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		margin: 0 0 8px;
-	}
-
-	.dm-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.dm-item {
-		border-top: 1px solid #e0e0e0;
-	}
-
-	.dm-link {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 12px 0;
-		text-decoration: none;
-		font-family: "Open Sans", sans-serif;
-		font-size: 14px;
-		color: #333;
-		transition: color 0.15s;
-	}
-	.dm-link:hover {
-		color: #222;
-	}
-	.dm-link svg {
-		color: #aaa;
-		flex-shrink: 0;
-	}
-
 	/* ── 3-col article grid ───────────────────────────────── */
 	.three-col-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: 24px;
-		margin-bottom: 32px;
+		margin-bottom: 36px;
 	}
 
 	/* ── Produktvorschläge heading ──────────────────────── */

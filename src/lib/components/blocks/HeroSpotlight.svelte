@@ -35,6 +35,27 @@
 
 	// Homepage: 2 stacked right
 	const rightStack = $derived(sideArticles.slice(0, 2));
+
+	type HeroArticle = ArticlePreview & { content?: string };
+
+	function plainText(html: string): string {
+		return html
+			.replace(/<[^>]+>/g, " ")
+			.replace(/\s+/g, " ")
+			.trim();
+	}
+
+	/** Full lead text for hero overlay (WP excerpt, else start of body). */
+	const overlayBody = $derived.by(() => {
+		const a = article as HeroArticle;
+		const excerpt = a.excerpt?.trim() ?? "";
+		if (excerpt.length >= 200) return excerpt;
+		if (a.content) {
+			const fromContent = plainText(a.content);
+			return excerpt || fromContent.slice(0, 1500);
+		}
+		return excerpt;
+	});
 </script>
 
 <!-- ════════════════════════════════════════════════════════
@@ -60,18 +81,14 @@
 						>
 					</div>
 				{/if}
-				<!-- Dark gradient + article info overlaid at bottom -->
 				<div class="hero-overlay">
-					<span class="hero-overlay-badge"
-						>{article.category.name}</span
-					>
 					<p class="hero-overlay-title">{article.title}</p>
-					{#if article.excerpt}
-						<p class="hero-overlay-excerpt">{article.excerpt}</p>
-					{/if}
 					<span class="hero-overlay-author"
 						>{article.author.name}</span
 					>
+					{#if overlayBody}
+						<p class="hero-overlay-excerpt">{overlayBody}</p>
+					{/if}
 				</div>
 			</a>
 
@@ -97,7 +114,6 @@
 							{#if art.excerpt}
 								<p class="hrc-excerpt">{art.excerpt}</p>
 							{/if}
-							<span class="hrc-author">{art.author.name}</span>
 						</div>
 					</a>
 				{/each}
@@ -192,7 +208,7 @@
 		margin-bottom: 32px;
 	}
 	.hero-home {
-		margin-bottom: 130px; /* Space for hanging overlay */
+		margin-bottom: 240px; /* Space for tall hanging overlay */
 	}
 
 	/* ── Category badge (mosaic shared) ── */
@@ -244,13 +260,13 @@
 	   ══════════════════════════════════════ */
 	.homepage-grid {
 		display: grid;
-		grid-template-columns: 65% 35%;
-		gap: 3px;
-		height: 500px;
-		max-height: 500px;
-		background: #e0e0e0;
-		border: 1px solid #e0e0e0;
-		overflow: visible; /* Allowing the overlay to hang out */
+		grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+		gap: 28px;
+		height: 520px;
+		max-height: 520px;
+		background: transparent;
+		border: none;
+		overflow: visible;
 	}
 
 	/* LEFT: relative container — image fills it, overlay is absolute */
@@ -274,197 +290,161 @@
 		transform: scale(1.02);
 	}
 
-	/* Hanging box centered at mid-bottom of image — visible on desktop */
+	/* Hanging editorial box — centered, 750px max */
 	.hero-overlay {
 		position: absolute;
 		bottom: 0;
-		left: 50% !important;
-		transform: translate(-50%, 50%) !important;
-		width: 88%;
-		max-width: 620px;
-		background: #f4f4f4 !important;
-		padding: 24px 24px 36px; /* Optimized bottom padding */
+		left: 50%;
+		transform: translate(-50%, 55%);
+		width: min(calc(100% - 40px), 750px);
+		max-width: 750px;
+		background: #ecf3f0;
+		padding: 40px 44px 48px;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		border-radius: 4px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-		z-index: 10 !important;
+		gap: 0;
+		border-radius: 0;
+		box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+		z-index: 10;
 		pointer-events: auto;
+	}
+
+	.hero-overlay-title {
+		font-family: var(--font-editorial);
+		font-size: 26px;
+		font-weight: 400;
+		color: #000;
+		margin: 0 0 10px;
+		line-height: 1.32;
+	}
+
+	.hero-overlay-author {
+		font-family: "Roboto", sans-serif;
+		font-size: 12px;
+		font-weight: 700;
+		color: #000;
+		margin: 0 0 18px;
+		line-height: 1.2;
+	}
+
+	.hero-overlay-excerpt {
+		font-family: var(--font-editorial);
+		font-size: 16px;
+		color: #000;
+		margin: 0;
+		line-height: 1.55;
+	}
+
+	@media (max-width: 900px) {
+		.hero-home {
+			margin-bottom: 200px;
+		}
 	}
 
 	@media (max-width: 600px) {
 		.hero-overlay {
-			width: 90%;
-			padding: 14px 16px;
-			gap: 0;
-			bottom: -20px; /* Hanging 20px out */
-			transform: translateX(-50%) !important;
+			width: calc(100% - 32px);
+			max-width: none;
+			padding: 24px 22px 28px;
+			transform: translate(-50%, 48%);
+		}
+		.hero-home {
+			margin-bottom: 160px;
 		}
 		.hero-overlay-title {
-			font-size: 18px !important;
-			line-height: 1.2 !important;
-			-webkit-line-clamp: 3 !important;
-			line-clamp: 3 !important;
+			font-size: 20px;
 		}
-		/* Hide description and author on small mobile per request */
-		.hero-overlay-excerpt,
-		.hero-overlay-author,
-		.hero-overlay-badge {
-			display: none !important;
+		.hero-overlay-author {
+			margin-bottom: 14px;
+		}
+		.hero-overlay-excerpt {
+			font-size: 14px;
+			line-height: 1.5;
 		}
 	}
-	.hero-overlay-badge {
-		display: inline-block;
-		align-self: flex-start;
-		background: #111; /* Changed to black as requested */
-		color: #fff;
-		font-family: "Roboto", sans-serif;
-		font-size: 10px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		padding: 2px 8px;
-		border-radius: 2px;
-	}
-	.hero-overlay-title {
-		font-family: "Roboto", sans-serif;
-		font-size: 24px;
-		font-weight: 700;
-		color: #111;
-		margin: 0;
-		line-height: 1.2;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		line-clamp: 2;
-		overflow: hidden;
-	}
-	.hero-overlay-excerpt {
-		font-family: "Open Sans", sans-serif;
-		font-size: 13px;
-		color: #444;
-		margin: 0;
-		line-height: 1.4;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		line-clamp: 2;
-		overflow: hidden;
-	}
-	.hero-overlay-author {
-		font-family: "Open Sans", sans-serif;
-		font-size: 11px;
-		color: #666;
-		margin-top: 4px;
-		font-weight: 700;
-	}
-	/* RIGHT STACK: 2 mini cards stacked with gap */
+
+	/* RIGHT: sidebar article — image, badge, heading, serif body */
 	.hrc-stack {
 		display: flex;
 		flex-direction: column;
 		height: 100%;
 		background: #fff;
+		min-width: 0;
 	}
 	.hrc-mini-card {
 		display: flex;
 		flex-direction: column;
 		text-decoration: none;
-		overflow: hidden;
-		flex: 0 0 auto; /* Don't stretch if only one */
+		height: 100%;
 		background: #fff;
-		transition: background 0.15s;
-		border-bottom: 1px solid #eee;
+		color: inherit;
 	}
-	.hrc-mini-card:last-child {
-		border-bottom: none;
-	}
-	.hrc-mini-card:hover {
-		background: #fafafa;
+	.hrc-mini-card:hover .hrc-title {
+		color: #333;
 	}
 
-	/* Image portion - shrunk to 40% to ensure 2 items fit */
 	.hrc-img {
 		position: relative;
-		flex: 0 0 38%;
+		flex-shrink: 0;
+		width: 100%;
+		aspect-ratio: 16 / 10;
 		overflow: hidden;
-		background: #e0e0e0;
+		background: #e8e8e8;
 	}
 	.hrc-img img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
 		display: block;
-		transition: transform 0.3s ease;
+		transition: transform 0.35s ease;
 	}
 	.hrc-mini-card:hover .hrc-img img {
-		transform: scale(1.04);
+		transform: scale(1.03);
 	}
 	.hrc-ph {
 		width: 100%;
 		height: 100%;
-		background: #e0e0e0;
+		background: #e8e8e8;
 	}
 
-	/* Badge: category label on image — dark neutral, no green */
 	.hrc-badge {
 		position: absolute;
-		bottom: 8px;
+		bottom: 10px;
 		left: 10px;
 		font-family: "Roboto", sans-serif;
 		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.04em;
 		color: #fff;
-		background: rgba(0, 0, 0, 0.55);
-		padding: 2px 7px;
-		border-radius: 2px;
+		background: #000;
+		padding: 3px 8px;
+		border-radius: 0;
+		line-height: 1.2;
 	}
 
-	/* Body: title + excerpt + author */
 	.hrc-body {
 		flex: 1;
-		padding: 14px 16px 16px;
+		padding: 20px 0 0;
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
-		overflow: hidden;
+		min-width: 0;
 	}
 	.hrc-title {
 		font-family: "Roboto", sans-serif;
-		font-size: 16px;
+		font-size: 22px;
 		font-weight: 700;
-		color: #222;
-		margin: 0;
-		line-height: 1.35;
-		display: -webkit-box;
-		-webkit-line-clamp: 4;
-		-webkit-box-orient: vertical;
-		line-clamp: 4;
-		overflow: hidden;
+		color: #1a202c;
+		margin: 0 0 18px;
+		line-height: 1.3;
 		transition: color 0.15s;
 	}
-	.hrc-mini-card:hover .hrc-title {
-		color: #444;
-	}
 	.hrc-excerpt {
-		font-family: "Open Sans", sans-serif;
-		font-size: 13px;
-		color: #555 !important;
+		font-family: var(--font-editorial);
+		font-size: 15px;
+		color: #111;
 		margin: 0;
-		line-height: 1.5;
-		display: -webkit-box;
-		-webkit-line-clamp: 6; /* More lines since there is more room now */
-		-webkit-box-orient: vertical;
-		line-clamp: 6;
-		overflow: hidden;
-	}
-	.hrc-author {
-		font-family: "Open Sans", sans-serif;
-		font-size: 11px;
-		color: #999;
-		margin-top: auto;
+		line-height: 1.6;
 	}
 
 	/* ══════════════════════════════════════

@@ -1,67 +1,85 @@
-import { json, error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types.js';
-import { createUser, findByEmail } from '$lib/auth/users.js';
-import { createSession } from '$lib/auth/session.js';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { AuthError, publicUser, registerWithWordPress } from '$lib/server/auth';
 
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9_.-]{3,60}$/;
 const MIN_PASSWORD_LENGTH = 8;
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
-	let body: { name?: string; username?: string; email?: string; password?: string };
+	let body: {
+		username?: string;
+		email?: string;
+		password?: string;
+		name?: string;        // legacy alias for displayName
+		firstName?: string;
+		lastName?: string;
+		displayName?: string;
+	};
 
 	try {
 		body = await request.json();
 	} catch {
-		throw error(400, 'Invalid JSON body');
+		return json({ error: 'Ungültiger Anfragetext.' }, { status: 400 });
 	}
 
-	// Accept either `name` (new form) or `username` (legacy form)
-	const name = body.name?.trim() || body.username?.trim() || '';
-	const { email, password } = body;
+	const email       = body.email?.trim().toLowerCase();
+	const password    = body.password ?? '';
+	const firstName   = body.firstName?.trim() ?? '';
+	const lastName    = body.lastName?.trim()  ?? '';
+	const displayName = (body.displayName ?? body.name)?.trim() ?? '';
 
-	if (!name) {
-		throw error(400, 'Name ist erforderlich');
+	// Username can be supplied explicitly, or derived from email-local-part
+	// (matches the way the LoginModal collects it implicitly).
+	let username = body.username?.trim() ?? '';
+	if (!username && email) {
+		username = email
+			.split('@')[0]
+			.replace(/[^a-zA-Z0-9_.-]/g, '')
+			.slice(0, 60);
 	}
+
+	// ── Local validation (don't burn a WP round-trip for obvious failures) ──
 	if (!email || !EMAIL_REGEX.test(email)) {
-		throw error(400, 'Gültige E-Mail-Adresse ist erforderlich');
+		return json({ error: 'Gültige E-Mail-Adresse ist erforderlich.' }, { status: 400 });
 	}
-	if (!password || password.length < MIN_PASSWORD_LENGTH) {
-		throw error(400, `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen haben`);
+	if (!username || !USERNAME_REGEX.test(username)) {
+		return json(
+			{ error: 'Benutzername muss 3–60 Zeichen lang sein und darf nur Buchstaben, Zahlen, Punkt, Bindestrich und Unterstrich enthalten.' },
+			{ status: 400 }
+		);
+	}
+	if (password.length < MIN_PASSWORD_LENGTH) {
+		return json(
+			{ error: `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen lang sein.` },
+			{ status: 400 }
+		);
 	}
 
-	// Check duplicate before hashing (saves CPU)
-	if (findByEmail(email)) {
-		throw error(409, 'Diese E-Mail-Adresse ist bereits registriert');
-	}
-
-	let user;
 	try {
-		user = await createUser({
-			email: email.toLowerCase().trim(),
-			username: name,
-			name,
-			password
+		const user = await registerWithWordPress({
+			username,
+			email,
+			password,
+			firstName: firstName || undefined,
+			lastName: lastName || undefined,
+			displayName: displayName || undefined
 		});
+
+		cookies.set('wp_token', user.token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'lax',
+			maxAge: SESSION_MAX_AGE,
+			path: '/'
+		});
+
+		return json({ success: true, user: publicUser(user) }, { status: 201 });
 	} catch (err) {
-		if (err instanceof Error && err.message === 'EMAIL_EXISTS') {
-			throw error(409, 'Diese E-Mail-Adresse ist bereits registriert');
+		if (err instanceof AuthError) {
+			return json({ error: err.message, code: err.upstreamCode, kind: err.kind }, { status: err.status });
 		}
-		throw error(500, 'Registrierung fehlgeschlagen');
+		return json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 });
 	}
-
-	// Auto-login after registration
-	await createSession(cookies, user.id, user.tier);
-
-	return json(
-		{
-			user: {
-				id:        user.id,
-				name:      user.name,
-				email:     user.email,
-				tier:      user.tier,
-				createdAt: new Date(user.createdAt)
-			}
-		},
-		{ status: 201 }
-	);
 };

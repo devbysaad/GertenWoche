@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
+	import { invalidateAll } from "$app/navigation";
 	import { modalStore } from "$lib/stores/modal.store.js";
 
 	let { data } = $props();
@@ -8,46 +9,64 @@
 	// Read tab from URL query param
 	let activeTab = $state($page.url.searchParams.get("tab") ?? "dashboard");
 
-	// Profile form fields
-	let firstName = $state("");
-	let lastName = $state("");
-	let displayName = $state("");
-	let profileEmail = $state("");
-	let currentPw = $state("");
-	let newPw = $state("");
-	let confirmPw = $state("");
-	let avatarPreview = $state("");
+	// Profile form fields — initialized from server-loaded data.profile
+	let firstName    = $state(data.profile.firstName);
+	let lastName     = $state(data.profile.lastName);
+	let displayName  = $state(data.profile.displayName);
+	let profileEmail = $state(data.profile.email);
+	let currentPw    = $state("");
+	let newPw        = $state("");
+	let confirmPw    = $state("");
+	let avatarPreview = $state(user?.avatar ?? "");
 
-	// Billing form fields
-	let billFirstName = $state("");
-	let billLastName = $state("");
-	let billCompany = $state("");
-	let billVat = $state("");
-	let billAddress = $state("");
-	let billCountry = $state("");
-	let billCity = $state("");
-	let billDistrict = $state("");
-	let billPostal = $state("");
-	let billPhone = $state("");
-	let billEmail = $state("");
+	// Billing form fields — initialized from server-loaded data.billing
+	let billFirstName = $state(data.billing.firstName);
+	let billLastName  = $state(data.billing.lastName);
+	let billCompany   = $state(data.billing.company);
+	let billVat       = $state(data.billing.vat);
+	let billAddress   = $state(data.billing.address);
+	let billCountry   = $state(data.billing.country);
+	let billCity      = $state(data.billing.city);
+	let billDistrict  = $state(data.billing.district);
+	let billPostal    = $state(data.billing.postal);
+	let billPhone     = $state(data.billing.phone);
+	let billEmail     = $state(data.billing.email);
+
+	// Re-sync local form state whenever the server data changes (e.g. after
+	// invalidateAll() following a save). This keeps the fields hydrated with
+	// the canonical saved values without blowing away an in-progress edit.
+	$effect(() => {
+		const p = data.profile;
+		firstName    = p.firstName;
+		lastName     = p.lastName;
+		displayName  = p.displayName;
+		profileEmail = p.email;
+	});
+	$effect(() => {
+		const b = data.billing;
+		billFirstName = b.firstName;
+		billLastName  = b.lastName;
+		billCompany   = b.company;
+		billVat       = b.vat;
+		billAddress   = b.address;
+		billCountry   = b.country;
+		billCity      = b.city;
+		billDistrict  = b.district;
+		billPostal    = b.postal;
+		billPhone     = b.phone;
+		billEmail     = b.email;
+	});
 
 	// Status messages
 	let profileSaving = $state(false);
-	let profileMsg = $state("");
-	let billSaving = $state(false);
-	let billMsg = $state("");
+	let profileMsg    = $state("");
+	let profileMsgKind = $state<"success" | "error" | "info">("success");
+	let profileFieldErrors = $state<Record<string, string>>({});
 
-	// Pre-fill fields
-	$effect(() => {
-		if (user) {
-			const parts = (user.name ?? "").split(" ");
-			firstName = parts[0] ?? "";
-			lastName = parts.slice(1).join(" ");
-			displayName = user.username ?? "";
-			profileEmail = user.email ?? "";
-			avatarPreview = user.avatar ?? "";
-		}
-	});
+	let billSaving    = $state(false);
+	let billMsg       = $state("");
+	let billMsgKind   = $state<"success" | "error" | "info">("success");
+	let billFieldErrors = $state<Record<string, string>>({});
 
 	function handleAvatarChange(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
@@ -66,24 +85,133 @@
 	async function saveProfile(e: SubmitEvent) {
 		e.preventDefault();
 		profileMsg = "";
+		profileFieldErrors = {};
 		profileSaving = true;
-		// Mock delay
-		await new Promise((r) => setTimeout(r, 800));
-		profileMsg = "Changes saved successfully.";
-		profileSaving = false;
+
+		const wantsPwChange = Boolean(newPw || currentPw || confirmPw);
+
+		try {
+			// ── 1. Persist profile fields locally via /api/account/profile ──
+			const profileRes = await fetch("/api/account/profile", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({
+					firstName,
+					lastName,
+					displayName,
+					email: profileEmail,
+				}),
+			});
+			const profileData = await profileRes.json().catch(() => ({}));
+			if (!profileRes.ok) {
+				profileMsg = profileData?.error ?? "Profil konnte nicht gespeichert werden.";
+				profileMsgKind = "error";
+				profileFieldErrors = profileData?.errors ?? {};
+				profileSaving = false;
+				return;
+			}
+
+			// ── 2. Optional password change ─────────────────────────────────
+			if (wantsPwChange) {
+				if (!currentPw) {
+					profileMsg = "Bitte geben Sie Ihr aktuelles Passwort ein.";
+					profileMsgKind = "error";
+					profileSaving = false;
+					return;
+				}
+				if (!newPw || newPw.length < 8) {
+					profileMsg = "Neues Passwort muss mindestens 8 Zeichen lang sein.";
+					profileMsgKind = "error";
+					profileSaving = false;
+					return;
+				}
+				if (newPw !== confirmPw) {
+					profileMsg = "Die beiden neuen Passwörter stimmen nicht überein.";
+					profileMsgKind = "error";
+					profileSaving = false;
+					return;
+				}
+
+				const pwRes = await fetch("/api/auth/change-password", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					credentials: "include",
+					body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+				});
+				const pwData = await pwRes.json().catch(() => ({}));
+				if (!pwRes.ok) {
+					profileMsg = pwData?.error ?? "Passwort konnte nicht geändert werden.";
+					profileMsgKind = "error";
+					profileSaving = false;
+					return;
+				}
+				currentPw = "";
+				newPw = "";
+				confirmPw = "";
+				profileMsg = "Profil und Passwort erfolgreich aktualisiert.";
+			} else {
+				profileMsg = "Profil erfolgreich aktualisiert.";
+			}
+
+			profileMsgKind = "success";
+			await invalidateAll();
+		} catch {
+			profileMsg = "Netzwerkfehler. Bitte versuchen Sie es erneut.";
+			profileMsgKind = "error";
+		} finally {
+			profileSaving = false;
+		}
 	}
 
 	async function saveBilling(e: SubmitEvent) {
 		e.preventDefault();
 		billMsg = "";
+		billFieldErrors = {};
 		billSaving = true;
-		await new Promise((r) => setTimeout(r, 800));
-		billMsg = "Billing details updated.";
-		billSaving = false;
+		try {
+			const res = await fetch("/api/account/billing", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({
+					firstName: billFirstName,
+					lastName:  billLastName,
+					company:   billCompany,
+					vat:       billVat,
+					address:   billAddress,
+					country:   billCountry,
+					city:      billCity,
+					district:  billDistrict,
+					postal:    billPostal,
+					phone:     billPhone,
+					email:     billEmail,
+				}),
+			});
+			const result = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				billMsg = result?.error ?? "Rechnungsdaten konnten nicht gespeichert werden.";
+				billMsgKind = "error";
+				billFieldErrors = result?.errors ?? {};
+				return;
+			}
+			billMsg = "Rechnungsdaten erfolgreich aktualisiert.";
+			billMsgKind = "success";
+			await invalidateAll();
+		} catch {
+			billMsg = "Netzwerkfehler. Bitte versuchen Sie es erneut.";
+			billMsgKind = "error";
+		} finally {
+			billSaving = false;
+		}
 	}
 
 	async function logout() {
-		await fetch("/api/auth/logout", { method: "POST" });
+		try {
+			await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+		} catch {
+			// Cookie clear on the server side is best-effort; navigate anyway.
+		}
 		window.location.href = "/";
 	}
 
@@ -165,11 +293,14 @@
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
-							stroke-width="2"
-							><path
-								d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-							/><circle cx="12" cy="7" r="4" /></svg
+							stroke-width="1.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
 						>
+							<circle cx="12" cy="9" r="3.5" />
+							<path d="M4 20.5c.7-4 4.1-6.5 8-6.5s7.3 2.5 8 6.5" />
+						</svg>
 						Account details
 					</button>
 					<button
@@ -336,9 +467,11 @@
 										? "Saving..."
 										: "Save Changes"}
 								</button>
-								{#if profileMsg}<p class="success">
+								{#if profileMsg}
+									<p class="msg" class:msg-success={profileMsgKind === 'success'} class:msg-error={profileMsgKind === 'error'} class:msg-info={profileMsgKind === 'info'}>
 										{profileMsg}
-									</p>{/if}
+									</p>
+								{/if}
 							</form>
 						</section>
 
@@ -458,9 +591,11 @@
 								>
 									{billSaving ? "Saving..." : "Save Changes"}
 								</button>
-								{#if billMsg}<p class="success">
+								{#if billMsg}
+									<p class="msg" class:msg-success={billMsgKind === 'success'} class:msg-error={billMsgKind === 'error'} class:msg-info={billMsgKind === 'info'}>
 										{billMsg}
-									</p>{/if}
+									</p>
+								{/if}
 							</form>
 						</section>
 					</div>
@@ -565,8 +700,8 @@
 	}
 
 	.icon {
-		width: 16px;
-		height: 16px;
+		width: 24px;
+		height: 24px;
 		opacity: 0.8;
 	}
 
@@ -721,10 +856,27 @@
 		margin: 40px 0;
 	}
 
-	.success {
+	.msg {
 		font-size: 12px;
-		color: #2e8b22;
 		margin-top: 10px;
+		padding: 10px 12px;
+		border: 1px solid transparent;
+		line-height: 1.5;
+	}
+	.msg-success {
+		color: #1a7a3a;
+		background: #f0fff4;
+		border-color: #b2f0c8;
+	}
+	.msg-error {
+		color: #cc2200;
+		background: #fff0f0;
+		border-color: #fcc;
+	}
+	.msg-info {
+		color: #595959;
+		background: #f5f7fa;
+		border-color: #d6dce5;
 	}
 
 	.empty-subs {

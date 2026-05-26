@@ -77,12 +77,19 @@
 			const res = await fetch('/api/auth/register', {
 				method:  'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body:    JSON.stringify({ email: regEmail, name: regName, password: regPassword }),
+				body:    JSON.stringify({
+					email:       regEmail,
+					password:    regPassword,
+					displayName: regName
+					// Username is derived server-side from the email local-part
+					// when omitted, matching the registration form on the
+					// /anmelden-registrieren page.
+				}),
 				credentials: 'include'
 			});
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) {
-				errorMsg = data?.message ?? 'Registrierung fehlgeschlagen.';
+				errorMsg = data?.error ?? data?.message ?? 'Registrierung fehlgeschlagen.';
 			} else {
 				successMsg = 'Konto erstellt! Sie sind jetzt angemeldet.';
 				setTimeout(() => { modalStore.closeModal(); window.location.reload(); }, 1200);
@@ -97,9 +104,24 @@
 	async function handleRecover(e: SubmitEvent) {
 		e.preventDefault();
 		reset(); loading = true;
-		// Password recovery requires email infrastructure — show info for now
-		successMsg = 'Falls ein Konto mit dieser E-Mail existiert, wurde ein Link gesendet.';
-		loading = false;
+		try {
+			const res = await fetch('/api/auth/forgot-password', {
+				method:  'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body:    JSON.stringify({ email: recoverEmail })
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				errorMsg = data?.error ?? 'Anfrage fehlgeschlagen.';
+			} else {
+				successMsg = data?.message ??
+					'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde ein Link zum Zurücksetzen gesendet.';
+			}
+		} catch {
+			errorMsg = 'Netzwerkfehler. Bitte versuchen Sie es erneut.';
+		} finally {
+			loading = false;
+		}
 	}
 </script>
 

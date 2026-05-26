@@ -20,7 +20,8 @@
 	/* Typography */
 	--font-heading: 'Roboto', Verdana, Geneva, sans-serif;
 	--font-body: 'Open Sans', Verdana, Geneva, sans-serif;
-	--font-editorial: 'Lora', Georgia, serif;
+	--td_default_google_font_1: 'Source Serif 4', Georgia, serif;
+	--font-editorial: var(--td_default_google_font_1);
 
 	/* Spacing / Layout */
 	--header-height: 60px;

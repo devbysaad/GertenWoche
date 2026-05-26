@@ -9,6 +9,7 @@
  *  - URL path extraction: stores article.path from post.link for correct routing
  */
 
+import { env } from '$env/dynamic/private';
 import { getCached, setCached, TTL } from './cache.js';
 import {
 	FALLBACK_ARTICLES,
@@ -19,7 +20,9 @@ import {
 } from './fallback.js';
 import type { Article, ArticlePreview, Author, Category, DirectoryEntry, GartenEvent } from '$lib/types/index.js';
 
-const BASE_URL = 'https://gartenwoche.ch/wp-json/wp/v2';
+function getBaseUrl() {
+	return env.WP_API_BASE ?? 'https://gartenwoche.ch/wp-json/wp/v2';
+}
 const FETCH_TIMEOUT = 30000; // 30 seconds — WP API is slow
 
 // ============================================================
@@ -97,7 +100,7 @@ interface WpTribeEvent {
 
 /** Low-level fetch with timeout — returns Response so callers can read headers */
 async function wpRawFetch(endpoint: string): Promise<Response | null> {
-	const url = `${BASE_URL}${endpoint}`;
+	const url = `${getBaseUrl()}${endpoint}`;
 	try {
 		const controller = new AbortController();
 		const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
@@ -119,7 +122,7 @@ async function wpRawFetch(endpoint: string): Promise<Response | null> {
 
 /** Fetch a single endpoint with TTL caching */
 async function wpFetch<T>(endpoint: string, ttl = TTL.DEFAULT): Promise<T | null> {
-	const cacheKey = `${BASE_URL}${endpoint}`;
+	const cacheKey = `${getBaseUrl()}${endpoint}`;
 	const cached = getCached<T>(cacheKey);
 	if (cached) return cached;
 
@@ -136,7 +139,7 @@ async function wpFetch<T>(endpoint: string, ttl = TTL.DEFAULT): Promise<T | null
  * Uses X-WP-TotalPages header to know how many pages to fetch.
  */
 async function wpFetchAll<T>(endpoint: string, ttl = TTL.ARTICLES): Promise<T[]> {
-	const cacheKey = `ALL:${BASE_URL}${endpoint}`;
+	const cacheKey = `ALL:${getBaseUrl()}${endpoint}`;
 	const cached = getCached<T[]>(cacheKey);
 	if (cached) return cached;
 
@@ -284,7 +287,9 @@ function transformPost(
 		?? '';
 
 	const tags = tagTerms.map((t) => t.slug);
-	const rawExcerpt = stripHtml(wpPost.excerpt.rendered).slice(0, 180);
+	const rawExcerpt =
+		stripHtml(wpPost.excerpt.rendered).trim() ||
+		stripHtml(wpPost.content.rendered).trim().slice(0, 1500);
 
 	// --- Critical fix: extract URL path from post.link ---
 	const linkSegments = extractPathFromLink(wpPost.link);
@@ -305,7 +310,7 @@ function transformPost(
 		publishedAt: new Date(wpPost.date),
 		updatedAt: new Date(wpPost.modified),
 		thumbnail,
-		isPro:    !!(
+		isPro: !!(
 			wpPost.meta?.is_premium ||
 			wpPost.meta?.['_is_pro'] ||
 			wpPost.acf?.premium_content ||
@@ -325,7 +330,7 @@ async function loadCategories(): Promise<Category[]> {
 	if (_categoriesPromise) return _categoriesPromise;
 	_categoriesPromise = (async () => {
 		const wpCats = await wpFetchAll<WpCategory>('/categories', TTL.CATEGORIES);
-		_categories = wpCats.length ? wpCats.map((c) => transformCategory(c, wpCats)) : FALLBACK_CATEGORIES;
+		_categories = wpCats.length ? wpCats.map((c) => transformCategory(c, wpCats)) : [];
 		return _categories;
 	})();
 	return _categoriesPromise;
@@ -336,7 +341,7 @@ async function loadAuthors(): Promise<Author[]> {
 	if (_authorsPromise) return _authorsPromise;
 	_authorsPromise = (async () => {
 		const wpUsers = await wpFetchAll<WpUser>('/users', TTL.CATEGORIES);
-		_authors = wpUsers.length ? wpUsers.map(transformAuthor) : FALLBACK_AUTHORS;
+		_authors = wpUsers.length ? wpUsers.map(transformAuthor) : [];
 		return _authors;
 	})();
 	return _authorsPromise;
@@ -349,13 +354,41 @@ async function loadArticles(): Promise<Article[]> {
 		const [categories, authors] = await Promise.all([loadCategories(), loadAuthors()]);
 		const wpPosts = await wpFetchAll<WpPost>('/posts?_embed', TTL.ARTICLES);
 		if (!wpPosts.length) {
-			_articles = FALLBACK_ARTICLES;
+			console.warn('[WP API] No posts fetched from live API, returning empty list (no mock fallback).');
+			_articles = [];
 			return _articles;
 		}
 		const articles = wpPosts
 			.map((p) => transformPost(p, categories, authors))
 			.filter((a): a is Article => a !== null);
-		_articles = articles.length > 0 ? articles : FALLBACK_ARTICLES;
+
+		const japankaeferSlug = 'kampagne-japankaefer-stoppen-lanciert';
+		const voyagerSlug = 'kress-voyager-hohe-maehleistung-fuer-profis';
+
+		const hasJapankaefer = articles.some((a) => a.slug === japankaeferSlug || a.slug === 'kampagne-stopp-japankaefer-lanciert');
+		const hasVoyager = articles.some((a) => a.slug === voyagerSlug);
+
+		if (!hasJapankaefer) {
+			const fbHero = FALLBACK_ARTICLES.find((a) => a.slug === japankaeferSlug);
+			if (fbHero) {
+				const clonedHero = JSON.parse(JSON.stringify(fbHero)) as Article;
+				clonedHero.publishedAt = new Date(fbHero.publishedAt);
+				clonedHero.updatedAt = new Date(fbHero.updatedAt);
+				articles.push(clonedHero);
+			}
+		}
+
+		if (!hasVoyager) {
+			const fbVoyager = FALLBACK_ARTICLES.find((a) => a.slug === voyagerSlug);
+			if (fbVoyager) {
+				const clonedVoyager = JSON.parse(JSON.stringify(fbVoyager)) as Article;
+				clonedVoyager.publishedAt = new Date(fbVoyager.publishedAt);
+				clonedVoyager.updatedAt = new Date(fbVoyager.updatedAt);
+				articles.push(clonedVoyager);
+			}
+		}
+
+		_articles = articles;
 		return _articles;
 	})();
 	return _articlesPromise;
@@ -367,7 +400,8 @@ async function loadEvents(): Promise<GartenEvent[]> {
 
 	const wpEvents = await wpFetchAll<WpTribeEvent>('/tribe_events?_embed', TTL.EVENTS);
 	if (!wpEvents.length) {
-		_events = FALLBACK_EVENTS;
+		console.warn('[WP API] No events fetched from live API, returning empty list (no mock fallback).');
+		_events = [];
 		return _events;
 	}
 
@@ -384,7 +418,6 @@ async function loadEvents(): Promise<GartenEvent[]> {
 		thumbnail: e._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? ''
 	}));
 
-	if (_events.length === 0) _events = FALLBACK_EVENTS;
 	return _events;
 }
 
@@ -428,8 +461,17 @@ export async function getArticles(filter?: ArticleFilter): Promise<ArticlePrevie
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-	const all = await loadArticles();
-	return all.find((a) => a.slug === slug) ?? null;
+	if (_articles) {
+		const found = _articles.find((a) => a.slug === slug);
+		if (found) return found;
+	}
+
+	const endpoint = `/posts?slug=${slug}&_embed`;
+	const posts = await wpFetch<WpPost[]>(endpoint, TTL.ARTICLES);
+	if (!posts || posts.length === 0) return null;
+
+	const [categories, authors] = await Promise.all([loadCategories(), loadAuthors()]);
+	return transformPost(posts[0], categories, authors);
 }
 
 /** Find article by its full URL path (e.g. "pflanzen/stauden/die-distel") */

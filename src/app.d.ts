@@ -16,9 +16,6 @@ export {};
 
 // Private env vars (server-only, accessed via $env/static/private or process.env)
 declare module '$env/static/private' {
-	// OpenWeatherMap API key — used by /api/weather proxy
-	const WEATHER_API_KEY: string;
-
 	// Node environment
 	const NODE_ENV: 'development' | 'production' | 'test';
 
@@ -45,9 +42,18 @@ declare module '$env/static/public' {
 // Dynamic env vars (runtime, accessed via $env/dynamic/private)
 declare module '$env/dynamic/private' {
 	interface PrivateEnv {
-		WEATHER_API_KEY?: string;
 		NODE_ENV?: string;
 		PORT?: string;
+		// WordPress REST
+		PUBLIC_WP_URL?: string;
+		WP_API_BASE?: string;
+		// HeadlessKey plugin (auth backend)
+		WP_HEADLESSKEY_BASE?: string;
+		// Legacy / unused (kept for backward compat with stale callers)
+		WP_JWT_AUTH_URL?: string;
+		WP_JWT_VALIDATE_URL?: string;
+		// Session signing key (reserved)
+		AUTH_SECRET?: string;
 	}
 	const env: PrivateEnv;
 	export { env };

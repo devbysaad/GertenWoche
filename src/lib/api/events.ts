@@ -1,21 +1,28 @@
 /**
  * Events API — fetches from The Events Calendar (Tribe Events) WordPress plugin.
  *
- * Two endpoints are tried in order:
- *   1. Tribe REST API v1:  /wp-json/tribe/events/v1/events   (richer data — venue, organizer)
- *   2. WP REST API v2:     /wp-json/wp/v2/tribe_events       (fallback, less data)
+ * Endpoint: /wp-json/tribe/events/v1/events  (public, no auth)
+ *
+ * The standard WP REST endpoint /wp/v2/tribe_events was tried previously as a
+ * fallback but is structurally broken — Tribe does not expose its custom post
+ * type through that route, so it always returns `[]` even when events exist.
+ * It has been removed so a real v1 outage surfaces as an empty result with a
+ * clear warning instead of being silently masked.
  *
  * Results are cached for TTL.EVENTS (10 min) via the shared cache module.
  */
 
+import { env } from '$env/dynamic/private';
 import { getCached, setCached, TTL } from './cache.js';
-import { FALLBACK_EVENTS } from './fallback.js';
 import type { GartenEvent } from '$lib/types/index.js';
 
-const WP_BASE   = 'https://gartenwoche.ch/wp-json';
-const TRIBE_V1  = `${WP_BASE}/tribe/events/v1/events`;
-const TRIBE_WP  = `${WP_BASE}/wp/v2/tribe_events`;
-const TIMEOUT   = 20_000;
+function getWpBase() {
+	return env.PUBLIC_WP_URL ?? 'https://gartenwoche.ch/wp-json';
+}
+function getTribeV1() {
+	return `${getWpBase()}/tribe/events/v1/events`;
+}
+const TIMEOUT = 20_000;
 
 // ─────────────────────────────────────────────────────────────
 // Raw Tribe REST v1 types
@@ -53,25 +60,6 @@ interface TribeV1Response {
 	events: TribeV1Event[];
 	total: number;
 	total_pages: number;
-}
-
-// Raw WP v2 tribe_events post type
-interface WpTribePost {
-	id: number;
-	slug: string;
-	link: string;
-	title: { rendered: string };
-	content: { rendered: string };
-	meta?: {
-		_EventStartDate?: string;
-		_EventEndDate?: string;
-		_EventVenueName?: string;
-		_EventCity?: string;
-		_EventCountry?: string;
-		_EventOrganizerName?: string;
-		_EventURL?: string;
-	};
-	_embedded?: { 'wp:featuredmedia'?: Array<{ source_url: string }> };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -131,24 +119,6 @@ function fromTribeV1(e: TribeV1Event): GartenEvent {
 	};
 }
 
-function fromWpV2(e: WpTribePost): GartenEvent {
-	return {
-		id:          String(e.id),
-		slug:        e.slug,
-		title:       stripHtml(e.title.rendered),
-		description: e.content.rendered,
-		startDate:   parseDate(e.meta?._EventStartDate),
-		endDate:     parseDate(e.meta?._EventEndDate),
-		location:    e.meta?._EventVenueName ?? '',
-		city:        e.meta?._EventCity ?? '',
-		country:     e.meta?._EventCountry ?? 'Schweiz',
-		thumbnail:   e._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? '',
-		organizer:   e.meta?._EventOrganizerName,
-		websiteUrl:  e.meta?._EventURL ?? e.link,
-		website:     e.link
-	};
-}
-
 // ─────────────────────────────────────────────────────────────
 // Tribe v1 paginated fetch
 // ─────────────────────────────────────────────────────────────
@@ -161,35 +131,43 @@ export interface EventFilter {
 	past?: boolean;
 }
 
+// Tribe REST v1 defaults `start_date` to "today", so calling it without a
+// window silently hides every past event on the server. Always pass an
+// explicit wide window and filter past/future locally inside fetchEvents().
+const TRIBE_WIDE_START = '2000-01-01 00:00:00';
+const TRIBE_WIDE_END   = '2099-12-31 23:59:59';
+
 async function fetchAllTribeV1(filter: EventFilter = {}): Promise<GartenEvent[] | null> {
 	const params = new URLSearchParams({
 		per_page: String(filter.perPage ?? 50),
-		page:     String(filter.page ?? 1)
+		page:     String(filter.page ?? 1),
+		start_date: filter.startDate ?? TRIBE_WIDE_START,
+		end_date:   filter.endDate   ?? TRIBE_WIDE_END
 	});
-	if (filter.startDate) params.set('start_date', filter.startDate);
-	if (filter.endDate)   params.set('end_date',   filter.endDate);
 
-	const url = `${TRIBE_V1}?${params}`;
+	const url = `${getTribeV1()}?${params}`;
 	const cacheKey = `tribe_v1:${url}`;
 	const cached = getCached<GartenEvent[]>(cacheKey);
 	if (cached) return cached;
 
 	const res = await safeFetch(url);
+	// `null` here means "request failed / non-2xx" — keep the caller's
+	// fallback path. An empty `events` array is a valid 200 OK response and
+	// must NOT be treated as failure (otherwise we cascade to v2 and end
+	// up logging a misleading "Both APIs failed" when the calendar simply
+	// has nothing in the requested window).
 	if (!res) return null;
 
 	const body: TribeV1Response = await res.json();
-	if (!body?.events?.length) return null;
+	const events = (body?.events ?? []).map(fromTribeV1);
+	const totalPages = body?.total_pages ?? 1;
 
-	const events = body.events.map(fromTribeV1);
-	const totalPages = body.total_pages ?? 1;
-
-	// Fetch remaining pages concurrently if needed
 	if (totalPages > 1) {
 		const pages = await Promise.all(
 			Array.from({ length: totalPages - 1 }, (_, i) => {
 				const p = new URLSearchParams(params);
 				p.set('page', String(i + 2));
-				return safeFetch(`${TRIBE_V1}?${p}`).then(r => r?.json() as Promise<TribeV1Response>);
+				return safeFetch(`${getTribeV1()}?${p}`).then((r) => r?.json() as Promise<TribeV1Response>);
 			})
 		);
 		for (const pg of pages) {
@@ -202,56 +180,72 @@ async function fetchAllTribeV1(filter: EventFilter = {}): Promise<GartenEvent[] 
 }
 
 // ─────────────────────────────────────────────────────────────
-// WP v2 fallback
-// ─────────────────────────────────────────────────────────────
-
-async function fetchWpV2Events(): Promise<GartenEvent[] | null> {
-	const cacheKey = 'tribe_wp_v2:all';
-	const cached = getCached<GartenEvent[]>(cacheKey);
-	if (cached) return cached;
-
-	const res = await safeFetch(`${TRIBE_WP}?_embed&per_page=50`);
-	if (!res) return null;
-
-	const posts: WpTribePost[] = await res.json();
-	if (!posts?.length) return null;
-
-	const events = posts.map(fromWpV2);
-	setCached(cacheKey, events, TTL.EVENTS);
-	return events;
-}
-
-// ─────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Fetch events. Tries Tribe REST v1, falls back to WP v2, then static fallback.
+ * Sort + past/future filter shared by both upstream paths.
+ *
+ * When `filter.past` is true we return events that have already ended,
+ * newest first. Otherwise we return events that haven't ended yet,
+ * soonest first.
+ */
+function applyTimeFilter(events: GartenEvent[], filter: EventFilter): GartenEvent[] {
+	const now = new Date();
+	if (filter.past) {
+		return events
+			.filter((e) => e.endDate < now)
+			.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+	}
+	return events
+		.filter((e) => e.endDate >= now)
+		.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+}
+
+/**
+ * Fetch events from the upstream WordPress calendar via Tribe REST v1.
+ *
+ * - The 2000–2099 window is always sent so the upstream's default
+ *   "from today" filter doesn't hide past events. Past/future
+ *   selection happens locally in `applyTimeFilter`.
+ * - `[]` is a valid successful result (calendar empty in the
+ *   requested window) and is cached for TTL.EVENTS.
+ * - `null` from `fetchAllTribeV1` only happens on real request
+ *   failure (non-2xx / timeout / network) — surfaced as a single
+ *   warn and an empty array.
  */
 export async function fetchEvents(filter: EventFilter = {}): Promise<GartenEvent[]> {
 	try {
-		// Try Tribe v1 first (richest data)
 		const v1 = await fetchAllTribeV1(filter);
-		if (v1 && v1.length > 0) return v1;
+		if (v1 !== null) return applyTimeFilter(v1, filter);
 
-		// Fallback: WP REST v2 (less venue data)
-		const v2 = await fetchWpV2Events();
-		if (v2 && v2.length > 0) {
-			// Apply date filtering manually since WP v2 has no date params
-			const now = new Date();
-			if (filter.past) {
-				return v2.filter(e => e.endDate < now).sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
-			}
-			return v2.filter(e => e.endDate >= now).sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-		}
-
-		// Static fallback
-		console.warn('[events] Both Tribe APIs failed — using fallback data');
-		return FALLBACK_EVENTS;
+		console.warn('[events] Tribe v1 unreachable — returning [].');
+		return [];
 	} catch (err) {
 		console.error('[events] Unexpected error:', err);
-		return FALLBACK_EVENTS;
+		return [];
 	}
+}
+
+/**
+ * Display-friendly variant: return upcoming events when available, otherwise
+ * fall back to the most recent past events so widgets like the home page
+ * "Veranstaltungen" block are never empty just because the upstream calendar
+ * has nothing scheduled ahead.
+ *
+ * Returns an object so callers can render an "events have already taken
+ * place" hint when `isPast` is true.
+ */
+export async function fetchUpcomingOrRecent(limit = 4): Promise<{
+	events: GartenEvent[];
+	isPast: boolean;
+}> {
+	const upcoming = await fetchEvents();
+	if (upcoming.length > 0) {
+		return { events: upcoming.slice(0, limit), isPast: false };
+	}
+	const past = await fetchEvents({ past: true });
+	return { events: past.slice(0, limit), isPast: past.length > 0 };
 }
 
 /**

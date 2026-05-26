@@ -183,6 +183,14 @@
 
 		<!-- ═══ LIST VIEW ═══ -->
 		{#if activeView === "list"}
+			{#if data.fallbackToPast}
+				<div class="past-fallback-notice">
+					Aktuell sind keine kommenden Veranstaltungen geplant.
+					Hier finden Sie die zuletzt durchgeführten Veranstaltungen –
+					nutzen Sie die Monatsnavigation, um in der Vergangenheit
+					oder Zukunft weiter zu blättern.
+				</div>
+			{/if}
 			<EventListView
 				events={filtered}
 				showPast={data.isPastMonth ?? false}
@@ -393,6 +401,18 @@
 		border: none;
 		border-top: 1px solid #e5e7eb;
 		margin: 0 0 24px;
+	}
+
+	/* ── Past-events fallback notice ── */
+	.past-fallback-notice {
+		padding: 12px 16px;
+		margin: 0 0 20px;
+		background: #fffbeb;
+		border-left: 3px solid #f59e0b;
+		font-family: "Open Sans", sans-serif;
+		font-size: 13px;
+		line-height: 1.55;
+		color: #78350f;
 	}
 
 	/* ── Bottom navigation ── */

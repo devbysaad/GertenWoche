@@ -7,12 +7,20 @@
  * Results are cached for 15 minutes.
  */
 
+import { env } from '$env/dynamic/private';
 import { getCached, setCached } from './cache.js';
 import type { JobListing } from '$lib/types/index.js';
 
-const WP_BASE     = 'https://gartenwoche.ch';
-const JMAJAX_URL  = `${WP_BASE}/jm-ajax/get_listings/`;
-const WP_REST_URL = `${WP_BASE}/wp-json/wp/v2/job_listing`;
+function getWpOrigin() {
+	const wpUrl = env.PUBLIC_WP_URL ?? 'https://gartenwoche.ch/wp-json';
+	return wpUrl.endsWith('/wp-json') ? wpUrl.slice(0, -8) : wpUrl;
+}
+function getJmAjaxUrl() {
+	return `${getWpOrigin()}/jm-ajax/get_listings/`;
+}
+function getWpRestUrl() {
+	return `${getWpOrigin()}/wp-json/wp/v2/job_listing`;
+}
 const CACHE_TTL   = 15 * 60_000; // 15 min
 const TIMEOUT     = 20_000;
 
@@ -133,7 +141,7 @@ async function fetchViaJmAjax(page = 1, perPage = 20): Promise<JobListing[] | nu
 		show_pagination: '0'
 	});
 
-	const res = await safeFetch(JMAJAX_URL, {
+	const res = await safeFetch(getJmAjaxUrl(), {
 		method:  'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body
@@ -150,7 +158,7 @@ async function fetchViaJmAjax(page = 1, perPage = 20): Promise<JobListing[] | nu
 }
 
 async function fetchViaWpRest(): Promise<JobListing[] | null> {
-	const res = await safeFetch(`${WP_REST_URL}?per_page=50&orderby=date&order=desc`);
+	const res = await safeFetch(`${getWpRestUrl()}?per_page=50&orderby=date&order=desc`);
 	if (!res) return null;
 
 	try {

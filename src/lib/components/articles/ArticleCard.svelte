@@ -7,13 +7,14 @@
 		article: ArticlePreview;
 		showExcerpt?: boolean;
 		titleSize?: 'sm' | 'md' | 'lg';
+		variant?: 'standard' | 'three-col';
 	}
-	let { article, showExcerpt = false, titleSize = 'md' }: Props = $props();
+	let { article, showExcerpt = false, titleSize = 'md', variant = 'standard' }: Props = $props();
 
 	const url = $derived(`/${article.urlPath}`);
 </script>
 
-<article class="article-card">
+<article class="article-card" class:three-col-variant={variant === 'three-col'}>
 	<!-- Image -->
 	<a href={url} class="card-thumb-link" tabindex="-1" aria-hidden="true">
 		<div class="card-thumb">
@@ -35,12 +36,25 @@
 
 	<!-- Body: title, author, excerpt -->
 	<div class="card-body">
-		<h3 class="card-title size-{titleSize}">
-			<a href={url}>{article.title}</a>
-		</h3>
-		<AuthorMeta author={article.author} publishedAt={article.publishedAt} />
-		{#if showExcerpt && article.excerpt}
-			<p class="card-excerpt">{article.excerpt}</p>
+		{#if variant === 'three-col'}
+			<h3 class="card-title three-col-title">
+				<a href={url}>{article.title}</a>
+			</h3>
+			{#if showExcerpt && article.excerpt}
+				<p class="card-excerpt three-col-excerpt">{article.excerpt}</p>
+			{/if}
+			<div class="three-col-author">
+				{article.author.name}
+			</div>
+			<div class="three-col-divider"></div>
+		{:else}
+			<h3 class="card-title size-{titleSize}">
+				<a href={url}>{article.title}</a>
+			</h3>
+			<AuthorMeta author={article.author} publishedAt={article.publishedAt} />
+			{#if showExcerpt && article.excerpt}
+				<p class="card-excerpt">{article.excerpt}</p>
+			{/if}
 		{/if}
 	</div>
 </article>
@@ -148,8 +162,56 @@
 	}
 
 	/* Hover: spec says box-shadow + translateY */
-	.article-card:hover {
+	.article-card:not(.three-col-variant):hover {
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 		transform: translateY(-2px);
+	}
+
+	/* ── Three column variant overrides ── */
+	.three-col-title {
+		font-family: var(--td_default_google_font_1), Georgia, serif;
+		font-size: clamp(17px, 1.8vw, 19px);
+		font-weight: 500;
+		line-height: 1.35;
+		margin: 12px 0 10px;
+		display: block;
+		-webkit-line-clamp: unset;
+		overflow: visible;
+	}
+
+	.three-col-title a {
+		color: #222222;
+		transition: color 0.2s ease;
+	}
+
+	.three-col-title a:hover {
+		color: #006633;
+	}
+
+	.three-col-excerpt {
+		font-family: var(--td_default_google_font_1), Georgia, serif;
+		font-size: 14px;
+		color: #333333;
+		line-height: 1.6;
+		margin: 0 0 14px;
+		display: block;
+		-webkit-line-clamp: unset;
+		overflow: visible;
+	}
+
+	.three-col-author {
+		font-family: var(--font-body), sans-serif;
+		font-size: 11px;
+		font-weight: 700;
+		color: #222222;
+		margin-bottom: 12px;
+	}
+
+	.three-col-divider {
+		width: 60%;
+		height: 2px;
+		background-color: #e0e0e0;
+		margin-top: 14px;
+		margin-bottom: 4px;
 	}
 </style>

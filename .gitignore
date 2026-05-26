@@ -12,7 +12,8 @@ Thumbs.db
 *.tsbuildinfo
 instructions/*
 .vercel/output/
-# better-auth SQLite database
+# Local persistent stores
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/*.json

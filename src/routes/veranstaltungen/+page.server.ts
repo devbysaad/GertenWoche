@@ -42,17 +42,31 @@ export const load: PageServerLoad = async ({ url }) => {
 		!month ? fetchEvents({ startDate: now.toISOString().slice(0, 10) }) : Promise.resolve([])
 	]);
 
-	// For list view without a specific month, show upcoming; otherwise show month events
-	const events = !month && view === 'list' ? upcomingEvents : monthEvents;
+	let events = !month && view === 'list' ? upcomingEvents : monthEvents;
+
+	// Fallback: when the default list view has zero upcoming events,
+	// surface the most recent past events instead so the page is never
+	// empty just because the calendar has nothing scheduled ahead.
+	let fallbackToPast = false;
+	if (!month && view === 'list' && events.length === 0) {
+		const past = await fetchEvents({ past: true });
+		if (past.length > 0) {
+			events = past.slice(0, 12);
+			fallbackToPast = true;
+		}
+	}
 
 	return {
 		events,
 		view,
 		month: month ?? `${y}-${String(m + 1).padStart(2, '0')}`,
 		displayYear: y,
-		displayMonth: m,  // 0-indexed
+		displayMonth: m,
 		search,
-		isPastMonth,
+		// Treat the fallback view as "past" so EventListView styles cards
+		// accordingly and the user gets the right visual cue.
+		isPastMonth: isPastMonth || fallbackToPast,
+		fallbackToPast,
 		totalCount: events.length
 	};
 };

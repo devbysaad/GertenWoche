@@ -4,8 +4,10 @@
 
 	interface Props {
 		events: GartenEvent[];
+		/** When true the events shown are past, not upcoming. */
+		isPast?: boolean;
 	}
-	let { events }: Props = $props();
+	let { events, isPast = false }: Props = $props();
 </script>
 
 <section class="events-widget">
@@ -17,6 +19,11 @@
 	{#if events.length === 0}
 		<p class="events-empty">Aktuell keine Veranstaltungen eingetragen.</p>
 	{:else}
+		{#if isPast}
+			<p class="events-past-hint">
+				Zuletzt durchgeführte Veranstaltungen
+			</p>
+		{/if}
 		<div class="events-list">
 			{#each events.slice(0, 4) as event}
 				<a href="/veranstaltung/{event.slug}" class="event-item">
@@ -167,5 +174,13 @@
 		text-align: center;
 		padding: 16px 0;
 		margin: 0;
+	}
+
+	.events-past-hint {
+		font-family: var(--font-body);
+		font-size: 11px;
+		color: var(--color-text-faint);
+		font-style: italic;
+		margin: 0 0 8px;
 	}
 </style>

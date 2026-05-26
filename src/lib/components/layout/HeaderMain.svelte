@@ -160,40 +160,43 @@
 				aria-expanded={menuOpen}
 			>
 				{#if user}
-					<!-- Logged-in: grey avatar circle + text -->
+					<!-- Logged-in: outline silhouette + name -->
 					<div class="user-avatar-mini">
 						{#if user.avatar}
 							<img src={user.avatar} alt={user.name} />
 						{:else}
 							<svg
 								viewBox="0 0 24 24"
-								fill="currentColor"
-								width="22"
-								height="22"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								width="30"
+								height="30"
 								aria-hidden="true"
 							>
-								<path
-									d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"
-								/>
+								<circle cx="12" cy="9" r="3.5" />
+								<path d="M4 20.5c.7-4 4.1-6.5 8-6.5s7.3 2.5 8 6.5" />
 							</svg>
 						{/if}
 					</div>
 					<span class="konto-label">Mein Konto</span>
 				{:else}
-					<!-- Guest: person icon + text -->
+					<!-- Guest: outline silhouette + text -->
 					<svg
-						width="15"
-						height="15"
+						width="24"
+						height="24"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
-						stroke-width="1.8"
+						stroke-width="1.5"
 						stroke-linecap="round"
 						stroke-linejoin="round"
 						aria-hidden="true"
 					>
-						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-						<circle cx="12" cy="7" r="4" />
+						<circle cx="12" cy="9" r="3.5" />
+						<path d="M4 20.5c.7-4 4.1-6.5 8-6.5s7.3 2.5 8 6.5" />
 					</svg>
 					<span>Mein Konto</span>
 				{/if}

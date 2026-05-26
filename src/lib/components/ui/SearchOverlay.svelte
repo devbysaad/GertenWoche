@@ -27,7 +27,7 @@
 	});
 
 	function closeOverlay() {
-		searchStore.close();
+		searchStore.clearSearch();
 		query   = '';
 		results = [];
 	}

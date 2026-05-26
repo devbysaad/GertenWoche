@@ -69,7 +69,7 @@ function makeArticle(
 
 export const FALLBACK_ARTICLES: Article[] = [
 	makeArticle('1', 'nuesslisalat-ganzjaehriger-vitaminchampion', 'Nüsslisalat – ganzjähriger Vitaminchampion', 'schweiz', 'redaktion-aktuelles', true, 2),
-	makeArticle('2', 'kress-voyager-hohe-maehleistung-fuer-profis', 'Kress Voyager – hohe Mähleistung für Profis', 'produktschau', 'stemalo', true, 4),
+	makeArticle('2', 'kress-voyager-hohe-maehleistung-fuer-profis', 'Kress Voyager: hohe Mähleistung für Profis', 'produktschau', 'stemalo', true, 4),
 	makeArticle('3', 'biohybride-pflanzen-unibz', 'Biohybride Pflanzen: Uni Bozen entwickelt Superpflanzen', 'wissen', 'redaktion-wissen', true, 6),
 	makeArticle('4', 'zwitschern-laesst-sich-pflanzen', 'So pflanzen Sie für die Vogelwelt', 'gartenpraxis', 'redaktion-gartenpraxis', false, 8),
 	makeArticle('5', 'neue-hortensie-runaway-bride', 'Neue Hortensie: Runaway Bride', 'pflanzenempfehlungen', 'redaktion-aktuelles', true, 10),
@@ -88,7 +88,14 @@ export const FALLBACK_ARTICLES: Article[] = [
 	makeArticle('18', 'seerosen-in-kleinen-gefaessen', 'Seerosen in kleinen Gefässen', 'wasserpflanzen', 'redaktion-gartenpraxis', false, 36),
 	makeArticle('19', 'cornus-kuosa-scarlet-fire', "Cornus 'Scarlet Fire' – der Blumenhartriegel", 'pflanzenempfehlungen', 'stemalo', false, 38),
 	makeArticle('20', 'zeitliche-veraenderungen-laubfall', 'Zeitliche Veränderungen im Laubfall haben Folgen für Flohkrebse', 'schweiz', 'redaktion-aktuelles', true, 40),
-	makeArticle('21', 'kampagne-japankaefer-stoppen-lanciert', 'Kampagne „Japankäfer stoppen“ lanciert', 'schweiz', 'redaktion-aktuelles', true, 1)
+	makeArticle('22', 'neue-katzenminze-nepeta-neptune', 'Neue Katzenminze – Nepeta ‚Neptune‘', 'pflanzenempfehlungen', 'redaktion-aktuelles', false, 42),
+	makeArticle('23', 'euonymus-japonicus-paloma-blanca', 'Euonymus japonicus ‚Paloma Blanca‘', 'pflanzenempfehlungen', 'redaktion-aktuelles', false, 44),
+	{
+		...makeArticle('21', 'kampagne-japankaefer-stoppen-lanciert', 'Kampagne «Stopp Japankäfer» lanciert', 'schweiz', 'redaktion-aktuelles', true, 1),
+		excerpt: 'Der Japankäfer ist ein Schadorganismus, der in der Landwirtschaft grosse Schäden anrichten und ganze Ernten zerstören kann. Aufgrund der bevorstehenden Feiertage und der fortschreitenden Verbreitung des Käfers hierzulande und im angrenzenden Ausland lanciert das Bundesamt für Landwirtschaft (BLW) heute eine Kampagne zur Sensibilisierung der Bürgerinnen und Bürger sowie der Reisenden. Damit soll die Bevölkerung zur Wachsamkeit aufgerufen und die Verbreitung des Käfers verlangsamt werden.',
+		content: '<p>Der Japankäfer (Popillia japonica) stellt eine ernsthafte Bedrohung für die Landwirtschaft, den Gartenbau und die Umwelt dar. Während der adulte Käfer Blätter, Früchte und Blüten von mehr als 400 Pflanzenarten befällt, schädigen die Larven Wurzeln von Rasen- und Grünflächen.</p><p>Im Jahr 2025 wurden in der Schweiz grössere Befallsherde in den Kantonen Basel, Tessin, Zürich und Wallis abgegrenzt. In weiteren Kantonen lagen zudem Meldungen vor. Von Juni bis September ist die Gefahr der Verschleppung aufgrund des zunehmenden Reiseverkehrs während der Sommerzeit um ein Vielfaches grösser. So ist es möglich, dass der Käfer ungewollt in Fahrzeuge und Gepäckstücke gelangt und darin, insbesondere entlang der Nord-Süd-Achsen, mitreist.</p>',
+		thumbnail: 'https://gartenwoche.ch/wp-content/uploads/2026/05/stopp-dem-japankaefer.webp'
+	}
 ];
 
 export const FALLBACK_EVENTS: GartenEvent[] = [

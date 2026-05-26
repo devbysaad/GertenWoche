@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { Article } from "$lib/types/index.js";
+	import type { ArticlePreview } from "$lib/types/index.js";
 	import ArticleCard from "$lib/components/articles/ArticleCard.svelte";
 	import ArticleCardLarge from "$lib/components/articles/ArticleCardLarge.svelte";
 
 	interface Props {
-		articles: Article[];
+		articles: ArticlePreview[];
 	}
 
 	let { articles }: Props = $props();

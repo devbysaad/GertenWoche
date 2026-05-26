@@ -49,22 +49,26 @@ function createAuthStore() {
 			}
 		},
 
-		async register(
-			username: string,
-			email: string,
-			password: string
-		): Promise<{ ok: boolean; error?: string }> {
+		async register(payload: {
+			email: string;
+			password: string;
+			username?: string;
+			displayName?: string;
+			firstName?: string;
+			lastName?: string;
+		}): Promise<{ ok: boolean; error?: string }> {
 			update((s) => ({ ...s, loading: true }));
 			try {
 				const res = await fetch('/api/auth/register', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ username, email, password })
+					body: JSON.stringify(payload),
+					credentials: 'include'
 				});
-				const data = await res.json();
+				const data = await res.json().catch(() => ({}));
 				if (!res.ok) {
 					update((s) => ({ ...s, loading: false }));
-					return { ok: false, error: data.message ?? 'Registrierung fehlgeschlagen' };
+					return { ok: false, error: data?.error ?? data?.message ?? 'Registrierung fehlgeschlagen' };
 				}
 				update((s) => ({ ...s, user: data.user, loading: false }));
 				return { ok: true };
@@ -75,7 +79,11 @@ function createAuthStore() {
 		},
 
 		async logout(): Promise<void> {
-			await fetch('/api/auth/logout', { method: 'POST' });
+			try {
+				await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+			} catch {
+				// Even if the server call fails, drop local state and navigate home.
+			}
 			update((s) => ({ ...s, user: null }));
 			window.location.href = '/';
 		}
